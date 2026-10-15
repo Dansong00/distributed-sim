@@ -1,6 +1,6 @@
 import { openDB, type DBSchema } from "idb";
 import type { Diagram, StoredDiagram } from "../domain/model";
-import { validateDiagram } from "../domain/serialization";
+import { exportDiagram, validateDiagram } from "../domain/serialization";
 
 export class DiagramConflictError extends Error {
   constructor(
@@ -154,6 +154,7 @@ export function createDiagramStore(
       }
     },
     async save(document, expectedRevision) {
+      exportDiagram(document);
       return (await mutate(
         document.id,
         expectedRevision,

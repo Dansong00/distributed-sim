@@ -60,7 +60,7 @@ export function App() {
   const duplicate = () => {
     if (!document) return;
     const result = duplicateSelection(document, selection);
-    dispatch({ type: "preview", document: result.document });
+    if (!dispatch({ type: "preview", document: result.document })) return;
     dispatch({ type: "commit" });
     setSelection(result.selection);
   };

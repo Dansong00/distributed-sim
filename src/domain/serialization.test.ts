@@ -70,3 +70,23 @@ describe('portable documents', () => {
   });
   it('reports malformed JSON', () => { expect(() => importDiagram('{')).toThrow(DocumentValidationError); });
 });
+
+it('accepts exactly 5 MiB of portable JSON and rejects one additional byte', () => {
+  const doc = createDiagram('notes', 'Byte boundary');
+  const component = doc.nodes.find(n => n.kind === 'component')!;
+  doc.nodes = Array.from({ length: 500 }, () => ({ ...component, id: crypto.randomUUID(), parentId: undefined, notes: 'x'.repeat(10000), description: '' }));
+  doc.edges = [];
+  const currentBytes = new TextEncoder().encode(JSON.stringify(validateDiagram(doc), null, 2)).byteLength;
+  let remaining = 5 * 1024 * 1024 - currentBytes;
+  for (const node of doc.nodes) {
+    const length = Math.min(10000, remaining);
+    node.description = 'x'.repeat(length);
+    remaining -= length;
+  }
+  expect(remaining).toBe(0);
+  const text = exportDiagram(doc);
+  expect(new TextEncoder().encode(text).byteLength).toBe(5 * 1024 * 1024);
+  expect(() => importDiagram(text)).not.toThrow();
+  doc.nodes.at(-1)!.description += 'x';
+  expect(() => exportDiagram(doc)).toThrow('5 MiB');
+});

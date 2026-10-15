@@ -116,9 +116,20 @@ export function useDocumentSession(store: DiagramStore) {
   function dispatch(action: HistoryAction) {
     // Lifecycle writes freeze editing as well as the visible workspace. Global
     // keyboard handlers can still fire while a DOM subtree is inert.
-    if (!s.history || s.busy) return;
+    if (!s.history || s.busy) return false;
+    const next = historyReducer(s.history, action);
+    if (next.present !== s.history.present) {
+      try {
+        exportDiagram(next.present);
+      } catch (error) {
+        s.warning = `Edit not applied: ${error instanceof Error ? error.message : String(error)}`;
+        emit();
+        return false;
+      }
+      if (action.type !== "viewport") s.warning = "";
+    }
     const previous = s.history.present;
-    s.history = historyReducer(s.history, action);
+    s.history = next;
     if (
       previous !== s.history.present &&
       JSON.stringify(previous) !== JSON.stringify(s.history.present)
@@ -133,6 +144,7 @@ export function useDocumentSession(store: DiagramStore) {
       }
     }
     emit();
+    return true;
   }
   async function lifecycle<T>(action: () => Promise<T>): Promise<T> {
     if (s.busy) throw new Error("Please wait for the current diagram action.");

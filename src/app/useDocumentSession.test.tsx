@@ -7,6 +7,8 @@ import {
   DiagramConflictError,
   type DiagramStore,
 } from "../storage/diagram-store";
+import { duplicateSelection } from "../domain/operations";
+import { importDiagram } from "../domain/serialization";
 import type { StoredDiagram } from "../domain/model";
 function fake() {
   const records = new Map<string, StoredDiagram>();
@@ -243,4 +245,75 @@ test("rename resolves only once the name is durable", async () => {
   });
   expect(done).toBe(true);
   expect(records.get(doc.id)?.document.name).toBe("Renamed");
+});
+
+test("rejects over-limit compound edits atomically while exact limits remain portable", async () => {
+  const { store } = fake();
+  const { result } = renderHook(() => useDocumentSession(store));
+  await act(async () => { await result.current.create("notes", "Limits"); });
+  const base = result.current.document!;
+  const component = base.nodes.find(n => n.kind === "component")!;
+  const nodes = Array.from({ length: 500 }, (_, i) => ({ ...component, id: `node-${i}`, parentId: undefined }));
+  const edges = Array.from({ length: 1000 }, (_, i) => ({ ...base.edges[0], id: `edge-${i}`, source: nodes[0].id, target: nodes[1].id }));
+  act(() => {
+    expect(result.current.dispatch({ type: "preview", document: { ...base, nodes, edges } })).toBe(true);
+    result.current.dispatch({ type: "commit" });
+  });
+  await act(async () => { await result.current.retrySave(); });
+  const history = result.current.history;
+  const document = result.current.document!;
+  for (const next of [
+    duplicateSelection(document, { nodeIds: [nodes[0].id], edgeIds: [] }).document,
+    { ...document, nodes: [...nodes, { ...nodes[0], id: "extra" }] },
+    { ...document, edges: [...edges, { ...edges[0], id: "extra" }] },
+    { ...document, nodes: nodes.map(n => ({ ...n, notes: "😀".repeat(5000) })) },
+  ]) {
+    act(() => { expect(result.current.dispatch({ type: "preview", document: next })).toBe(false); });
+    expect(result.current.history).toBe(history);
+    expect(result.current.status).toBe("saved");
+    expect(result.current.warning).toContain("Edit not applied");
+    expect(importDiagram(result.current.exportCurrent()).nodes).toHaveLength(500);
+  }
+  act(() => { expect(result.current.dispatch({ type: "viewport", viewport: { x: 1_000_001, y: 0, zoom: 1 } })).toBe(false); });
+  expect(result.current.history).toBe(history);
+  expect(result.current.status).toBe("saved");
+  const edgeBounded = { ...document, nodes: nodes.slice(0, 2) };
+  act(() => {
+    expect(result.current.dispatch({ type: "preview", document: edgeBounded })).toBe(true);
+    result.current.dispatch({ type: "commit" });
+  });
+  await act(async () => { await result.current.retrySave(); });
+  const edgeHistory = result.current.history;
+  const compound = duplicateSelection(edgeBounded, { nodeIds: edgeBounded.nodes.map(n => n.id), edgeIds: [] });
+  expect(compound.document.edges).toHaveLength(2000);
+  act(() => { expect(result.current.dispatch({ type: "preview", document: compound.document })).toBe(false); });
+  expect(result.current.history).toBe(edgeHistory);
+  expect(result.current.status).toBe("saved");
+});
+
+test("undo cannot restore oversized content under a newer viewport", async () => {
+  const { store } = fake();
+  const { result } = renderHook(() => useDocumentSession(store));
+  await act(async () => { await result.current.create("notes", "Byte history"); });
+  const base = result.current.document!;
+  const component = base.nodes.find(n => n.kind === "component")!;
+  const nodes = Array.from({ length: 500 }, () => ({ ...component, id: crypto.randomUUID(), parentId: undefined, notes: "x".repeat(10000), description: "" }));
+  const exact = { ...base, nodes, edges: [], viewport: { x: 0, y: 0, zoom: 1 } };
+  let remaining = 5 * 1024 * 1024 - new TextEncoder().encode(JSON.stringify(exact, null, 2)).byteLength;
+  for (const node of nodes) {
+    const length = Math.min(remaining, 10000);
+    node.description = "x".repeat(length);
+    remaining -= length;
+  }
+  act(() => {
+    expect(result.current.dispatch({ type: "preview", document: exact })).toBe(true);
+    result.current.dispatch({ type: "commit" });
+    expect(result.current.dispatch({ type: "preview", document: { ...exact, nodes: nodes.map((n, i) => i === 0 ? { ...n, notes: n.notes.slice(10) } : n) } })).toBe(true);
+    result.current.dispatch({ type: "commit" });
+    expect(result.current.dispatch({ type: "viewport", viewport: { x: 123456, y: 0, zoom: 1 } })).toBe(true);
+  });
+  const before = result.current.history;
+  act(() => { expect(result.current.dispatch({ type: "undo" })).toBe(false); });
+  expect(result.current.history).toBe(before);
+  expect(() => importDiagram(result.current.exportCurrent())).not.toThrow();
 });

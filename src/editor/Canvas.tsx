@@ -44,7 +44,7 @@ export type CanvasProps = {
   selection: Selection;
   tool: "select" | "pan";
   onSelectionChange: (selection: Selection) => void;
-  dispatch: (action: HistoryAction) => void;
+  dispatch: (action: HistoryAction) => boolean;
   ref?: Ref<CanvasHandle>;
 };
 function Editor({
@@ -69,13 +69,15 @@ function Editor({
   latest.current = document;
   const dragOrigin = useRef<{
     document: Diagram;
+    rootId: string;
     position: Point;
     selection: Selection;
   } | null>(null);
   const [space, setSpace] = useState(false);
   const transact = (next: Diagram) => {
-    dispatch({ type: "preview", document: next });
+    if (!dispatch({ type: "preview", document: next })) return false;
     dispatch({ type: "commit" });
+    return true;
   };
   const add = (id: string, point?: Point) => {
     const bounds = wrapper.current!.getBoundingClientRect();
@@ -113,7 +115,7 @@ function Editor({
       { ...document, nodes: [...document.nodes, node] },
       [node.id],
     );
-    transact(next);
+    if (!transact(next)) return;
     onSelectionChange({ nodeIds: [node.id], edgeIds: [] });
   };
   useImperativeHandle(ref, () => ({
@@ -143,8 +145,7 @@ function Editor({
           });
         if (key === "d") {
           const result = duplicateSelection(document, selection);
-          transact(result.document);
-          onSelectionChange(result.selection);
+          if (transact(result.document)) onSelectionChange(result.selection);
         }
         if (key === "z") dispatch({ type: event.shiftKey ? "redo" : "undo" });
         if (key === "y") dispatch({ type: "redo" });
@@ -276,20 +277,25 @@ function Editor({
           const selected = selection.nodeIds.includes(node.id)
             ? selection
             : { nodeIds: [node.id], edgeIds: [] };
+          const root = document.nodes.find(n => n.id === node.parentId && selected.nodeIds.includes(n.id)) ?? node;
           dragOrigin.current = {
             document,
-            position: node.position,
+            rootId: root.id,
+            position: root.position,
             selection: selected,
           };
           dispatch({ type: "begin" });
         }}
-        onNodeDrag={(_, node) => {
+        onNodeDrag={(_, node, nodes) => {
           const origin = dragOrigin.current;
           if (origin) {
+            const moving = nodes.find(n => n.id === origin.rootId) ?? (node.id === origin.rootId ? node : flow.getNode(origin.rootId));
+            if (!moving) return;
             const next = moveSelection(origin.document, origin.selection, {
-              x: node.position.x - origin.position.x,
-              y: node.position.y - origin.position.y,
+              x: moving.position.x - origin.position.x,
+              y: moving.position.y - origin.position.y,
             });
+            next.viewport = flow.getViewport();
             dispatch({ type: "preview", document: next });
           }
         }}
@@ -331,10 +337,14 @@ function Editor({
             label: "",
             direction: "one-way" as const,
           };
-          transact({ ...document, edges: [...document.edges, edge] });
+          if (!transact({ ...document, edges: [...document.edges, edge] })) return;
           onSelectionChange({ nodeIds: [], edgeIds: [edge.id] });
         }}
-        onMove={(_, viewport) => dispatch({ type: "viewport", viewport })}
+        onMove={(_, viewport) => {
+          if (dispatch({ type: "viewport", viewport }))
+            latest.current = { ...latest.current, viewport };
+          else void flow.setViewport(latest.current.viewport);
+        }}
       >
         <Background
           variant={BackgroundVariant.Dots}

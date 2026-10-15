@@ -91,7 +91,14 @@ export function validateDiagram(value: unknown): Diagram {
   };
 }
 export function exportDiagram(doc: Diagram): string {
-  return JSON.stringify(validateDiagram(doc), null, 2);
+  const text = JSON.stringify(validateDiagram(doc), null, 2);
+  // Import assigns UUIDs. Reserve their width so a valid export stays portable
+  // even when an imported/custom identifier is shorter than a UUID.
+  const idGrowth = (id: string) => Math.max(0, 36 - id.length);
+  const remapGrowth = Math.max(0, 24 - doc.createdAt.length) + Math.max(0, 24 - doc.updatedAt.length) + idGrowth(doc.id) + doc.nodes.reduce((sum, n) => sum + idGrowth(n.id) + (n.parentId ? idGrowth(n.parentId) : 0), 0)
+    + doc.edges.reduce((sum, e) => sum + idGrowth(e.id) + idGrowth(e.source) + idGrowth(e.target), 0);
+  if (new TextEncoder().encode(text).byteLength + remapGrowth > 5 * 1024 * 1024) fail("Document exceeds the 5 MiB portable file size limit.");
+  return text;
 }
 export function importDiagram(text: string): Diagram {
   if (new TextEncoder().encode(text).byteLength > 5 * 1024 * 1024) fail('Import exceeds the 5 MiB file size limit.');
@@ -100,8 +107,10 @@ export function importDiagram(text: string): Diagram {
   const doc = validateDiagram(value);
   const nodeIds = new Map(doc.nodes.map(n => [n.id, crypto.randomUUID()]));
   const now = new Date().toISOString();
-  return { ...doc, id: crypto.randomUUID(), createdAt: now, updatedAt: now,
+  const imported = { ...doc, id: crypto.randomUUID(), createdAt: now, updatedAt: now,
     nodes: doc.nodes.map(n => ({ ...n, id: nodeIds.get(n.id)!, ...(n.parentId === undefined ? {} : { parentId: nodeIds.get(n.parentId)! }) })),
     edges: doc.edges.map(e => ({ ...e, id: crypto.randomUUID(), source: nodeIds.get(e.source)!, target: nodeIds.get(e.target)! })),
   };
+  exportDiagram(imported);
+  return imported;
 }

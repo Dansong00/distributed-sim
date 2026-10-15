@@ -146,3 +146,19 @@ it("rejects listing when its transaction aborts without an unhandled completion 
   }
   expect(await store.get("one")).toEqual({ document: doc(), revision: 1 });
 });
+
+it("keeps the last portable revision after rejecting an oversized write", async () => {
+  const { createDiagram } = await import("../domain/templates");
+  const { exportDiagram, importDiagram } = await import("../domain/serialization");
+  const { store } = setup();
+  const document = createDiagram("notes", "Portable");
+  const component = document.nodes.find(n => n.kind === "component")!;
+  document.nodes = Array.from({ length: 500 }, () => ({ ...component, id: crypto.randomUUID(), parentId: undefined }));
+  document.edges = [];
+  await store.save(document, null);
+  const oversized = { ...document, nodes: document.nodes.map(n => ({ ...n, notes: "😀".repeat(5000) })) };
+  await expect(store.save(oversized, 1)).rejects.toThrow("5 MiB");
+  const stored = (await store.get(document.id))!;
+  expect(stored.revision).toBe(1);
+  expect(importDiagram(exportDiagram(stored.document)).nodes).toHaveLength(500);
+});

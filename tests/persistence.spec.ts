@@ -177,3 +177,51 @@ test("conflict reload restores stored viewport and preserves it through the next
   await other.getByRole("button", { name: "Open After reload", exact: true }).click();
   await expect(other.locator(".react-flow__viewport")).toHaveAttribute("style", storedTransform!);
 });
+
+test("exact editor limits reject add, duplicate and connect atomically and preserve export", async ({ page }) => {
+  const { createDiagram } = await import("../src/domain/templates");
+  const doc = createDiagram("notes", "Limits");
+  const component = doc.nodes.find(n => n.kind === "component")!;
+  doc.nodes = Array.from({ length: 499 }, (_, i) => ({ ...component, id: `limit-${i}`, name: `Limit ${i}`, parentId: undefined, position: { x: i < 2 ? 80 + i * 320 : 2000 + i * 5, y: 180 } }));
+  doc.edges = Array.from({ length: 999 }, (_, i) => ({ ...doc.edges[0], id: `route-${i}`, source: "limit-0", target: "limit-1" }));
+  doc.viewport = { x: 0, y: 0, zoom: 1 };
+  await page.goto("/");
+  await page.locator("input[type=file]").setInputFiles({ name: "limits.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(doc)) });
+  await expect(page.getByRole("status")).toHaveText("Saved locally");
+  await page.getByRole("button", { name: "Add Generic Client", exact: true }).click();
+  await expect(page.locator(".react-flow__node")).toHaveCount(500);
+  await expect(page.getByRole("status")).toHaveText("Saved locally");
+  const selection = await page.locator(".react-flow__node.selected").getAttribute("data-id");
+  await page.getByRole("button", { name: "Add Generic Client", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("Edit not applied");
+  await page.getByRole("button", { name: "Duplicate", exact: true }).click();
+  await expect(page.locator(".react-flow__node")).toHaveCount(500);
+  await expect(page.locator(".react-flow__node.selected")).toHaveAttribute("data-id", selection!);
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect(page.locator(".react-flow__node")).toHaveCount(499);
+  await page.getByRole("button", { name: "Redo", exact: true }).click();
+  await expect(page.locator(".react-flow__node")).toHaveCount(500);
+  const node = (name: string) => page.locator(".react-flow__node").filter({ has: page.locator("strong", { hasText: new RegExp(`^${name}$`) }) });
+  async function connect() {
+    const from = (await node("Limit 0").locator('[data-handleid="right"]').boundingBox())!;
+    const to = (await node("Limit 1").locator('[data-handleid="left"]').boundingBox())!;
+    await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, { steps: 10 });
+    await page.mouse.up();
+  }
+  await connect();
+  await expect(page.locator(".react-flow__edge")).toHaveCount(1000);
+  await expect(page.getByRole("status")).toHaveText("Saved locally");
+  await connect();
+  await expect(page.getByRole("alert")).toContainText("at most 1000");
+  await expect(page.locator(".react-flow__edge")).toHaveCount(1000);
+  await expect(page.getByRole("status")).toHaveText("Saved locally");
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export JSON", exact: true }).click();
+  const path = await (await download).path();
+  await page.locator("input[type=file]").setInputFiles(path!);
+  await expect(page.getByRole("status")).toHaveText("Saved locally");
+  await expect(page.locator(".react-flow__node")).toHaveCount(500);
+  await expect(page.locator(".react-flow__edge")).toHaveCount(1000);
+});

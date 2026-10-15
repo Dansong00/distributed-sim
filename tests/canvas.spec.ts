@@ -321,3 +321,67 @@ test("toolbar disables unavailable delete and duplicate actions", async ({
     page.getByRole("button", { name: "Duplicate", exact: true }),
   ).toBeDisabled();
 });
+
+test("selected parent moves when drag starts on its child with one undo and redo", async ({ page }) => {
+  await startEditor(page);
+  const parent = page.locator(".react-flow__node-container");
+  const child = nodeFor(page, "Notes API");
+  await parent.locator(".container-node > span").click();
+  await child.click({ modifiers: ["Shift"] });
+  const pathsBefore = await page.locator(".react-flow__edge-path").evaluateAll(els => els.map(el => el.getAttribute("d")));
+  const before = { parent: await parent.boundingBox(), child: await child.boundingBox() };
+  await drag(page, child, 75, 40);
+  const after = { parent: await parent.boundingBox(), child: await child.boundingBox() };
+  const pathsAfter = await page.locator(".react-flow__edge-path").evaluateAll(els => els.map(el => el.getAttribute("d")));
+  expect(pathsAfter).not.toEqual(pathsBefore);
+  expect(after.parent!.x - before.parent!.x).toBeGreaterThan(60);
+  expect(after.child!.x - before.child!.x).toBeCloseTo(after.parent!.x - before.parent!.x, 0);
+  expect(after.child!.y - before.child!.y).toBeCloseTo(after.parent!.y - before.parent!.y, 0);
+  expect(after.parent!.y - before.parent!.y).toBeGreaterThan(30);
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  expect(await parent.boundingBox()).toEqual(before.parent);
+  expect(await child.boundingBox()).toEqual(before.child);
+  await expect.poll(() => page.locator(".react-flow__edge-path").evaluateAll(els => els.map(el => el.getAttribute("d")))).toEqual(pathsBefore);
+  await page.getByRole("button", { name: "Redo", exact: true }).click();
+  expect(await parent.boundingBox()).toEqual(after.parent);
+  expect(await child.boundingBox()).toEqual(after.child);
+});
+
+test("drag auto-pan persists the visible viewport through export and reopen", async ({ page }) => {
+  await startEditor(page);
+  const api = nodeFor(page, "Notes API");
+  const box = (await api.boundingBox())!;
+  const canvas = (await page.locator(".canvas").boundingBox())!;
+  const visible = () => page.locator(".react-flow__viewport").evaluate(el => {
+    const matrix = new DOMMatrix(getComputedStyle(el).transform);
+    return { x: matrix.e, y: matrix.f, zoom: matrix.a };
+  });
+  const before = await visible();
+  const geometryBefore = await api.evaluate(el => (el as HTMLElement).style.transform);
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(canvas.x + canvas.width - 4, box.y + box.height / 2, { steps: 15 });
+  await page.waitForTimeout(500);
+  await page.mouse.up();
+  await expect(page.getByRole("status")).toHaveText("Saved locally");
+  const after = await visible();
+  const geometryAfter = await api.evaluate(el => (el as HTMLElement).style.transform);
+  expect(geometryAfter).not.toBe(geometryBefore);
+  expect(Math.abs(after.x - before.x)).toBeGreaterThan(20);
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export JSON", exact: true }).click();
+  const path = await (await download).path();
+  const { readFile } = await import("node:fs/promises");
+  const exported = JSON.parse(await readFile(path!, "utf8"));
+  expect(exported.viewport.x).toBeCloseTo(after.x, 2);
+  expect(exported.viewport.y).toBeCloseTo(after.y, 2);
+  expect(exported.viewport.zoom).toBeCloseTo(after.zoom, 4);
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect.poll(() => api.evaluate(el => (el as HTMLElement).style.transform)).toBe(geometryBefore);
+  await page.getByRole("button", { name: "Redo", exact: true }).click();
+  await expect.poll(() => api.evaluate(el => (el as HTMLElement).style.transform)).toBe(geometryAfter);
+  await expect(page.getByRole("status")).toHaveText("Saved locally");
+  await page.reload();
+  await page.getByRole("button", { name: "Open Note-Taking App", exact: true }).click();
+  await expect.poll(async () => (await visible()).x).toBeCloseTo(after.x, 2);
+});
