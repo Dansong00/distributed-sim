@@ -1,22 +1,72 @@
-import { Handle, Position, type NodeProps } from '@xyflow/react';
-import { Globe, Server, Database, Layers, Network, HardDrive, MessageSquare, Box } from 'lucide-react';
-import type { CanvasNode } from './flow-adapter';
-const icons = { Clients: Globe, Compute: Server, Databases: Database, Caches: Layers, Messaging: MessageSquare, Networking: Network, Storage: HardDrive };
+import { Handle, NodeResizer, Position, type NodeProps } from "@xyflow/react";
+import {
+  Globe,
+  Server,
+  Database,
+  Layers,
+  Network,
+  HardDrive,
+  MessageSquare,
+  Box,
+} from "lucide-react";
+import type { CanvasNode } from "./flow-adapter";
+const icons = {
+  Clients: Globe,
+  Compute: Server,
+  Databases: Database,
+  Caches: Layers,
+  Messaging: MessageSquare,
+  Networking: Network,
+  Storage: HardDrive,
+};
 export function ComponentNode({ data }: NodeProps<CanvasNode>) {
   const node = data.element;
   const Icon = icons[node.category as keyof typeof icons] ?? Box;
-  return <div className={`component-card category-${node.category?.toLowerCase()}`}>
-    <span className="component-icon"><Icon size={21} strokeWidth={1.7}/></span>
-    <div className="component-copy"><small>{node.category}</small><strong>{node.name}</strong><span>{node.technology || node.componentType}</span></div>
-    {Object.entries({ top: Position.Top, right: Position.Right, bottom: Position.Bottom, left: Position.Left }).map(([id, position]) => <Handle key={id} id={id} type="source" position={position} />)}
-  </div>;
+  return (
+    <div className={`component-card category-${node.category?.toLowerCase()}`}>
+      <span className="component-icon">
+        <Icon size={21} strokeWidth={1.7} />
+      </span>
+      <div className="component-copy">
+        <small>{node.category}</small>
+        <strong>{node.name}</strong>
+        <span>{node.technology || node.componentType}</span>
+      </div>
+      {Object.entries({
+        top: Position.Top,
+        right: Position.Right,
+        bottom: Position.Bottom,
+        left: Position.Left,
+      }).map(([id, position]) => (
+        <Handle key={id} id={id} type="source" position={position} />
+      ))}
+    </div>
+  );
 }
-export function ContainerNode({ data }: NodeProps<CanvasNode>) {
-  return <div className="container-node"><span><Box size={13}/>{data.element.name}</span></div>;
+export function ContainerNode({ data, selected }: NodeProps<CanvasNode>) {
+  return (
+    <div className="container-node">
+      <NodeResizer isVisible={selected} minWidth={48} minHeight={48} />
+      <span>
+        <Box size={13} />
+        {data.element.name}
+      </span>
+    </div>
+  );
 }
 export function StickyNode({ data }: NodeProps<CanvasNode>) {
-  return <div className={`sticky-node sticky-${data.element.color ?? 'yellow'}`}><strong>{data.element.name}</strong><p>{data.element.notes}</p></div>;
+  return (
+    <div className={`sticky-node sticky-${data.element.color ?? "yellow"}`}>
+      <strong>{data.element.name}</strong>
+      <p>{data.element.notes}</p>
+    </div>
+  );
 }
 export function TextNode({ data }: NodeProps<CanvasNode>) {
-  return <div className="text-node"><strong>{data.element.name}</strong><p>{data.element.notes}</p></div>;
+  return (
+    <div className="text-node">
+      <strong>{data.element.name}</strong>
+      <p>{data.element.notes}</p>
+    </div>
+  );
 }
