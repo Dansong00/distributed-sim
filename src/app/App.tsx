@@ -63,6 +63,15 @@ export function App() {
             redo={() => dispatch({ type: "redo" })}
             canUndo={history.past.length > 0}
             canRedo={history.future.length > 0}
+            canDelete={
+              document.nodes.some((node) =>
+                selection.nodeIds.includes(node.id),
+              ) ||
+              document.edges.some((edge) => selection.edgeIds.includes(edge.id))
+            }
+            canDuplicate={document.nodes.some((node) =>
+              selection.nodeIds.includes(node.id),
+            )}
             onDelete={remove}
             onDuplicate={duplicate}
           />

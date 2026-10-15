@@ -36,13 +36,53 @@ export function reparentMoved(doc: Diagram, nodeIds: string[]): Diagram {
   }) };
 }
 
-export function resizeContainer(doc: Diagram, id: string, size: { width: number; height: number }): Diagram {
-  const members = doc.nodes.filter(node => node.parentId === id);
-  return { ...doc, nodes: doc.nodes.map(node => node.id === id && node.kind === 'container' ? {
-    ...node,
-    width: Math.max(48, size.width, ...members.map(member => member.position.x + member.width + 24)),
-    height: Math.max(48, size.height, ...members.map(member => member.position.y + member.height + 24)),
-  } : node) };
+export function resizeContainer(
+  doc: Diagram,
+  id: string,
+  size: { width: number; height: number; position?: Point },
+): Diagram {
+  const container = doc.nodes.find(
+    (node) => node.id === id && node.kind === "container",
+  );
+  if (!container) return doc;
+  const members = doc.nodes
+    .filter((node) => node.parentId === id)
+    .map((node) => ({ node, world: worldPosition(node, doc.nodes) }));
+  const proposed = size.position ?? container.position;
+  const left = Math.min(
+    proposed.x,
+    ...members.map(({ world }) => world.x - 24),
+  );
+  const top = Math.min(proposed.y, ...members.map(({ world }) => world.y - 24));
+  const right = Math.max(
+    proposed.x + size.width,
+    left + 48,
+    ...members.map(({ node, world }) => world.x + node.width + 24),
+  );
+  const bottom = Math.max(
+    proposed.y + size.height,
+    top + 48,
+    ...members.map(({ node, world }) => world.y + node.height + 24),
+  );
+  return {
+    ...doc,
+    nodes: doc.nodes.map((node) => {
+      if (node.id === id)
+        return {
+          ...node,
+          position: { x: left, y: top },
+          width: right - left,
+          height: bottom - top,
+        };
+      const member = members.find((member) => member.node.id === node.id);
+      return member
+        ? {
+            ...node,
+            position: { x: member.world.x - left, y: member.world.y - top },
+          }
+        : node;
+    }),
+  };
 }
 
 export function duplicateSelection(doc: Diagram, selection: Selection): { document: Diagram; selection: Selection } {

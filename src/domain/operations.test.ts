@@ -51,3 +51,46 @@ describe('document operations', () => {
   expect(result.nodes[2].parentId).toBeUndefined();
  });
 });
+
+it("clamps top/left resize origins around member world rectangles and preserves member positions", () => {
+  const original = doc([
+    box(),
+    node("a", 20, 30, "box"),
+    node("b", 100, 120, "box"),
+  ]);
+  const result = resizeContainer(original, "box", {
+    width: 50,
+    height: 50,
+    position: { x: 250, y: 250 },
+  });
+  const boundary = result.nodes[0];
+  expect(boundary.position).toEqual({ x: 96, y: 106 });
+  expect(boundary.width).toBe(204);
+  expect(boundary.height).toBe(194);
+  expect(worldPosition(result.nodes[1], result.nodes)).toEqual({
+    x: 120,
+    y: 130,
+  });
+  expect(worldPosition(result.nodes[2], result.nodes)).toEqual({
+    x: 200,
+    y: 220,
+  });
+  expect(result.nodes[1].position).toEqual({ x: 24, y: 24 });
+});
+it("clamps bottom/right shrink with padding while preserving the proposed top/left expansion", () => {
+  const original = doc([box(), node("a", 120, 130, "box")]);
+  const result = resizeContainer(original, "box", {
+    width: 20,
+    height: 20,
+    position: { x: 80, y: 70 },
+  });
+  expect(result.nodes[0]).toMatchObject({
+    position: { x: 80, y: 70 },
+    width: 184,
+    height: 204,
+  });
+  expect(worldPosition(result.nodes[1], result.nodes)).toEqual({
+    x: 220,
+    y: 230,
+  });
+});

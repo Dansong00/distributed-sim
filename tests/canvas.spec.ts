@@ -225,4 +225,98 @@ test("container resize is undoable and clamps around members", async ({
   const memberAfter = await member.boundingBox();
   expect(memberAfter!.x).toBeCloseTo(memberBefore!.x, 0);
   expect(memberAfter!.y).toBeCloseTo(memberBefore!.y, 0);
+  await drag(
+    page,
+    boundary.locator(".react-flow__resize-control.bottom.right"),
+    -220,
+    -120,
+  );
+  const shrunk = await boundary.boundingBox();
+  const scale = memberBefore!.width / 200;
+  for (const component of [member, nodeFor(page, "PostgreSQL")]) {
+    const bounds = (await component.boundingBox())!;
+    expect(
+      shrunk!.x + shrunk!.width - bounds.x - bounds.width,
+    ).toBeGreaterThanOrEqual(24 * scale - 1);
+    expect(
+      shrunk!.y + shrunk!.height - bounds.y - bounds.height,
+    ).toBeGreaterThanOrEqual(24 * scale - 1);
+  }
+});
+
+test("top-left shrinking contains members with padding and one undo restores all geometry", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const boundary = page.locator(".react-flow__node-container");
+  const api = nodeFor(page, "Notes API");
+  const database = nodeFor(page, "PostgreSQL");
+  await boundary.locator(".container-node > span").click();
+  const geometry = async () => ({
+    parent: await boundary.boundingBox(),
+    api: await api.boundingBox(),
+    database: await database.boundingBox(),
+  });
+  const before = await geometry();
+  await drag(
+    page,
+    boundary.locator(".react-flow__resize-control.top.left"),
+    210,
+    140,
+  );
+  const after = await geometry();
+  expect(after.parent!.x + after.parent!.width).toBeCloseTo(
+    before.parent!.x + before.parent!.width,
+    0,
+  );
+  expect(after.parent!.y + after.parent!.height).toBeCloseTo(
+    before.parent!.y + before.parent!.height,
+    0,
+  );
+  const scale = before.api!.width / 200;
+  const padding = 24 * scale;
+  for (const member of [after.api!, after.database!]) {
+    expect(member.x - after.parent!.x).toBeGreaterThanOrEqual(padding - 1);
+    expect(member.y - after.parent!.y).toBeGreaterThanOrEqual(padding - 1);
+    expect(
+      after.parent!.x + after.parent!.width - member.x - member.width,
+    ).toBeGreaterThanOrEqual(padding - 1);
+    expect(
+      after.parent!.y + after.parent!.height - member.y - member.height,
+    ).toBeGreaterThanOrEqual(padding - 1);
+  }
+  expect(after.api!.x).toBeCloseTo(before.api!.x, 0);
+  expect(after.api!.y).toBeCloseTo(before.api!.y, 0);
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  expect(await geometry()).toEqual(before);
+});
+
+test("toolbar disables unavailable delete and duplicate actions", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.keyboard.press("Escape");
+  await expect(
+    page.getByRole("button", { name: "Delete", exact: true }),
+  ).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "Duplicate", exact: true }),
+  ).toBeDisabled();
+  await nodeFor(page, "Notes API").click();
+  await expect(
+    page.getByRole("button", { name: "Delete", exact: true }),
+  ).toBeEnabled();
+  await expect(
+    page.getByRole("button", { name: "Duplicate", exact: true }),
+  ).toBeEnabled();
+  await page.keyboard.press("Escape");
+  await page.locator(".react-flow__edge").first().focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByLabel("Label", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Delete", exact: true }),
+  ).toBeEnabled();
+  await expect(
+    page.getByRole("button", { name: "Duplicate", exact: true }),
+  ).toBeDisabled();
 });

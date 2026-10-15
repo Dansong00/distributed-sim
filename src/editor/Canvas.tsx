@@ -178,27 +178,8 @@ function Editor({
     }
     let next = latest.current;
     let changed = false;
-    // React Flow offsets existing members while resizing a boundary from its top/left.
-    // Apply those relative positions together with the dimensions in one transaction.
-    if (
-      changes.some((change) => change.type === "dimensions" && change.resizing)
-    ) {
-      const positions = changes.filter(
-        (change) => change.type === "position" && change.position,
-      );
-      next = {
-        ...next,
-        nodes: next.nodes.map((node) => {
-          const change = positions.find(
-            (change) => change.type === "position" && change.id === node.id,
-          );
-          return change?.type === "position" && change.position
-            ? { ...node, position: change.position }
-            : node;
-        }),
-      };
-      changed = true;
-    }
+    // Treat Flow's resize geometry as a proposal. The domain operation clamps
+    // all sides around existing member world rectangles and adjusts relatives.
     for (const change of changes) {
       if (
         change.type === "dimensions" &&
@@ -207,8 +188,22 @@ function Editor({
       ) {
         const node = next.nodes.find((n) => n.id === change.id);
         if (node?.kind === "container") {
-          if (change.resizing) dispatch({ type: "begin" });
-          next = resizeContainer(next, change.id, change.dimensions);
+          // The end event repeats Flow's raw dimensions. Keep the last clamped
+          // proposal rather than shrinking the opposite side a second time.
+          if (change.resizing === false) {
+            changed = true;
+            continue;
+          }
+          dispatch({ type: "begin" });
+          const position = changes.find(
+            (candidate) =>
+              candidate.type === "position" && candidate.id === change.id,
+          );
+          next = resizeContainer(next, change.id, {
+            ...change.dimensions,
+            position:
+              position?.type === "position" ? position.position : undefined,
+          });
           changed = true;
         }
       }

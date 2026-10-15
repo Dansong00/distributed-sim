@@ -5,6 +5,8 @@ export function Toolbar({
   redo,
   canUndo,
   canRedo,
+  canDelete,
+  canDuplicate,
   onDelete,
   onDuplicate,
 }: {
@@ -14,6 +16,8 @@ export function Toolbar({
   redo: () => void;
   canUndo: boolean;
   canRedo: boolean;
+  canDelete: boolean;
+  canDuplicate: boolean;
   onDelete: () => void;
   onDuplicate: () => void;
 }) {
@@ -33,8 +37,12 @@ export function Toolbar({
         Redo
       </button>
       <span />
-      <button onClick={onDuplicate}>Duplicate</button>
-      <button onClick={onDelete}>Delete</button>
+      <button disabled={!canDuplicate} onClick={onDuplicate}>
+        Duplicate
+      </button>
+      <button disabled={!canDelete} onClick={onDelete}>
+        Delete
+      </button>
     </div>
   );
 }
