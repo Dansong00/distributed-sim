@@ -149,3 +149,31 @@ test("another tab causes a conflict; local edits survive as a copy", async ({
     other.getByRole("button", { name: "Open Local change copy", exact: true }),
   ).toBeVisible();
 });
+
+test("conflict reload restores stored viewport and preserves it through the next edit", async ({ page, context }) => {
+  await page.goto("/");
+  await create(page, "blank", "Shared viewport");
+  const other = await context.newPage();
+  await other.goto("/");
+  await other.getByRole("button", { name: "Open Shared viewport", exact: true }).click();
+  await page.getByRole("button", { name: "Zoom Out", exact: true }).click();
+  await expect(page.getByRole("status")).toHaveText("Saving…");
+  await expect(page.getByRole("status")).toHaveText("Saved locally");
+  const storedTransform = await page.locator(".react-flow__viewport").getAttribute("style");
+  await other.getByRole("button", { name: "Rename diagram", exact: true }).click();
+  await other.getByLabel("Diagram name", { exact: true }).fill("Discarded name");
+  await other.getByRole("button", { name: "Save name", exact: true }).click();
+  await expect(other.getByRole("status")).toHaveText("Conflict — edits kept");
+  await other.getByRole("button", { name: "Reload stored version", exact: true }).click();
+  await other.getByRole("button", { name: "Discard and reload", exact: true }).click();
+  await expect(other.getByRole("status")).toHaveText("Saved locally");
+  await expect(other.locator(".react-flow__viewport")).toHaveAttribute("style", storedTransform!);
+  await expect(other.locator(".document-title")).toHaveText("Shared viewport");
+  await other.getByRole("button", { name: "Rename diagram", exact: true }).click();
+  await other.getByLabel("Diagram name", { exact: true }).fill("After reload");
+  await other.getByRole("button", { name: "Save name", exact: true }).click();
+  await expect(other.getByRole("status")).toHaveText("Saved locally");
+  await other.reload();
+  await other.getByRole("button", { name: "Open After reload", exact: true }).click();
+  await expect(other.locator(".react-flow__viewport")).toHaveAttribute("style", storedTransform!);
+});

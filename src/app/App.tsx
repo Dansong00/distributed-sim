@@ -250,7 +250,7 @@ export function App() {
               onDuplicate={duplicate}
             />
             <Canvas
-              key={document.id}
+              key={session.installation}
               fitOnMount={session.fitOnOpen}
               ref={canvas}
               document={document}

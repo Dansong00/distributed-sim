@@ -24,6 +24,7 @@ export function useDocumentSession(store: DiagramStore) {
     status: "saved" as SaveStatus,
     error: null as Error | null,
     fitOnOpen: false,
+    installation: 0,
     records: [] as StoredDiagram[],
     warning: "",
     loading: true,
@@ -61,6 +62,7 @@ export function useDocumentSession(store: DiagramStore) {
   }, [store]);
   function install(record: StoredDiagram | null, fit = false) {
     clearTimeout(timer.current);
+    s.installation++;
     s.fitOnOpen = fit;
     s.history = record ? createHistory(record.document) : null;
     s.revision = record?.revision ?? null;
@@ -279,6 +281,7 @@ export function useDocumentSession(store: DiagramStore) {
       emit();
     },
     fitOnOpen: s.fitOnOpen,
+    installation: s.installation,
     status: s.status,
     error: s.error,
     records: s.records,
