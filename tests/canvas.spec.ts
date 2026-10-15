@@ -1,6 +1,7 @@
+import { startEditor } from "./start-editor";
 import { test, expect } from "@playwright/test";
 test("palette edits, annotation guards, and undo", async ({ page }) => {
-  await page.goto("/");
+  await startEditor(page);
   await page
     .getByRole("button", { name: "Add Generic Client", exact: true })
     .click();
@@ -57,7 +58,7 @@ async function drag(
 test("drop placement, handle connections, parallel edges and self loops", async ({
   page,
 }) => {
-  await page.goto("/");
+  await startEditor(page);
   const canvas = await page.locator(".canvas").boundingBox();
   if (!canvas) throw Error("Missing canvas");
   const transfer = await page.evaluateHandle(() => new DataTransfer());
@@ -105,7 +106,7 @@ test("drop placement, handle connections, parallel edges and self loops", async 
 test("drag transaction can undo and redo and container delete restores membership", async ({
   page,
 }) => {
-  await page.goto("/");
+  await startEditor(page);
   const api = nodeFor(page, "Notes API");
   const before = await api.evaluate(
     (el) => (el as HTMLElement).style.transform,
@@ -138,7 +139,7 @@ test("drag transaction can undo and redo and container delete restores membershi
 test("textarea and contenteditable retain normal delete and undo shortcuts", async ({
   page,
 }) => {
-  await page.goto("/");
+  await startEditor(page);
   await nodeFor(page, "Notes API").click();
   await page.getByLabel("Notes", { exact: true }).fill("keep node");
   await page.getByLabel("Notes", { exact: true }).press("Delete");
@@ -159,7 +160,7 @@ test("textarea and contenteditable retain normal delete and undo shortcuts", asy
 test("membership follows drop and drag-out; selected parent and child move once", async ({
   page,
 }) => {
-  await page.goto("/");
+  await startEditor(page);
   const boundary = page.locator(".react-flow__node-container");
   const api = nodeFor(page, "Notes API");
   await boundary.locator(".container-node > span").click();
@@ -195,7 +196,7 @@ test("membership follows drop and drag-out; selected parent and child move once"
 test("container resize is undoable and clamps around members", async ({
   page,
 }) => {
-  await page.goto("/");
+  await startEditor(page);
   const boundary = page.locator(".react-flow__node-container");
   await boundary.locator(".container-node > span").click();
   const before = await boundary.evaluate(
@@ -247,7 +248,7 @@ test("container resize is undoable and clamps around members", async ({
 test("top-left shrinking contains members with padding and one undo restores all geometry", async ({
   page,
 }) => {
-  await page.goto("/");
+  await startEditor(page);
   const boundary = page.locator(".react-flow__node-container");
   const api = nodeFor(page, "Notes API");
   const database = nodeFor(page, "PostgreSQL");
@@ -294,7 +295,7 @@ test("top-left shrinking contains members with padding and one undo restores all
 test("toolbar disables unavailable delete and duplicate actions", async ({
   page,
 }) => {
-  await page.goto("/");
+  await startEditor(page);
   await page.keyboard.press("Escape");
   await expect(
     page.getByRole("button", { name: "Delete", exact: true }),

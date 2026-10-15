@@ -40,6 +40,7 @@ const edgeTypes = { diagram: DiagramConnection };
 export type CanvasHandle = { add: (id: string) => void; fit: () => void };
 export type CanvasProps = {
   document: Diagram;
+  fitOnMount?: boolean;
   selection: Selection;
   tool: "select" | "pan";
   onSelectionChange: (selection: Selection) => void;
@@ -48,6 +49,7 @@ export type CanvasProps = {
 };
 function Editor({
   document,
+  fitOnMount = false,
   selection,
   tool,
   onSelectionChange: notifySelection,
@@ -246,7 +248,7 @@ function Editor({
         defaultViewport={document.viewport}
         minZoom={0.2}
         maxZoom={2}
-        fitView
+        fitView={fitOnMount}
         fitViewOptions={{ padding: 0.17 }}
         deleteKeyCode={null}
         multiSelectionKeyCode="Shift"
@@ -328,7 +330,7 @@ function Editor({
           transact({ ...document, edges: [...document.edges, edge] });
           onSelectionChange({ nodeIds: [], edgeIds: [edge.id] });
         }}
-        onMoveEnd={(_, viewport) => dispatch({ type: "viewport", viewport })}
+        onMove={(_, viewport) => dispatch({ type: "viewport", viewport })}
       >
         <Background
           variant={BackgroundVariant.Dots}
