@@ -9,6 +9,9 @@ export function toFlowNodes(document: Diagram): CanvasNode[] {
       type: element.kind,
       position: { ...element.position },
       parentId: element.parentId,
+      // React Flow needs dimensions when controlled nodes are recreated during drag.
+      width: element.width,
+      height: element.height,
       style: { width: element.width, height: element.height },
       data: { element },
       zIndex: element.kind === "container" ? -1 : 0,
