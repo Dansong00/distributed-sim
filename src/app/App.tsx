@@ -17,6 +17,7 @@ export function App() {
   const [modal, setModal] = useState<
     "new" | "rename" | "delete" | "reload" | "discard" | null
   >(null);
+  const [panel, setPanel] = useState<"components" | "properties" | null>(null);
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const input = useRef<HTMLInputElement>(null);
@@ -225,7 +226,30 @@ export function App() {
           </div>
         </main>
       ) : (
-        <div className="workspace" inert={session.busy}>
+        <div
+          className={`workspace panel-${panel ?? "none"}`}
+          inert={session.busy}
+        >
+          <nav className="panel-switches" aria-label="Editor panels">
+            <button
+              aria-expanded={panel === "components"}
+              aria-label="Components panel"
+              onClick={() =>
+                setPanel(panel === "components" ? null : "components")
+              }
+            >
+              Components
+            </button>
+            <button
+              aria-expanded={panel === "properties"}
+              aria-label="Properties panel"
+              onClick={() =>
+                setPanel(panel === "properties" ? null : "properties")
+              }
+            >
+              Properties
+            </button>
+          </nav>
           <Palette onAdd={(id) => canvas.current?.add(id)} />
           <main>
             <Toolbar

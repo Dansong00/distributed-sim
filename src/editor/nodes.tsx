@@ -10,6 +10,20 @@ import {
   Box,
 } from "lucide-react";
 import type { CanvasNode } from "./flow-adapter";
+const technologyIcons = import.meta.glob("../assets/technology/*.svg", {
+  eager: true,
+  query: "?url",
+  import: "default",
+}) as Record<string, string>;
+const technologies: Record<string, string> = {
+  PostgreSQL: "postgresql",
+  MySQL: "mysql",
+  MongoDB: "mongodb",
+  Redis: "redis",
+  Kafka: "apachekafka",
+  RabbitMQ: "rabbitmq",
+  "Google Cloud Storage": "googlecloud",
+};
 const icons = {
   Clients: Globe,
   Compute: Server,
@@ -22,10 +36,18 @@ const icons = {
 export function ComponentNode({ data }: NodeProps<CanvasNode>) {
   const node = data.element;
   const Icon = icons[node.category as keyof typeof icons] ?? Box;
+  const technologyIcon =
+    technologyIcons[
+      `../assets/technology/${technologies[node.technology ?? ""]}.svg`
+    ];
   return (
     <div className={`component-card category-${node.category?.toLowerCase()}`}>
       <span className="component-icon">
-        <Icon size={21} strokeWidth={1.7} />
+        {technologyIcon ? (
+          <img width={23} height={23} src={technologyIcon} alt="" />
+        ) : (
+          <Icon size={21} strokeWidth={1.7} />
+        )}
       </span>
       <div className="component-copy">
         <small>{node.category}</small>

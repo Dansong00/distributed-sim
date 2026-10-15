@@ -122,7 +122,11 @@ function Editor({
   }));
   useEffect(() => {
     const down = (event: KeyboardEvent) => {
-      if (isEditing(event.target)) return;
+      if (
+        isEditing(event.target) ||
+        (event.target instanceof Element && event.target.closest("dialog"))
+      )
+        return;
       const mod = event.metaKey || event.ctrlKey;
       const key = event.key.toLowerCase();
       if (key === " ") {
