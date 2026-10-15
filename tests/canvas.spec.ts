@@ -385,3 +385,65 @@ test("drag auto-pan persists the visible viewport through export and reopen", as
   await page.getByRole("button", { name: "Open Note-Taking App", exact: true }).click();
   await expect.poll(async () => (await visible()).x).toBeCloseTo(after.x, 2);
 });
+
+for (const target of ["standalone", "container member"] as const) {
+  for (const destination of ["center", "edge"] as const) {
+    test(`${target} stays visible throughout slow ${destination} drag and held pointer`, async ({ page }) => {
+      await startEditor(page);
+      if (target === "standalone") {
+        await page.getByRole("button", { name: "Add Generic Client", exact: true }).click();
+      }
+      const node = nodeFor(page, target === "standalone" ? "Generic Client" : "Notes API");
+      await expect(page.getByRole("status")).toHaveText("Saved locally");
+      await expect(node).toBeVisible();
+      // Let initial layout/measurement settle before observing the interaction.
+      await page.waitForTimeout(500);
+      const probe = await node.evaluateHandle(el => {
+        const hidden: string[] = [];
+        const observer = new MutationObserver(records => {
+          for (const record of records) {
+            // oldValue catches a hide/show pair even when both happen before this callback.
+            for (const style of [record.oldValue, el.getAttribute("style")]) {
+              if (/visibility:\s*hidden/.test(style ?? "")) hidden.push(style!);
+            }
+          }
+        });
+        observer.observe(el, { attributes: true, attributeFilter: ["style"], attributeOldValue: true });
+        return { hidden, observer };
+      });
+      const box = (await node.boundingBox())!;
+      const canvas = (await page.locator(".canvas").boundingBox())!;
+      const viewportX = () => page.locator(".react-flow__viewport").evaluate(el => new DOMMatrix(getComputedStyle(el).transform).e);
+      const beforePan = await viewportX();
+      const start = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+      const end = { x: destination === "edge" ? canvas.x + canvas.width - 4 : start.x + 60, y: start.y + 30 };
+      await page.mouse.move(start.x, start.y);
+      await page.mouse.down();
+      try {
+        for (let step = 1; step <= 30; step++) {
+          await page.mouse.move(start.x + (end.x - start.x) * step / 30, start.y + (end.y - start.y) * step / 30);
+          await page.waitForTimeout(40);
+        }
+        if (destination === "edge") {
+          await expect.poll(async () => Math.abs(await viewportX() - beforePan)).toBeGreaterThan(20);
+          const heldPan = await viewportX();
+          await page.waitForTimeout(1500);
+          expect(Math.abs(await viewportX() - heldPan)).toBeGreaterThan(20);
+        } else {
+          // Autosave starts 400 ms after the last move; keep the pointer down through completion.
+          await page.waitForTimeout(1000);
+          await expect(page.getByRole("status")).toHaveText("Saved locally");
+        }
+      } finally {
+        await page.mouse.up();
+      }
+      await expect(node).toBeVisible();
+      const hidden = await probe.evaluate(({ hidden, observer }) => {
+        observer.disconnect();
+        return hidden;
+      });
+      await probe.dispose();
+      expect(hidden, "No transient visibility:hidden styles during drag, autosave or auto-pan").toEqual([]);
+    });
+  }
+}
