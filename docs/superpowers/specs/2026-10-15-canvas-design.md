@@ -47,6 +47,42 @@ Single-click selects a component and displays its properties. Dragging moves it 
 - Deleting a component removes its incident edges in the same undoable operation.
 - Connection labels describe intent; the editor does not validate protocols or claim to simulate traffic.
 
+## Connector configuration follow-up — 2026-10-16
+
+Status: design agreed; implementation in progress. Feature status and deferred work are tracked in [the backlog](../../BACKLOG.md). This section extends the original connection requirements. Current code has solid strokes, curved singleton paths, offset parallel paths, and curved self-loops; it has no stroke/path inspector controls.
+
+### Confirmed requirements
+
+- Stroke style and path shape are independent settings on each connection.
+- Stroke choices: solid, dashed, dotted. Default: solid.
+- When components and connectors are selected together, expose connector styling under “Connections (N)”, where N is the selected connector count. These edits affect only selected connectors and leave components unchanged.
+- Batch stroke/path editing applies to all selected connectors. Each control shows “Mixed” when its selected values differ. Changing one property preserves the other, and one undo restores the entire batch.
+- Selected connectors visibly highlight the line with an accent color and slightly increased thickness across all stroke/path styles. Do not add endpoint selection handles in this iteration. Selection feedback must work for individual and multiple selected connectors.
+- Every newly drawn connection starts solid + elbow, regardless of the last edited connection. Duplicating a connection preserves its settings.
+- Path choices: straight, curved, elbow. Default: elbow, replacing the current curved default.
+- Straight means a direct line between endpoints, not a different arrowhead.
+- Elbow means horizontal/vertical segments joined by sharp 90-degree turns. Collapse to a straight segment only when the selected handles align and face each other (right-to-left or bottom-to-top, in either direction). Otherwise retain orthogonal turns that leave and enter the chosen sides naturally. Moving components automatically updates the route without changing the attached handles.
+- Edit these settings in the connection inspector and retain them across saving, reopening, duplication, export/import, and undo/redo.
+- Multiple connections between the same components remain allowed. Straight connectors remain direct endpoint-to-endpoint lines even when they overlap; users can choose different handles or curved/elbow paths to separate them. This is an explicit exception to the original offset-path requirement for parallel straight connectors.
+- Self-connections always render as visible loops: rectangular for elbow and rounded for curved. Straight self-connections fall back to rectangular loops, with a brief inspector note explaining the exception.
+- Labels remain automatically positioned along their connector. Crossing lines have no bridge arcs or junction dots and do not imply connections. Manual label placement, label overlap avoidance and special crossing indicators are deferred.
+- Routing is automatic; no manual bend editing in this iteration. The live drawing preview uses solid + elbow to match newly completed connections.
+- Routing is simple for this iteration: paths may cross intervening components or container boundaries. Automatic obstacle avoidance is deferred.
+- Existing connections without an explicit path setting use elbow; absent stroke settings use solid. Existing one-way/bidirectional direction is independent of these settings.
+
+### Edge-case decision record
+
+1. Obstacle routing is resolved: simple routing, with no automatic obstacle avoidance. Manual bend editing is deferred.
+2. Parallel/reverse straight connections are resolved: preserve straight geometry and allow overlap. Users can choose different handles or curved/elbow paths for separation; no additional overlap-selection control is required for this iteration.
+3. Self-connections are resolved: visible rectangular loops for elbow or straight, rounded loops for curved; explain the straight fallback in the inspector.
+4. Alignment and handles are resolved for the straight shortcut: chosen handles must align and face each other; moving components updates routing while preserving attachment. Same-side handles retain orthogonal turns. Overlapping cards and very close endpoints still need robust finite routing without a promise of obstacle avoidance.
+5. Multi-selection already exists (Shift-click and select all), but the current inspector edits only one selected item. Line-only connector selection highlighting and batch stroke/path editing are approved, including Mixed values and one undo per batch. New connections always start solid + elbow; duplication preserves settings. Mixed component/connector selection exposes Connections (N) styling and changes only selected connectors. The live drag preview uses solid + elbow; manual bend editing is deferred.
+6. Labels and crossings are resolved: labels remain automatic; plain crossings have no bridges or junction dots and imply no connection. Manual label placement, label overlap avoidance and special crossing indicators are deferred.
+
+### Validation to retain and extend after decisions
+
+Preserve connector reliability during selection, pan, drag and autosave, including the pending-measurement connection-start regression. Cover all stroke/path combinations, horizontal/vertical alignment, non-facing handles, parallel/reverse links, self-loops, and movements that change alignment. Verify one-way/bidirectional arrowheads and selectable dashed/dotted paths. Cover legacy files without settings, invalid setting values, save/reload, import/export, duplication, and undo/redo. These are proposed acceptance areas, not claims that new configuration is implemented or tested.
+
 ## Annotations and containers
 
 Provide sticky notes, plain text, and resizable labeled containers. Text is plain text; do not render imported HTML. Notes and text can be edited from the properties panel. Sticky notes support a small color palette.

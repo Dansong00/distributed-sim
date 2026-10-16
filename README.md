@@ -2,6 +2,8 @@
 
 A local architecture sketchpad: components, connections, sticky notes, text and single-level containers. Start blank or use the Web application and Note-taking app examples. Technology choices change labels and icons only.
 
+Feature status and deferred work are tracked in [the product backlog](docs/BACKLOG.md).
+
 Run all commands from this repository directory. Node.js 22.12+ (or 24+) and npm are required.
 
 ```sh
