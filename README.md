@@ -33,6 +33,23 @@ npm run build
 npm exec -- vite preview --host 0.0.0.0 --port 4173 --strictPort
 ```
 
+## GitHub Pages hosting
+
+The Pages site is https://Dansong00.github.io/distributed-sim/. In the GitHub repository, open **Settings → Pages → Build and deployment** and select **GitHub Actions** as the **Source**. This is a one-time repository setting, not a Git command. No personal access token or custom deployment secret is needed; the workflow uses GitHub's built-in deployment credentials.
+
+The workflow in `.github/workflows/pages.yml` installs locked dependencies, runs unit tests, and builds the app (including TypeScript checking). Pull requests only validate the build. Pushes to `main` also upload `dist/` and deploy it through the `github-pages` environment. Once this workflow is merged and Pages is enabled, watch **Actions → Build and deploy GitHub Pages** for the deployment result. To deploy again manually, select **Run workflow** on `main`. Environment approval rules, if configured, can pause deployment for review.
+
+Vite's **base** is the URL prefix used for built assets. On this repository's Pages site, an asset must load from `/distributed-sim/assets/...`, rather than `/assets/...`. The workflow passes `--base /distributed-sim/` only to the hosted build, so ordinary local development still works at `http://localhost:5173/`.
+
+To test the hosted paths locally:
+
+```sh
+npm run build -- --base /distributed-sim/
+npm exec -- vite preview --host 0.0.0.0 --port 4173 --strictPort --base /distributed-sim/
+```
+
+Open `http://localhost:4173/distributed-sim/`. If the repository name or hosting path changes (for example, to a custom domain's root), update the workflow's base path accordingly. Hosting does not sync browser data: export diagrams from localhost and import them on the Pages site.
+
 Click a palette item or drag it onto the canvas. Select an element to edit its properties. At widths of 900px and below, Components and Properties buttons open side drawers. Shift selects multiple elements; Space or the Pan tool pans; Ctrl/Cmd Z undoes; Ctrl/Cmd Shift Z or Ctrl Y redoes; Ctrl/Cmd D duplicates; Delete removes selected elements. Shortcuts preserve ordinary input editing. History holds 100 transactions for the currently open diagram and resets on opening another diagram or reloading.
 
 Diagrams autosave to IndexedDB in this browser and origin on this device. There is no account, backend, cloud sync, simulation or analysis. Clearing browser/site data, changing origins, or private browsing can remove or isolate diagrams. Export JSON regularly for portable backups; import creates a new diagram and never overwrites one. Another tab changing or deleting a diagram causes a conflict: keep edits with Save as copy or Export JSON, or explicitly reload/discard. A save notice reports success only after the storage transaction completes. Storage failure keeps edits in memory, so export them before leaving.
