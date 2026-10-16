@@ -79,6 +79,8 @@ export function validateDiagram(value: unknown): Diagram {
       targetHandle: choice(e.targetHandle, 'Target handle', handles), label: string(e.label, 'Connection label', 200),
       direction: choice(e.direction, 'Connection direction', ['one-way', 'both']),
     };
+    if (e.stroke !== undefined) edge.stroke = choice(e.stroke, 'Connection stroke', ['solid', 'dashed', 'dotted'] as const);
+    if (e.path !== undefined) edge.path = choice(e.path, 'Connection path', ['straight', 'curved', 'elbow'] as const);
     if (nodeMap.get(edge.source)?.kind !== 'component' || nodeMap.get(edge.target)?.kind !== 'component') fail('Connection endpoints must reference existing components.');
     return edge;
   });

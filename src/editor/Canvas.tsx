@@ -28,7 +28,7 @@ import {
 } from "../domain/operations";
 import { toFlowEdges, toFlowNodes } from "./flow-adapter";
 import { ComponentNode, ContainerNode, StickyNode, TextNode } from "./nodes";
-import { DiagramConnection } from "./edges";
+import { ConnectionPreview, DiagramConnection } from "./edges";
 import { isEditing } from "./shortcuts";
 const nodeTypes = {
   component: ComponentNode,
@@ -253,6 +253,7 @@ function Editor({
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         connectionMode={ConnectionMode.Loose}
+        connectionLineComponent={ConnectionPreview}
         defaultViewport={document.viewport}
         minZoom={0.2}
         maxZoom={2}
@@ -339,6 +340,8 @@ function Editor({
             targetHandle: connection.targetHandle ?? "left",
             label: "",
             direction: "one-way" as const,
+            stroke: "solid" as const,
+            path: "elbow" as const,
           };
           if (!transact({ ...document, edges: [...document.edges, edge] })) return;
           onSelectionChange({ nodeIds: [], edgeIds: [edge.id] });

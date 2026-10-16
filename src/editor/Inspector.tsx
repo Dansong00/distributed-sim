@@ -10,7 +10,8 @@ export function Inspector({
   dispatch: (action: HistoryAction) => void;
 }) {
   const node = document.nodes.find((n) => selection.nodeIds.includes(n.id));
-  const edge = document.edges.find((e) => selection.edgeIds.includes(e.id));
+  const edges = document.edges.filter((e) => selection.edgeIds.includes(e.id));
+  const edge = edges[0];
   if (!node && !edge)
     return (
       <aside className="inspector">
@@ -64,6 +65,17 @@ export function Inspector({
       )}
     </label>
   );
+  const connectorSetting = (label: string, key: "stroke" | "path", values: string[], fallback: string) => {
+    const selected = new Set(edges.map(e => e[key] ?? fallback));
+    const value = selected.size > 1 ? "mixed" : [...selected][0];
+    return <label>{label}<select aria-label={label} value={value} onChange={event => {
+      dispatch({ type: "preview", document: { ...document, edges: document.edges.map(e => selection.edgeIds.includes(e.id) ? { ...e, [key]: event.target.value } : e) } });
+      dispatch({ type: "commit" });
+    }}>
+      {selected.size > 1 && <option value="mixed" disabled>Mixed</option>}
+      {values.map(v => <option key={v} value={v}>{v[0].toUpperCase() + v.slice(1)}</option>)}
+    </select></label>;
+  };
   return (
     <aside className="inspector">
       <h3>
@@ -71,7 +83,7 @@ export function Inspector({
           ? node.kind === "component"
             ? "Component"
             : node.kind
-          : "Connection"}
+          : edges.length > 1 ? `Connections (${edges.length})` : "Connection"}
       </h3>
       {node ? (
         <>
@@ -101,12 +113,13 @@ export function Inspector({
             </label>
           )}
         </>
-      ) : (
+      ) : edges.length === 1 ? (
         <>
           {field("Label", "label", edge!.label)}
           <label>
             Direction
             <select
+              aria-label="Direction"
               value={edge!.direction}
               onChange={(e) => {
                 update("direction", e.target.value);
@@ -118,7 +131,13 @@ export function Inspector({
             </select>
           </label>
         </>
-      )}
+      ) : null}
+      {edges.length > 0 && <>
+        {node && <h3>Connections ({edges.length})</h3>}
+        {connectorSetting("Stroke style", "stroke", ["solid", "dashed", "dotted"], "solid")}
+        {connectorSetting("Path shape", "path", ["straight", "curved", "elbow"], "elbow")}
+        {edges.some(e => e.source === e.target && e.path === "straight") && <p>Straight self-connections use a rectangular loop so they stay visible.</p>}
+      </>}
     </aside>
   );
 }

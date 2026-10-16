@@ -90,3 +90,21 @@ it('accepts exactly 5 MiB of portable JSON and rejects one additional byte', () 
   doc.nodes.at(-1)!.description += 'x';
   expect(() => exportDiagram(doc)).toThrow('5 MiB');
 });
+
+
+it("preserves every connector setting through export, import and legacy validation", () => {
+  const d = fixture();
+  for (const stroke of ["solid", "dashed", "dotted"] as const) for (const path of ["straight", "curved", "elbow"] as const) {
+    Object.assign(d.edges[0], { stroke, path });
+    expect(importDiagram(exportDiagram(d)).edges[0]).toMatchObject({ stroke, path });
+  }
+  delete d.edges[0].stroke; delete d.edges[0].path;
+  expect(validateDiagram(d).edges[0].stroke ?? "solid").toBe("solid");
+  expect(validateDiagram(d).edges[0].path ?? "elbow").toBe("elbow");
+});
+it.each(["stroke", "path"])("rejects explicit invalid connector %s instead of silently defaulting", key => {
+  for (const value of [null, "", "unknown", 1]) {
+    const d = fixture(); Object.assign(d.edges[0], { [key]: value });
+    expect(() => validateDiagram(d)).toThrow(/Connection/);
+  }
+});

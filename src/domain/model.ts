@@ -24,6 +24,8 @@ export type DiagramEdge = {
   targetHandle: string;
   label: string;
   direction: "one-way" | "both";
+  stroke?: "solid" | "dashed" | "dotted";
+  path?: "straight" | "curved" | "elbow";
 };
 export type Diagram = {
   schemaVersion: 1;
