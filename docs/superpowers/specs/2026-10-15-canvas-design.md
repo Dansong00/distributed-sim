@@ -83,6 +83,18 @@ Status: merged into main via PR #4 (`1eb13a1`). Feature status and deferred work
 
 Preserve connector reliability during selection, pan, drag and autosave, including the pending-measurement connection-start regression. Cover all stroke/path combinations, horizontal/vertical alignment, non-facing handles, parallel/reverse links, self-loops, and movements that change alignment. Verify one-way/bidirectional arrowheads and selectable dashed/dotted paths. Cover legacy files without settings, invalid setting values, save/reload, import/export, duplication, and undo/redo. Recorded verification: 103 unit tests and 29 Chromium browser tests passed, along with typecheck and production build. New browser checks cover all nine style combinations, actual line selection, solid hit targets, arrowheads, batch Mixed/undo, defaults/preview, save/reopen, duplication/import and visible self-loop selection. Existing drag/measurement-cache regressions remain green. This is not cross-browser certification.
 
+## Rounded elbow routing follow-up — 2026-10-16
+
+Status: design approved; implementation in progress. This supersedes the sharp-corner elbow requirement above. The user reported small rectangular detours and requested smoother elbows, with an Excalidraw example.
+
+- Keep three path choices: Straight, Curved, Elbow. Rounded elbows replace sharp elbows everywhere, including existing connections and elbow self-loops; no fourth shape or per-corner setting.
+- Elbows retain horizontal/vertical runs joined by gently rounded corners. Reduce the radius for short segments. Aligned facing endpoints remain a straight segment.
+- Choose a simple route with as few turns as practical, respecting chosen handle exit/entry directions. Remove unnecessary overshoot, backtracking and self-crossings that create tiny rectangles.
+- Self-loops use a compact outside route; choose the shorter direction around the component when possible. Same-handle self-connections remain visible loops. Retain straight self-loop fallback behavior and Curved as a distinct path choice.
+- Keep distinct selectable paths for parallel/reverse elbows and preserve stroke styles, selection, labels, arrows and saved endpoint choices.
+- Drawing preview uses the same rounded routing as completed elbows. Existing no-obstacle-avoidance and no-manual-bend scope remains.
+- Verify screenshot-like perpendicular connections (bottom-to-left and left-to-top), aligned/nonaligned facing handles, same-side/backward/close endpoints, parallel/reverse routes, compact self-loops and no degenerate rounded corners. Browser checks inspect actual path geometry and preview, while retaining prior connector/drag/sticky regressions.
+
 ## Annotations and containers
 
 Provide sticky notes, plain text, and resizable labeled containers. Text is plain text; do not render imported HTML. Notes and text can be edited from the properties panel. Sticky notes support a small color palette.
@@ -97,7 +109,7 @@ Deleting a container preserves its members at their existing world positions and
 
 ## Sticky-note sizing follow-up — 2026-10-16
 
-Status: implemented and verified on `fix/sticky-note-sizing`; pending merge/deployment. The user reported text overflowing the fixed sticky-note background.
+Status: merged into main via PR #5 (`f1568bd`). The user reported text overflowing the fixed sticky-note background.
 
 - Grow the note vertically as necessary to contain its title and body at its chosen width; wrap long words and preserve newlines.
 - Show drag-to-resize handles when selected. Support enlarging and shrinking width/height, keeping enough height for the text. Preserve intentionally added whitespace; automatic growth need not shrink a note after text deletion (manual resize controls that).

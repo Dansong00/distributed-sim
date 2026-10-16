@@ -2,9 +2,18 @@
 
 Updated: 2026-10-16. This is the feature/status index, not a promise of delivery dates. Detailed agreed behavior lives in the [canvas spec](superpowers/specs/2026-10-15-canvas-design.md); completed implementation history lives in the [original plan](superpowers/plans/2026-10-15-canvas.md). Update this list as decisions change or features ship.
 
-## Current focus — sticky-note sizing
+## Current focus — rounded elbow routing
 
-Status: implemented and verified on `fix/sticky-note-sizing`; pending merge/deployment. See the [sticky-note requirements](superpowers/specs/2026-10-15-canvas-design.md#sticky-note-sizing-follow-up--2026-10-16).
+Status: design approved; implementation in progress. See the [rounded-elbow requirements](superpowers/specs/2026-10-15-canvas-design.md#rounded-elbow-routing-follow-up--2026-10-16).
+
+- [ ] Replace sharp elbow corners with adaptive rounded corners, including existing edges, self-loops and drawing previews.
+- [ ] Remove tiny rectangles caused by overshooting and backtracking; prefer simple routes respecting selected handles.
+- [ ] Use compact self-loop routes while preserving aligned shortcuts, parallel/reverse separation and existing styling/persistence behavior.
+- [ ] Verify screenshot-like layouts, route geometry and existing editor regressions; independent review and visual validation.
+
+## Completed — sticky-note sizing
+
+Status: merged into main via PR #5 (`f1568bd`). See the [sticky-note requirements](superpowers/specs/2026-10-15-canvas-design.md#sticky-note-sizing-follow-up--2026-10-16).
 
 - [x] Fix overflowing text by growing note height to fit title/body at the chosen width.
 - [x] Add selected-note resize handles for enlarging/shrinking, with content-safe minimum height.
