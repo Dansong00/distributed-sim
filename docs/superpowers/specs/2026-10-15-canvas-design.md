@@ -49,7 +49,7 @@ Single-click selects a component and displays its properties. Dragging moves it 
 
 ## Connector configuration follow-up — 2026-10-16
 
-Status: design agreed; implementation in progress. Feature status and deferred work are tracked in [the backlog](../../BACKLOG.md). This section extends the original connection requirements. Current code has solid strokes, curved singleton paths, offset parallel paths, and curved self-loops; it has no stroke/path inspector controls.
+Status: implemented and verified on `feat/connector-styles`; pending merge/deployment. Feature status and deferred work are tracked in [the backlog](../../BACKLOG.md). This section extends the original connection requirements. The editor now supports the settings below. Optional additive schema-1 fields `stroke` and `path` retain compatibility with existing files; absent values render as solid + elbow.
 
 ### Confirmed requirements
 
@@ -76,12 +76,12 @@ Status: design agreed; implementation in progress. Feature status and deferred w
 2. Parallel/reverse straight connections are resolved: preserve straight geometry and allow overlap. Users can choose different handles or curved/elbow paths for separation; no additional overlap-selection control is required for this iteration.
 3. Self-connections are resolved: visible rectangular loops for elbow or straight, rounded loops for curved; explain the straight fallback in the inspector.
 4. Alignment and handles are resolved for the straight shortcut: chosen handles must align and face each other; moving components updates routing while preserving attachment. Same-side handles retain orthogonal turns. Overlapping cards and very close endpoints still need robust finite routing without a promise of obstacle avoidance.
-5. Multi-selection already exists (Shift-click and select all), but the current inspector edits only one selected item. Line-only connector selection highlighting and batch stroke/path editing are approved, including Mixed values and one undo per batch. New connections always start solid + elbow; duplication preserves settings. Mixed component/connector selection exposes Connections (N) styling and changes only selected connectors. The live drag preview uses solid + elbow; manual bend editing is deferred.
+5. Before this follow-up, multi-selection already existed (Shift-click and select all), but the inspector edited only one selected item. Line-only connector selection highlighting and batch stroke/path editing are approved, including Mixed values and one undo per batch. New connections always start solid + elbow; duplication preserves settings. Mixed component/connector selection exposes Connections (N) styling and changes only selected connectors. The live drag preview uses solid + elbow; manual bend editing is deferred.
 6. Labels and crossings are resolved: labels remain automatic; plain crossings have no bridges or junction dots and imply no connection. Manual label placement, label overlap avoidance and special crossing indicators are deferred.
 
-### Validation to retain and extend after decisions
+### Validation
 
-Preserve connector reliability during selection, pan, drag and autosave, including the pending-measurement connection-start regression. Cover all stroke/path combinations, horizontal/vertical alignment, non-facing handles, parallel/reverse links, self-loops, and movements that change alignment. Verify one-way/bidirectional arrowheads and selectable dashed/dotted paths. Cover legacy files without settings, invalid setting values, save/reload, import/export, duplication, and undo/redo. These are proposed acceptance areas, not claims that new configuration is implemented or tested.
+Preserve connector reliability during selection, pan, drag and autosave, including the pending-measurement connection-start regression. Cover all stroke/path combinations, horizontal/vertical alignment, non-facing handles, parallel/reverse links, self-loops, and movements that change alignment. Verify one-way/bidirectional arrowheads and selectable dashed/dotted paths. Cover legacy files without settings, invalid setting values, save/reload, import/export, duplication, and undo/redo. Recorded verification: 103 unit tests and 29 Chromium browser tests passed, along with typecheck and production build. New browser checks cover all nine style combinations, actual line selection, solid hit targets, arrowheads, batch Mixed/undo, defaults/preview, save/reopen, duplication/import and visible self-loop selection. Existing drag/measurement-cache regressions remain green. This is not cross-browser certification.
 
 ## Annotations and containers
 
