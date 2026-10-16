@@ -1,4 +1,6 @@
+import { ConnectorPreferencesContext } from "./connector-preferences";
 import {
+  useContext,
   useEffect,
   useImperativeHandle,
   useRef,
@@ -57,6 +59,7 @@ function Editor({
   dispatch,
   ref,
 }: CanvasProps) {
+  const connectorPreferences = useContext(ConnectorPreferencesContext);
   const selectionRef = useRef(selection);
   selectionRef.current = selection;
   const onSelectionChange = (next: Selection) => {
@@ -344,7 +347,7 @@ function Editor({
           if (
             ![connection.source, connection.target].every(
               (id) =>
-                document.nodes.find((n) => n.id === id)?.kind === "component",
+                ["component", "sticky"].includes(document.nodes.find((n) => n.id === id)?.kind ?? ""),
             )
           )
             return;
@@ -355,9 +358,7 @@ function Editor({
             sourceHandle: connection.sourceHandle ?? "right",
             targetHandle: connection.targetHandle ?? "left",
             label: "",
-            direction: "one-way" as const,
-            stroke: "solid" as const,
-            path: "elbow" as const,
+            ...connectorPreferences,
           };
           if (!transact({ ...document, edges: [...document.edges, edge] })) return;
           onSelectionChange({ nodeIds: [], edgeIds: [edge.id] });

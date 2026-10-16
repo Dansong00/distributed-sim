@@ -33,7 +33,8 @@ describe('portable documents', () => {
     ['zero dimension', d => { d.nodes[0].height = 0; }],
     ['zoom low', d => { d.viewport.zoom = .19; }], ['zoom high', d => { d.viewport.zoom = 2.01; }],
     ['endpoint', d => { d.edges[0].source = 'missing'; }],
-    ['annotation endpoint', d => { d.edges[0].source = d.nodes[4].id; }],
+    ['text endpoint', d => { d.nodes[4].kind = 'text'; d.edges[0].source = d.nodes[4].id; }],
+    ['container endpoint', d => { d.edges[0].source = d.nodes[0].id; }],
     ['handle', d => { d.edges[0].sourceHandle = 'invalid'; }],
     ['parent', d => { d.nodes[2].parentId = 'missing'; }],
     ['nested container', d => { d.nodes[0].parentId = d.nodes[0].id; }],
@@ -107,4 +108,14 @@ it.each(["stroke", "path"])("rejects explicit invalid connector %s instead of si
     const d = fixture(); Object.assign(d.edges[0], { [key]: value });
     expect(() => validateDiagram(d)).toThrow(/Connection/);
   }
+});
+
+it('round trips sticky-to-component and sticky-to-sticky connections with remapped endpoints', () => {
+  const d = createDiagram('web', 'Connected notes');
+  d.nodes[0].kind = 'sticky'; d.nodes[1].kind = 'sticky';
+  const imported = importDiagram(exportDiagram(d));
+  expect(imported.edges[0].source).toBe(imported.nodes[0].id);
+  expect(imported.edges[0].target).toBe(imported.nodes[1].id);
+  expect(imported.edges[1].source).toBe(imported.nodes[1].id);
+  expect(imported.edges[1].target).toBe(imported.nodes[2].id);
 });

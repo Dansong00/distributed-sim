@@ -90,7 +90,7 @@ test('mixed component and connector selection batches only the edited setting wi
   await page.screenshot({ path: '/tmp/connector-styles.png' });
 });
 
-test('new connectors and their preview reset to solid elbow and settings survive local reopen, duplication and import', async ({ page }) => {
+test('new connectors and their preview start solid straight and settings survive local reopen, duplication and import', async ({ page }) => {
   await open(page, true);
   const source = (await page.locator('.react-flow__node-component').first().locator('[data-handleid="bottom"]').boundingBox())!;
   const target = (await page.locator('.react-flow__node-component').nth(1).locator('[data-handleid="bottom"]').boundingBox())!;
@@ -100,16 +100,16 @@ test('new connectors and their preview reset to solid elbow and settings survive
   const preview = page.locator('.react-flow__connection-path');
   await expect(preview).toHaveCount(1);
   expect((await appearance(preview)).dash).toBe('none');
-  await expect(preview).toHaveAttribute('d', /Q/);
+  expect(await preview.getAttribute('d')).not.toMatch(/[CQ]/);
   await page.mouse.move(target.x + target.width / 2, target.y + target.height / 2, { steps: 12 });
   const hoveredPreview = await preview.getAttribute('d');
   await page.mouse.up();
   await expect(page.locator('.react-flow__edge')).toHaveCount(3);
   await expect(page.locator('.react-flow__edge-path').last()).toHaveAttribute('d', hoveredPreview!);
   await expect(page.getByLabel('Stroke style')).toHaveValue('solid');
-  await expect(page.getByLabel('Path shape')).toHaveValue('elbow');
+  await expect(page.getByLabel('Path shape')).toHaveValue('straight');
   const saved = await exported(page);
-  expect(saved.edges[2]).toMatchObject({ stroke: 'solid', path: 'elbow' });
+  expect(saved.edges[2]).toMatchObject({ stroke: 'solid', path: 'straight' });
   await expect(page.getByRole('status')).toHaveText('Saved locally');
   await page.reload();
   await page.getByRole('button', { name: 'Open Connector settings', exact: true }).click();

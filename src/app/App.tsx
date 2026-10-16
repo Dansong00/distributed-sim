@@ -10,8 +10,15 @@ import { Canvas, type CanvasHandle } from "../editor/Canvas";
 import { Palette } from "../editor/Palette";
 import { Inspector } from "../editor/Inspector";
 import { Toolbar } from "../editor/Toolbar";
+import { ConnectorPreferencesContext, readConnectorPreferences, saveConnectorPreferences, type ConnectorPreferences } from "../editor/connector-preferences";
 const store = createDiagramStore();
 export function App() {
+  const [connectorPreferences, setConnectorPreferences] = useState(readConnectorPreferences);
+  const rememberConnectorPreferences = (patch: Partial<ConnectorPreferences>) => {
+    const next = { ...connectorPreferences, ...patch };
+    setConnectorPreferences(next);
+    saveConnectorPreferences(next);
+  };
   const session = useDocumentSession(store);
   const { document, history, dispatch, selection, setSelection } = session;
   const [modal, setModal] = useState<
@@ -65,6 +72,7 @@ export function App() {
     setSelection(result.selection);
   };
   return (
+    <ConnectorPreferencesContext.Provider value={connectorPreferences}>
     <div className="app-shell">
       <header className="app-header">
         <button
@@ -292,6 +300,7 @@ export function App() {
             </div>
           </main>
           <Inspector
+            onConnectorSetting={rememberConnectorPreferences}
             document={document}
             selection={selection}
             dispatch={dispatch}
@@ -400,5 +409,6 @@ export function App() {
         </Dialog>
       )}
     </div>
+    </ConnectorPreferencesContext.Provider>
   );
 }

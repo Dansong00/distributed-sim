@@ -81,7 +81,7 @@ export function validateDiagram(value: unknown): Diagram {
     };
     if (e.stroke !== undefined) edge.stroke = choice(e.stroke, 'Connection stroke', ['solid', 'dashed', 'dotted'] as const);
     if (e.path !== undefined) edge.path = choice(e.path, 'Connection path', ['straight', 'curved', 'elbow'] as const);
-    if (nodeMap.get(edge.source)?.kind !== 'component' || nodeMap.get(edge.target)?.kind !== 'component') fail('Connection endpoints must reference existing components.');
+    if (![edge.source, edge.target].every(id => ['component', 'sticky'].includes(nodeMap.get(id)?.kind ?? ''))) fail('Connection endpoints must reference existing components or sticky notes.');
     return edge;
   });
   if (new Set(edges.map(e => e.id)).size !== edges.length) fail('Connection IDs must be unique.');
