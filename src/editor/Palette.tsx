@@ -43,7 +43,7 @@ export function Palette({ onAdd }: { onAdd: (id: string) => void }) {
                 .filter(
                   (p) =>
                     p.category === category &&
-                    `${p.label} ${p.category}`
+                    `${p.label} ${p.category} ${p.componentType} ${p.componentType.replaceAll("-", " ")} ${p.description}`
                       .toLowerCase()
                       .includes(query.toLowerCase()),
                 )

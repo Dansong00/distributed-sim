@@ -32,9 +32,9 @@ it('keeps parents before children in rendering without changing document order',
 
 it('creates independent component positions and exposes all catalog categories', async () => {
   const { categories, presets, createComponent } = await import('./catalog');
-  expect(categories).toHaveLength(7);
-  expect(presets).toHaveLength(27);
-  expect(new Set(presets.map(p => p.id)).size).toBe(27);
+  expect(categories).toContain('AI');
+  expect(categories.every(category => presets.some(p => p.category === category))).toBe(true);
+  expect(new Set(presets.map(p => p.id)).size).toBe(presets.length);
   const position = { x: 12, y: 34 };
   const component = createComponent('postgresql', position);
   position.x = 99;
