@@ -2,6 +2,8 @@
 
 A local architecture sketchpad: components, connections, sticky notes, text and single-level containers. Start blank or use the Web application and Note-taking app examples. Technology choices change labels and icons only.
 
+Feature status and deferred work are tracked in [the product backlog](docs/BACKLOG.md).
+
 Run all commands from this repository directory. Node.js 22.12+ (or 24+) and npm are required.
 
 ```sh
@@ -51,6 +53,8 @@ npm exec -- vite preview --host 0.0.0.0 --port 4173 --strictPort --base /distrib
 Open `http://localhost:4173/distributed-sim/`. If the repository name or hosting path changes (for example, to a custom domain's root), update the workflow's base path accordingly. Hosting does not sync browser data: export diagrams from localhost and import them on the Pages site.
 
 Click a palette item or drag it onto the canvas. Select an element to edit its properties. At widths of 900px and below, Components and Properties buttons open side drawers. Shift selects multiple elements; Space or the Pan tool pans; Ctrl/Cmd Z undoes; Ctrl/Cmd Shift Z or Ctrl Y redoes; Ctrl/Cmd D duplicates; Delete removes selected elements. Shortcuts preserve ordinary input editing. History holds 100 transactions for the currently open diagram and resets on opening another diagram or reloading.
+
+Connectors start with a solid stroke and elbow path. Select a connector to change **Stroke style** (solid, dashed, dotted) or **Path shape** (straight, curved, elbow). Selected connector lines highlight; Shift-click selects several. Styling applies to all selected connectors, shows **Mixed** for differing values, and undoes in one step. When components are selected too, use the **Connections (N)** controls. Aligned facing handles use a straight elbow segment; self-connections stay visible as loops. Routing is automatic, with no manual bend editing or obstacle avoidance.
 
 Diagrams autosave to IndexedDB in this browser and origin on this device. There is no account, backend, cloud sync, simulation or analysis. Clearing browser/site data, changing origins, or private browsing can remove or isolate diagrams. Export JSON regularly for portable backups; import creates a new diagram and never overwrites one. Another tab changing or deleting a diagram causes a conflict: keep edits with Save as copy or Export JSON, or explicitly reload/discard. A save notice reports success only after the storage transaction completes. Storage failure keeps edits in memory, so export them before leaving.
 
