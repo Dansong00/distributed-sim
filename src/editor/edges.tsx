@@ -1,8 +1,7 @@
 import {
   BaseEdge,
+  useStore,
   EdgeLabelRenderer,
-  getSmoothStepPath,
-  Position,
   type ConnectionLineComponentProps,
   type EdgeProps,
 } from "@xyflow/react";
@@ -14,8 +13,8 @@ const directions: Record<string, Point> = {
   left: { x: -1, y: 0 },
 };
 
-/** Keep labels halfway along the route, independent of its stroke. */
-function polyline(points: Point[], rounded = false): { path: string; label: Point } {
+/** Keep labels near halfway along the rendered route, independent of stroke. */
+function polyline(points: Point[], radius = 0): { path: string; label: Point } {
   const ps = points.filter((p, i) => !i || p.x !== points[i - 1].x || p.y !== points[i - 1].y);
   const lengths = ps.slice(1).map((p, i) => Math.hypot(p.x - ps[i].x, p.y - ps[i].y));
   let remaining = lengths.reduce((sum, n) => sum + n, 0) / 2;
@@ -34,9 +33,14 @@ function polyline(points: Point[], rounded = false): { path: string; label: Poin
   let path = `M ${ps[0].x} ${ps[0].y}`;
   for (let i = 1; i < ps.length; i++) {
     const p = ps[i], prev = ps[i - 1], next = ps[i + 1];
-    if (rounded && next) {
+    if (radius && next) {
       const before = Math.hypot(p.x - prev.x, p.y - prev.y), after = Math.hypot(next.x - p.x, next.y - p.y);
-      const r = Math.min(14, before / 2, after / 2);
+      const r = Math.min(radius, before / 2, after / 2);
+      // A label at a trimmed corner moves onto the quadratic itself.
+      if (Math.hypot(label.x - p.x, label.y - p.y) < r) {
+        label = { x: p.x + (prev.x - p.x) * r / before / 4 + (next.x - p.x) * r / after / 4,
+          y: p.y + (prev.y - p.y) * r / before / 4 + (next.y - p.y) * r / after / 4 };
+      }
       path += ` L ${p.x + (prev.x - p.x) * r / before} ${p.y + (prev.y - p.y) * r / before} Q ${p.x} ${p.y} ${p.x + (next.x - p.x) * r / after} ${p.y + (next.y - p.y) * r / after}`;
     } else path += ` L ${p.x} ${p.y}`;
   }
@@ -79,14 +83,17 @@ export function edgeRoute(
       { x: bounds.right, y: bounds.bottom },
     ];
     const start = sides.indexOf(edge.sourceHandle), end = sides.indexOf(edge.targetHandle);
-    const turns = (end - start + 4) % 4 || 4;
+    const forwardTurns = (end - start + 4) % 4 || 4;
+    const backwardTurns = (start - end + 4) % 4 || 4;
+    const step = backwardTurns < forwardTurns ? -1 : 1;
+    const turns = Math.min(forwardTurns, backwardTurns);
     return polyline([
       s,
       outer(s, edge.sourceHandle),
-      ...Array.from({ length: turns }, (_, i) => corners[(start + i) % 4]),
+      ...Array.from({ length: turns }, (_, i) => corners[(start + (step === 1 ? i : -i - 1) + 8) % 4]),
       outer(t, edge.targetHandle),
       t,
-    ], shape === "curved");
+    ], shape === "straight" ? 0 : 14);
   }
   if (shape === "straight") return polyline([s, t]);
   if (shape === "curved") {
@@ -105,28 +112,54 @@ export function edgeRoute(
   const aligned = horizontal ? s.y === t.y : s.x === t.x;
   if (peers.length <= 1 && aligned && facing && forward) return polyline([s, t]);
   const gap = 24 + index * 18;
+  // Try a bounded set of one-turn, dogleg, and outside-lane routes. Reject
+  // reversals and crossings before choosing the shortest handle-safe route.
+  const xs = [s.x, t.x, (s.x + t.x) / 2, Math.min(s.x, t.x) - gap, Math.max(s.x, t.x) + gap];
+  const ys = [s.y, t.y, (s.y + t.y) / 2, Math.min(s.y, t.y) - gap, Math.max(s.y, t.y) + gap];
+  const candidates: Point[][] = [];
+  if (peers.length <= 1) {
+    candidates.push([s, { x: t.x, y: s.y }, t], [s, { x: s.x, y: t.y }, t]);
+    for (const x of xs) candidates.push([s, { x, y: s.y }, { x, y: t.y }, t]);
+    for (const y of ys) candidates.push([s, { x: s.x, y }, { x: t.x, y }, t]);
+  }
+  const stub = facing && forward ? Math.min(gap, Math.abs(horizontal ? t.x - s.x : t.y - s.y) / 3) : gap;
+  // Perpendicular peers need distinct stubs even when many lanes share a tiny gap.
+  const adaptiveStub = (distance: number) => distance > 0 ? gap * distance / (distance + 3 * gap) : gap;
+  const sourceStub = !facing ? adaptiveStub((t.x-s.x)*sv.x + (t.y-s.y)*sv.y) : stub;
+  const targetStub = !facing ? adaptiveStub((s.x-t.x)*tv.x + (s.y-t.y)*tv.y) : stub;
+  const a = { x: s.x + sv.x * sourceStub, y: s.y + sv.y * sourceStub };
+  const b = { x: t.x + tv.x * targetStub, y: t.y + tv.y * targetStub };
   if (horizontal !== targetHorizontal) {
-    const x = horizontal ? (sv.x > 0 ? Math.max(s.x, t.x) + gap : Math.min(s.x, t.x) - gap) : (tv.x > 0 ? Math.max(s.x, t.x) + gap : Math.min(s.x, t.x) - gap);
-    const y = horizontal ? (tv.y > 0 ? Math.max(s.y, t.y) + gap : Math.min(s.y, t.y) - gap) : (sv.y > 0 ? Math.max(s.y, t.y) + gap : Math.min(s.y, t.y) - gap);
-    return polyline(horizontal ? [s, { x, y: s.y }, { x, y }, { x: t.x, y }, t] : [s, { x: s.x, y }, { x, y }, { x, y: t.y }, t]);
+    for (const x of (peers.length > 1 ? [a.x, b.x, ...xs.slice(3)] : xs)) for (const y of (peers.length > 1 ? [a.y, b.y, ...ys.slice(3)] : ys)) candidates.push(horizontal
+      ? [s, { x, y: s.y }, { x, y }, { x: t.x, y }, t]
+      : [s, { x: s.x, y }, { x, y }, { x, y: t.y }, t]);
+  } else {
+    const lanes = horizontal ? ys.slice(3) : xs.slice(3);
+    for (const lane of lanes) candidates.push(horizontal
+      ? [s, a, { x: a.x, y: lane }, { x: b.x, y: lane }, b, t]
+      : [s, a, { x: lane, y: a.y }, { x: lane, y: b.y }, b, t]);
   }
-  // XYFlow handles the ordinary orthogonal cases. A shared outer lane keeps
-  // aligned peers separate and handles very close/backwards endpoints safely.
-  if (!aligned && peers.length <= 1 && (!facing || forward)) {
-    const [path, x, y] = getSmoothStepPath({
-      sourceX: s.x, sourceY: s.y,
-      targetX: t.x, targetY: t.y,
-      sourcePosition: edge.sourceHandle as Position,
-      targetPosition: edge.targetHandle as Position,
-      borderRadius: 0,
-      offset: gap,
-    });
-    return { path, label: { x, y } };
-  }
-  const a = { x: s.x + sv.x * gap, y: s.y + sv.y * gap };
-  const b = { x: t.x + tv.x * gap, y: t.y + tv.y * gap };
-  const lane = horizontal ? Math.min(s.y, t.y) - gap : Math.min(s.x, t.x) - gap;
-  return polyline(horizontal ? [s, a, { x: a.x, y: lane }, { x: b.x, y: lane }, b, t] : [s, a, { x: lane, y: a.y }, { x: lane, y: b.y }, b, t]);
+  const valid = candidates.map(ps => ps.filter((p, i) => !i || p.x !== ps[i - 1].x || p.y !== ps[i - 1].y)).filter(ps => {
+    if (ps.length < 2 || (peers.length > 1 && horizontal !== targetHorizontal && ps.length < 5)) return false;
+    const first = ps[1], last = ps[ps.length - 2];
+    if ((first.x - s.x) * sv.x + (first.y - s.y) * sv.y <= 0 ||
+        (last.x - t.x) * tv.x + (last.y - t.y) * tv.y <= 0) return false;
+    if ((sv.x ? first.y !== s.y : first.x !== s.x) || (tv.x ? last.y !== t.y : last.x !== t.x)) return false;
+    for (let i = 1; i < ps.length - 1; i++) {
+      const p = ps[i - 1], q = ps[i], r = ps[i + 1];
+      if ((q.x - p.x) * (r.x - q.x) + (q.y - p.y) * (r.y - q.y) < 0) return false;
+    }
+    for (let i = 0; i < ps.length - 1; i++) for (let j = i + 2; j < ps.length - 1; j++) {
+      if (i === 0 && j === ps.length - 2 && s.x === t.x && s.y === t.y) continue;
+      const p = ps[i], q = ps[i + 1], r = ps[j], u = ps[j + 1];
+      if (Math.max(Math.min(p.x,q.x), Math.min(r.x,u.x)) <= Math.min(Math.max(p.x,q.x), Math.max(r.x,u.x)) &&
+          Math.max(Math.min(p.y,q.y), Math.min(r.y,u.y)) <= Math.min(Math.max(p.y,q.y), Math.max(r.y,u.y))) return false;
+    }
+    return true;
+  });
+  const length = (ps: Point[]) => ps.slice(1).reduce((n, p, i) => n + Math.hypot(p.x - ps[i].x, p.y - ps[i].y), 0);
+  valid.sort((a, b) => length(a) - length(b) || a.length - b.length);
+  return polyline(valid[0] ?? [s, a, { x: a.x, y: b.y }, b, t], 14);
 }
 export function DiagramConnection(props: EdgeProps) {
   const data = props.data as { edge: DiagramEdge; document: Diagram };
@@ -167,6 +200,7 @@ export function DiagramConnection(props: EdgeProps) {
 }
 
 export function ConnectionPreview(props: ConnectionLineComponentProps) {
+  const existing = useStore(state => state.edges);
   const edge: DiagramEdge = {
     id: "preview",
     source: props.fromNode.id,
@@ -178,8 +212,10 @@ export function ConnectionPreview(props: ConnectionLineComponentProps) {
     stroke: "solid",
     path: "elbow",
   };
-  const route = edgeRoute(edge, { nodes: [props.fromNode.data.element as Diagram["nodes"][number]], edges: [edge] }, {
-    source: { x: props.fromX, y: props.fromY }, target: { x: props.toX, y: props.toY },
+  const route = edgeRoute(edge, { nodes: [props.fromNode.data.element as Diagram["nodes"][number]], edges: [...existing.map(e => (e.data as { edge: DiagramEdge }).edge), edge] }, {
+    // React Flow previews use handle centers, while finished edges use their outer tips.
+    source: { x: props.fromX + directions[edge.sourceHandle].x * props.fromHandle.width / 2, y: props.fromY + directions[edge.sourceHandle].y * props.fromHandle.height / 2 },
+    target: { x: props.toX + directions[edge.targetHandle].x * (props.toHandle?.width ?? 0) / 2, y: props.toY + directions[edge.targetHandle].y * (props.toHandle?.height ?? 0) / 2 },
   });
   return <path className="react-flow__connection-path" d={route.path} fill="none" stroke="#8090a5" strokeWidth={1.5} />;
 }
