@@ -240,6 +240,9 @@ function Editor({
       <ReactFlow
         nodes={toFlowNodes(document).map((n) => ({
           ...n,
+          // Preserve Flow's measured dimensions so controlled rerenders retain
+          // its DOM-derived handle bounds (selection, autosave, pan and drag).
+          measured: flow.getInternalNode(n.id)?.measured,
           selected: selection.nodeIds.includes(n.id),
         }))}
         edges={toFlowEdges(document).map((e) => ({

@@ -22,7 +22,7 @@ export function edgeRoute(
       label: { x: (s.x + t.x) / 2, y: Math.min(s.y, t.y) - r * 1.5 },
     };
   }
-  const offset = (index - (peers.length - 1) / 2) * 42;
+  const offset = peers.length === 1 ? 20 : (index - (peers.length - 1) / 2) * 42;
   const sign = edge.source < edge.target ? 1 : -1,
     dx = (t.x - s.x) * sign,
     dy = (t.y - s.y) * sign,

@@ -13,6 +13,18 @@ const edge: DiagramEdge = {
 };
 const endpoints = { source: { x: 0, y: 0 }, target: { x: 100, y: 0 } };
 describe("edgeRoute", () => {
+  it.each([
+    { source: { x: 0, y: 0 }, target: { x: 200, y: 0 } },
+    { source: { x: 0, y: 0 }, target: { x: 0, y: 200 } },
+  ])("gives a singleton aligned link a modest visible curve: %o", (points) => {
+    const doc = createDiagram("blank", "Test");
+    doc.edges = [edge];
+    const route = edgeRoute(edge, doc, points);
+    const midpoint = { x: (points.source.x + points.target.x) / 2, y: (points.source.y + points.target.y) / 2 };
+    const bend = Math.hypot(route.label.x - midpoint.x, route.label.y - midpoint.y);
+    expect(bend).toBeGreaterThanOrEqual(6);
+    expect(bend).toBeLessThanOrEqual(15);
+  });
   it("separates parallel and reverse edges spatially", () => {
     const doc = createDiagram("blank", "Test");
     const reverse = { ...edge, id: "b", source: "y", target: "x" };
