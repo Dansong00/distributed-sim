@@ -49,7 +49,7 @@ Single-click selects a component and displays its properties. Dragging moves it 
 
 ## Connector configuration follow-up — 2026-10-16
 
-Status: implemented and verified on `feat/connector-styles`; pending merge/deployment. Feature status and deferred work are tracked in [the backlog](../../BACKLOG.md). This section extends the original connection requirements. The editor now supports the settings below. Optional additive schema-1 fields `stroke` and `path` retain compatibility with existing files; absent values render as solid + elbow.
+Status: merged into main via PR #4 (`1eb13a1`). Feature status and deferred work are tracked in [the backlog](../../BACKLOG.md). This section extends the original connection requirements. The editor now supports the settings below. Optional additive schema-1 fields `stroke` and `path` retain compatibility with existing files; absent values render as solid + elbow.
 
 ### Confirmed requirements
 
@@ -97,7 +97,7 @@ Deleting a container preserves its members at their existing world positions and
 
 ## Sticky-note sizing follow-up — 2026-10-16
 
-Status: design agreed; implementation in progress. The user reported text overflowing the fixed sticky-note background.
+Status: implemented and verified on `fix/sticky-note-sizing`; pending merge/deployment. The user reported text overflowing the fixed sticky-note background.
 
 - Grow the note vertically as necessary to contain its title and body at its chosen width; wrap long words and preserve newlines.
 - Show drag-to-resize handles when selected. Support enlarging and shrinking width/height, keeping enough height for the text. Preserve intentionally added whitespace; automatic growth need not shrink a note after text deletion (manual resize controls that).
@@ -105,6 +105,9 @@ Status: design agreed; implementation in progress. The user reported text overfl
 - Keep the existing 10,000-character body limit and 200-character title limit. A visible character counter is deferred. No collapse/expand button is requested.
 - Preserve existing container membership and world-position semantics, and retain node/connector measurement-cache stability.
 - Verify actual browser text containment, width-dependent wrapping, long titles/words/newlines, all resize directions, undo/redo and persistence. Respect existing portable dimension/document limits.
+- Minimum manual/normalized note width is 80px. At the existing 100,000px dimension ceiling, extremely tall text scrolls inside the note. Valid legacy stored notes whose growth would exceed the portable byte budget retain their saved geometry and scroll safely.
+
+Verification: 103 unit tests, 43 Chromium browser tests (14 new sticky-note cases), typecheck, production build and whitespace checks passed. Tests cover all four corners, pure horizontal narrowing from top corners, atomic text-growth/resize history, real text containment, local/file round trips, container membership and legacy stored-note repair. Independent review caught an opposite-edge anchoring defect; the fix passed both new regressions and independent Chromium reproduction. Final visual inspection shows the full text inside the background with all four resize handles.
 
 ## Editing and history
 

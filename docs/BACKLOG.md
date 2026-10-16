@@ -4,14 +4,14 @@ Updated: 2026-10-16. This is the feature/status index, not a promise of delivery
 
 ## Current focus — sticky-note sizing
 
-Status: design agreed; implementation in progress. See the [sticky-note requirements](superpowers/specs/2026-10-15-canvas-design.md#sticky-note-sizing-follow-up--2026-10-16).
+Status: implemented and verified on `fix/sticky-note-sizing`; pending merge/deployment. See the [sticky-note requirements](superpowers/specs/2026-10-15-canvas-design.md#sticky-note-sizing-follow-up--2026-10-16).
 
-- [ ] Fix overflowing text by growing note height to fit title/body at the chosen width.
-- [ ] Add selected-note resize handles for enlarging/shrinking, with content-safe minimum height.
-- [ ] Persist dimensions and support one undo/redo step per resize gesture, with coherent text-edit growth history.
-- [ ] Verify wrapping, container membership, save/reopen, import/export and prior interaction regressions.
+- [x] Fix overflowing text by growing note height to fit title/body at the chosen width.
+- [x] Add selected-note resize handles for enlarging/shrinking, with content-safe minimum height.
+- [x] Persist dimensions and support one undo/redo step per resize gesture, with coherent text-edit growth history.
+- [x] Verify wrapping, container membership, save/reopen, import/export and prior interaction regressions.
 
-Keep the existing 10,000-character body limit; a character counter is deferred.
+The existing 10,000-character body limit remains; a character counter is deferred. Verification: 103 unit tests, 43 Chromium browser tests, typecheck and production build passed. Independent review verified the corner-anchor correction.
 
 ## Completed — connector configuration
 
