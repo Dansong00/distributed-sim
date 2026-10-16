@@ -1,6 +1,6 @@
 import { startEditor } from "./start-editor";
 import { test, expect } from "@playwright/test";
-test("palette edits, annotation guards, and undo", async ({ page }) => {
+test("palette edits, sticky handles, and undo", async ({ page }) => {
   await startEditor(page);
   await page
     .getByRole("button", { name: "Add Generic Client", exact: true })
@@ -24,9 +24,12 @@ test("palette edits, annotation guards, and undo", async ({ page }) => {
     .click();
   await expect(
     page.locator(".react-flow__node.selected .react-flow__handle"),
-  ).toHaveCount(0);
+  ).toHaveCount(4);
   await page.getByRole("button", { name: "Undo", exact: true }).click();
   await expect(page.locator(".sticky-node")).toHaveCount(1);
+  await page.getByRole("button", { name: "Add Text", exact: true }).click();
+  await expect(page.locator(".react-flow__node.selected .react-flow__handle")).toHaveCount(0);
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
   await page.screenshot({
     path: "/tmp/canvas-task5-editor.png",
     fullPage: true,

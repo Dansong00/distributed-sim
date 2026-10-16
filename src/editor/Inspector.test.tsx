@@ -48,3 +48,19 @@ it("explains straight self-loop fallback while retaining single-edge label and d
   expect(screen.getByLabelText("Label")).toBeTruthy();
   expect(screen.getByLabelText("Direction")).toBeTruthy();
 });
+
+it('remembers only explicit setting edits, including just the changed Mixed property', () => {
+  const d = createDiagram('web', 'Preferences');
+  d.edges[0].path = 'curved'; d.edges[1].path = 'elbow';
+  const patches: unknown[] = [];
+  const props = { document: d, dispatch: () => {}, onConnectorSetting: (patch: unknown) => patches.push(patch) };
+  const view = render(<Inspector {...props} selection={{ nodeIds: [], edgeIds: d.edges.map(e => e.id) }} />);
+  expect(patches).toEqual([]);
+  fireEvent.change(screen.getByLabelText('Stroke style'), { target: { value: 'dotted' } });
+  expect(patches).toEqual([{ stroke: 'dotted' }]);
+  view.rerender(<Inspector {...props} selection={{ nodeIds: [], edgeIds: [d.edges[0].id] }} />);
+  expect(patches).toHaveLength(1);
+  fireEvent.change(screen.getByLabelText('Direction'), { target: { value: 'both' } });
+  fireEvent.change(screen.getByLabelText('Path shape'), { target: { value: 'straight' } });
+  expect(patches).toEqual([{ stroke: 'dotted' }, { direction: 'both' }, { path: 'straight' }]);
+});

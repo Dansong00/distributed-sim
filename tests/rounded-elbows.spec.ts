@@ -15,6 +15,7 @@ test('rounded elbows stay compact, labels touch the rendered route, and hovered 
     { id: 'self', source: api.id, target: api.id, sourceHandle: 'top', targetHandle: 'right', label: 'Retry', direction: 'one-way' },
     { id: 'aligned', source: api.id, target: service.id, sourceHandle: 'right', targetHandle: 'left', label: 'Jobs', direction: 'one-way' },
   ];
+  await page.addInitScript(() => localStorage.setItem('system-canvas:connector-preferences', JSON.stringify({ path: 'elbow', stroke: 'solid', direction: 'one-way' })));
   await page.goto('/');
   await page.locator('input[type=file]').setInputFiles({ name: 'rounded.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(doc)) });
   await expect(page.locator('.react-flow__edge')).toHaveCount(4);

@@ -1,5 +1,6 @@
 import { Handle, NodeResizer, Position, type NodeProps } from "@xyflow/react";
 import {
+  BrainCircuit,
   Globe,
   Server,
   Database,
@@ -26,6 +27,7 @@ const technologies: Record<string, string> = {
   "Google Cloud Storage": "googlecloud",
 };
 const icons = {
+  AI: BrainCircuit,
   Clients: Globe,
   Compute: Server,
   Databases: Database,
@@ -34,6 +36,18 @@ const icons = {
   Networking: Network,
   Storage: HardDrive,
 };
+function ConnectionHandles() {
+  return <>
+      {Object.entries({
+        top: Position.Top,
+        right: Position.Right,
+        bottom: Position.Bottom,
+        left: Position.Left,
+      }).map(([id, position]) => (
+        <Handle key={id} id={id} type="source" position={position} />
+      ))}
+  </>;
+}
 export function ComponentNode({ data }: NodeProps<CanvasNode>) {
   const node = data.element;
   const Icon = icons[node.category as keyof typeof icons] ?? Box;
@@ -55,14 +69,7 @@ export function ComponentNode({ data }: NodeProps<CanvasNode>) {
         <strong>{node.name}</strong>
         <span>{node.technology || node.componentType}</span>
       </div>
-      {Object.entries({
-        top: Position.Top,
-        right: Position.Right,
-        bottom: Position.Bottom,
-        left: Position.Left,
-      }).map(([id, position]) => (
-        <Handle key={id} id={id} type="source" position={position} />
-      ))}
+      <ConnectionHandles />
     </div>
   );
 }
@@ -91,6 +98,7 @@ export function StickyNode({ data, selected }: NodeProps<CanvasNode>) {
         <strong>{data.element.name}</strong>
         <p>{data.element.notes}</p>
       </div>
+      <ConnectionHandles />
     </>
   );
 }

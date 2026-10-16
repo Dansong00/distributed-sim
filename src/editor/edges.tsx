@@ -1,3 +1,5 @@
+import { useContext, useId } from "react";
+import { ConnectorPreferencesContext } from "./connector-preferences";
 import {
   BaseEdge,
   useStore,
@@ -200,6 +202,8 @@ export function DiagramConnection(props: EdgeProps) {
 }
 
 export function ConnectionPreview(props: ConnectionLineComponentProps) {
+  const preferences = useContext(ConnectorPreferencesContext);
+  const markerId = useId().replace(/:/g, "");
   const existing = useStore(state => state.edges);
   const edge: DiagramEdge = {
     id: "preview",
@@ -208,14 +212,18 @@ export function ConnectionPreview(props: ConnectionLineComponentProps) {
     sourceHandle: props.fromHandle.id ?? props.fromPosition,
     targetHandle: props.toHandle?.id ?? props.toPosition,
     label: "",
-    direction: "one-way",
-    stroke: "solid",
-    path: "elbow",
+    ...preferences,
   };
   const route = edgeRoute(edge, { nodes: [props.fromNode.data.element as Diagram["nodes"][number]], edges: [...existing.map(e => (e.data as { edge: DiagramEdge }).edge), edge] }, {
     // React Flow previews use handle centers, while finished edges use their outer tips.
     source: { x: props.fromX + directions[edge.sourceHandle].x * props.fromHandle.width / 2, y: props.fromY + directions[edge.sourceHandle].y * props.fromHandle.height / 2 },
     target: { x: props.toX + directions[edge.targetHandle].x * (props.toHandle?.width ?? 0) / 2, y: props.toY + directions[edge.targetHandle].y * (props.toHandle?.height ?? 0) / 2 },
   });
-  return <path className="react-flow__connection-path" d={route.path} fill="none" stroke="#8090a5" strokeWidth={1.5} />;
+  return <>
+    <defs><marker id={markerId} viewBox="0 0 10 10" refX="10" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8090a5" /></marker></defs>
+    <path className="react-flow__connection-path" d={route.path} fill="none" stroke="#8090a5" strokeWidth={1.5}
+      strokeDasharray={edge.stroke === "dashed" ? "8 5" : edge.stroke === "dotted" ? "1 6" : undefined}
+      strokeLinecap={edge.stroke === "dotted" ? "round" : "butt"}
+      markerEnd={`url(#${markerId})`} markerStart={edge.direction === "both" ? `url(#${markerId})` : undefined} />
+  </>;
 }

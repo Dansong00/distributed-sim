@@ -24,11 +24,17 @@ async function geometry(node: Locator) {
   return node.evaluate(el => ({ width: (el as HTMLElement).style.width, height: (el as HTMLElement).style.height, position: (el as HTMLElement).style.transform }));
 }
 async function drag(page: Page, handle: Locator, dx: number, dy: number) {
-  await handle.click({ trial: true });
-  const b = (await handle.boundingBox())!;
-  await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
+  let b = (await handle.boundingBox())!;
+  // Side midpoints now contain connection handles. Resize along the edge away
+  // from the midpoint; the four corner resize grips keep their usual centers.
+  const line = await handle.evaluate(el => el.classList.contains('line'));
+  const positionAt = () => ({ x: b.width * (line && b.width > b.height ? .25 : .5), y: b.height * (line && b.height > b.width ? .25 : .5) });
+  await handle.click({ trial: true, position: positionAt() });
+  b = (await handle.boundingBox())!;
+  const position = positionAt();
+  await page.mouse.move(b.x + position.x, b.y + position.y);
   await page.mouse.down();
-  await page.mouse.move(b.x + b.width / 2 + dx, b.y + b.height / 2 + dy, { steps: 12 });
+  await page.mouse.move(b.x + position.x + dx, b.y + position.y + dy, { steps: 12 });
   await page.mouse.up();
 }
 test('sticky text grows its background and text plus growth undo together', async ({ page }) => {

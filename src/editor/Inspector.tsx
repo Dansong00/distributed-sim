@@ -1,13 +1,16 @@
+import type { ConnectorPreferences } from "./connector-preferences";
 import type { Diagram, Selection } from "../domain/model";
 import type { HistoryAction } from "../domain/history";
 export function Inspector({
   document,
   selection,
   dispatch,
+  onConnectorSetting,
 }: {
   document: Diagram;
   selection: Selection;
   dispatch: (action: HistoryAction) => void;
+  onConnectorSetting?: (patch: Partial<ConnectorPreferences>) => void;
 }) {
   const node = document.nodes.find((n) => selection.nodeIds.includes(n.id));
   const edges = document.edges.filter((e) => selection.edgeIds.includes(e.id));
@@ -71,6 +74,7 @@ export function Inspector({
     return <label>{label}<select aria-label={label} value={value} onChange={event => {
       dispatch({ type: "preview", document: { ...document, edges: document.edges.map(e => selection.edgeIds.includes(e.id) ? { ...e, [key]: event.target.value } : e) } });
       dispatch({ type: "commit" });
+      onConnectorSetting?.({ [key]: event.target.value });
     }}>
       {selected.size > 1 && <option value="mixed" disabled>Mixed</option>}
       {values.map(v => <option key={v} value={v}>{v[0].toUpperCase() + v.slice(1)}</option>)}
@@ -123,6 +127,7 @@ export function Inspector({
               value={edge!.direction}
               onChange={(e) => {
                 update("direction", e.target.value);
+                onConnectorSetting?.({ direction: e.target.value as ConnectorPreferences["direction"] });
                 dispatch({ type: "commit" });
               }}
             >
