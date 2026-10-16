@@ -29,6 +29,7 @@ import {
 import { toFlowEdges, toFlowNodes } from "./flow-adapter";
 import { ComponentNode, ContainerNode, StickyNode, TextNode } from "./nodes";
 import { ConnectionPreview, DiagramConnection } from "./edges";
+import { resizeSticky } from "./sticky-sizing";
 import { isEditing } from "./shortcuts";
 const nodeTypes = {
   component: ComponentNode,
@@ -73,6 +74,7 @@ function Editor({
     position: Point;
     selection: Selection;
   } | null>(null);
+  const resizeAnchor = useRef<{ id: string; right?: number; bottom?: number } | null>(null);
   const [space, setSpace] = useState(false);
   const transact = (next: Diagram) => {
     if (!dispatch({ type: "preview", document: next })) return false;
@@ -185,8 +187,8 @@ function Editor({
     }
     let next = latest.current;
     let changed = false;
-    // Treat Flow's resize geometry as a proposal. The domain operation clamps
-    // all sides around existing member world rectangles and adjusts relatives.
+    // Treat Flow's resize geometry as a proposal, clamped around container
+    // members or the sticky note's text at its proposed width.
     for (const change of changes) {
       if (
         change.type === "dimensions" &&
@@ -194,7 +196,7 @@ function Editor({
         change.resizing !== undefined
       ) {
         const node = next.nodes.find((n) => n.id === change.id);
-        if (node?.kind === "container") {
+        if (node?.kind === "container" || node?.kind === "sticky") {
           // The end event repeats Flow's raw dimensions. Keep the last clamped
           // proposal rather than shrinking the opposite side a second time.
           if (change.resizing === false) {
@@ -206,11 +208,14 @@ function Editor({
             (candidate) =>
               candidate.type === "position" && candidate.id === change.id,
           );
-          next = resizeContainer(next, change.id, {
+          const size = {
             ...change.dimensions,
             position:
               position?.type === "position" ? position.position : undefined,
-          });
+          };
+          next = node.kind === "container"
+            ? resizeContainer(next, change.id, size)
+            : { ...next, nodes: next.nodes.map(n => n.id === node.id ? resizeSticky(n, size, resizeAnchor.current?.id === n.id ? resizeAnchor.current : undefined) : n) };
           changed = true;
         }
       }
@@ -226,6 +231,17 @@ function Editor({
       ref={wrapper}
       className="canvas"
       aria-label="Architecture canvas"
+      onPointerDownCapture={(event) => {
+        const target = event.target as Element;
+        const control = target.closest(".react-flow__resize-control");
+        const id = control?.closest(".react-flow__node")?.getAttribute("data-id");
+        const node = latest.current.nodes.find(n => n.id === id);
+        resizeAnchor.current = node && control ? {
+          id: node.id,
+          right: control.classList.contains("left") ? node.position.x + node.width : undefined,
+          bottom: control.classList.contains("top") ? node.position.y + node.height : undefined,
+        } : null;
+      }}
       onDragOver={(e) => {
         e.preventDefault();
         e.dataTransfer.dropEffect = "copy";

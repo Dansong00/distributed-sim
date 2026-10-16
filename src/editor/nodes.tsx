@@ -9,6 +9,7 @@ import {
   MessageSquare,
   Box,
 } from "lucide-react";
+import { STICKY_MIN_WIDTH, STICKY_MAX_SIZE } from "./sticky-sizing";
 import type { CanvasNode } from "./flow-adapter";
 const technologyIcons = import.meta.glob("../assets/technology/*.svg", {
   eager: true,
@@ -76,12 +77,21 @@ export function ContainerNode({ data, selected }: NodeProps<CanvasNode>) {
     </div>
   );
 }
-export function StickyNode({ data }: NodeProps<CanvasNode>) {
+export function StickyNode({ data, selected }: NodeProps<CanvasNode>) {
   return (
-    <div className={`sticky-node sticky-${data.element.color ?? "yellow"}`}>
-      <strong>{data.element.name}</strong>
-      <p>{data.element.notes}</p>
-    </div>
+    <>
+      <NodeResizer
+        isVisible={selected}
+        minWidth={STICKY_MIN_WIDTH}
+        minHeight={48}
+        maxWidth={STICKY_MAX_SIZE}
+        maxHeight={STICKY_MAX_SIZE}
+      />
+      <div className={`sticky-node sticky-${data.element.color ?? "yellow"} nowheel`}>
+        <strong>{data.element.name}</strong>
+        <p>{data.element.notes}</p>
+      </div>
+    </>
   );
 }
 export function TextNode({ data }: NodeProps<CanvasNode>) {

@@ -302,10 +302,12 @@ main {
   border: 1px solid #ebddab;
   border-radius: 3px 3px 13px 3px;
   box-shadow: 0 5px 12px #8a772408;
-  transform: rotate(-1deg);
+  overflow: auto;
   color: #8e7a37;
 }
 .sticky-node strong {
+  display: block;
+  white-space: pre-wrap;
   font-size: 12px;
   font-weight: 650;
 }

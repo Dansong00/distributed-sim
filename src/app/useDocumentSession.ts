@@ -1,3 +1,4 @@
+import { growStickyNotes } from "../editor/sticky-sizing";
 import { useEffect, useRef, useState } from "react";
 import {
   createHistory,
@@ -64,13 +65,25 @@ export function useDocumentSession(store: DiagramStore) {
     clearTimeout(timer.current);
     s.installation++;
     s.fitOnOpen = fit;
-    s.history = record ? createHistory(record.document) : null;
+    let document = record?.document;
+    if (document) {
+      const grown = growStickyNotes(document);
+      // A legacy file at the portable byte limit can still open safely with
+      // scrolling; do not make an otherwise valid stored document unsaveable.
+      try { exportDiagram(grown); document = grown; } catch { /* retain original */ }
+    }
+    s.history = document ? createHistory(document) : null;
     s.revision = record?.revision ?? null;
     s.generation = 0;
     s.saved = 0;
     s.status = "saved";
     s.error = null;
     s.selection = { nodeIds: [], edgeIds: [] };
+    if (record && document !== record.document) {
+      s.generation++;
+      s.status = "saving";
+      timer.current = setTimeout(() => { void flush().catch(() => {}); }, 400);
+    }
     emit();
   }
   async function flush(): Promise<void> {
@@ -117,6 +130,8 @@ export function useDocumentSession(store: DiagramStore) {
     // Lifecycle writes freeze editing as well as the visible workspace. Global
     // keyboard handlers can still fire while a DOM subtree is inert.
     if (!s.history || s.busy) return false;
+    if (action.type === "preview" || action.type === "replace")
+      action = { ...action, document: growStickyNotes(action.document, s.history.present) };
     const next = historyReducer(s.history, action);
     if (next.present !== s.history.present) {
       try {
@@ -166,6 +181,7 @@ export function useDocumentSession(store: DiagramStore) {
     await flush();
   }
   async function saveNew(document: Diagram, fit = false) {
+    document = growStickyNotes(document);
     const record = await store.save(document, null);
     s.records = [record, ...s.records];
     install(record, fit);
