@@ -95,6 +95,17 @@ Dragging a member out removes membership while preserving its world position. Re
 
 Deleting a container preserves its members at their existing world positions and removes their parent assignment. If the selection explicitly includes both a container and a member, the member is also deleted. Undo restores the complete previous structure.
 
+## Sticky-note sizing follow-up — 2026-10-16
+
+Status: design agreed; implementation in progress. The user reported text overflowing the fixed sticky-note background.
+
+- Grow the note vertically as necessary to contain its title and body at its chosen width; wrap long words and preserve newlines.
+- Show drag-to-resize handles when selected. Support enlarging and shrinking width/height, keeping enough height for the text. Preserve intentionally added whitespace; automatic growth need not shrink a note after text deletion (manual resize controls that).
+- Persist dimensions through save/reopen, import/export and duplication. One resize gesture is one undoable operation; text edits and their required growth must undo coherently.
+- Keep the existing 10,000-character body limit and 200-character title limit. A visible character counter is deferred. No collapse/expand button is requested.
+- Preserve existing container membership and world-position semantics, and retain node/connector measurement-cache stability.
+- Verify actual browser text containment, width-dependent wrapping, long titles/words/newlines, all resize directions, undo/redo and persistence. Respect existing portable dimension/document limits.
+
 ## Editing and history
 
 Support selection, Shift multi-selection, selection marquee, dragging, pan, zoom, fit-to-view, delete, and duplication. Empty-canvas dragging draws a selection marquee; Space-drag or middle-button drag pans. A pan tool provides an alternative without keyboard modifiers.

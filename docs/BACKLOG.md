@@ -2,9 +2,20 @@
 
 Updated: 2026-10-16. This is the feature/status index, not a promise of delivery dates. Detailed agreed behavior lives in the [canvas spec](superpowers/specs/2026-10-15-canvas-design.md); completed implementation history lives in the [original plan](superpowers/plans/2026-10-15-canvas.md). Update this list as decisions change or features ship.
 
-## Current focus — connector configuration
+## Current focus — sticky-note sizing
 
-Status: implemented and verified on `feat/connector-styles`; pending merge/deployment. See the [connector requirements](superpowers/specs/2026-10-15-canvas-design.md#connector-configuration-follow-up--2026-10-16).
+Status: design agreed; implementation in progress. See the [sticky-note requirements](superpowers/specs/2026-10-15-canvas-design.md#sticky-note-sizing-follow-up--2026-10-16).
+
+- [ ] Fix overflowing text by growing note height to fit title/body at the chosen width.
+- [ ] Add selected-note resize handles for enlarging/shrinking, with content-safe minimum height.
+- [ ] Persist dimensions and support one undo/redo step per resize gesture, with coherent text-edit growth history.
+- [ ] Verify wrapping, container membership, save/reopen, import/export and prior interaction regressions.
+
+Keep the existing 10,000-character body limit; a character counter is deferred.
+
+## Completed — connector configuration
+
+Status: merged into main via PR #4 (`1eb13a1`). See the [connector requirements](superpowers/specs/2026-10-15-canvas-design.md#connector-configuration-follow-up--2026-10-16).
 
 - [x] Independent stroke styles (solid, dashed, dotted) and path shapes (straight, curved, elbow).
 - [x] Every new connection defaults to solid + elbow, with a matching drawing preview. Existing connections without settings use those defaults; duplicates preserve settings.
@@ -36,6 +47,7 @@ These are recorded possibilities, not commitments to build.
 - Automatic routing around intervening components.
 - Manual label placement and automatic label overlap avoidance.
 - Bridge arcs or other special crossing indicators.
+- Sticky-note character counter (existing text limit remains enforced).
 
 ## Outside the current release
 
