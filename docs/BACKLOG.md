@@ -4,12 +4,14 @@ Updated: 2026-10-16. This is the feature/status index, not a promise of delivery
 
 ## Current focus — rounded elbow routing
 
-Status: design approved; implementation in progress. See the [rounded-elbow requirements](superpowers/specs/2026-10-15-canvas-design.md#rounded-elbow-routing-follow-up--2026-10-16).
+Status: implemented on `fix/rounded-elbow-routing`; awaiting merge and deployment. See the [rounded-elbow requirements](superpowers/specs/2026-10-15-canvas-design.md#rounded-elbow-routing-follow-up--2026-10-16).
 
-- [ ] Replace sharp elbow corners with adaptive rounded corners, including existing edges, self-loops and drawing previews.
-- [ ] Remove tiny rectangles caused by overshooting and backtracking; prefer simple routes respecting selected handles.
-- [ ] Use compact self-loop routes while preserving aligned shortcuts, parallel/reverse separation and existing styling/persistence behavior.
-- [ ] Verify screenshot-like layouts, route geometry and existing editor regressions; independent review and visual validation.
+- [x] Replace sharp elbow corners with adaptive rounded corners, including existing edges, self-loops and drawing previews.
+- [x] Remove tiny rectangles caused by overshooting and backtracking; prefer simple routes respecting selected handles.
+- [x] Use compact self-loop routes while preserving aligned shortcuts, parallel/reverse separation and existing styling/persistence behavior.
+- [x] Verify screenshot-like layouts, route geometry and existing editor regressions; independent review and visual validation.
+
+Verification: 115 unit tests, 44 Chromium tests and a final five-test connector rerun, typecheck and build passed. Independent review and screenshot inspection completed.
 
 ## Completed — sticky-note sizing
 
@@ -29,7 +31,7 @@ Status: merged into main via PR #4 (`1eb13a1`). See the [connector requirements]
 - [x] Independent stroke styles (solid, dashed, dotted) and path shapes (straight, curved, elbow).
 - [x] Every new connection defaults to solid + elbow, with a matching drawing preview. Existing connections without settings use those defaults; duplicates preserve settings.
 - [x] Automatic simple routing, without obstacle avoidance or manual bend editing. Aligned, facing handles permit a straight elbow segment.
-- [x] Visible self-loops: rectangular for elbow/straight, rounded for curved; explain the straight fallback in the inspector.
+- [x] Visible self-loops: rectangular for straight, rounded for elbow/curved (updated by the rounded-elbow follow-up); explain the straight fallback in the inspector.
 - [x] Keep multiple connections allowed; straight paths may overlap. Preserve separation for curved/elbow paths.
 - [x] Visible line-only selection highlighting across all styles.
 - [x] Batch stroke/path editing with Mixed values, property-specific changes and one undo per batch. Mixed component/connector selections expose Connections (N) and modify only connectors.

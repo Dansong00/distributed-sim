@@ -85,7 +85,7 @@ Preserve connector reliability during selection, pan, drag and autosave, includi
 
 ## Rounded elbow routing follow-up — 2026-10-16
 
-Status: design approved; implementation in progress. This supersedes the sharp-corner elbow requirement above. The user reported small rectangular detours and requested smoother elbows, with an Excalidraw example.
+Status: implemented on `fix/rounded-elbow-routing`; awaiting merge and deployment. This supersedes the sharp-corner elbow requirement above. The user reported small rectangular detours and requested smoother elbows, with an Excalidraw example.
 
 - Keep three path choices: Straight, Curved, Elbow. Rounded elbows replace sharp elbows everywhere, including existing connections and elbow self-loops; no fourth shape or per-corner setting.
 - Elbows retain horizontal/vertical runs joined by gently rounded corners. Reduce the radius for short segments. Aligned facing endpoints remain a straight segment.
