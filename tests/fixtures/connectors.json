@@ -1,0 +1,198 @@
+{
+  "schemaVersion": 1,
+  "id": "connector-regression",
+  "name": "Connector regression",
+  "createdAt": "2026-10-16T00:10:18.062Z",
+  "updatedAt": "2026-10-16T00:10:18.062Z",
+  "nodes": [
+    {
+      "id": "aec038b7-c384-4eb5-8125-0afd48d2d034",
+      "kind": "component",
+      "position": {
+        "x": 238.06998400000003,
+        "y": 211.25984000000005
+      },
+      "width": 200,
+      "height": 88,
+      "name": "Web Browser",
+      "notes": "",
+      "description": "A client that initiates requests to your system.",
+      "componentType": "client",
+      "category": "Clients",
+      "technology": "Web Browser"
+    },
+    {
+      "id": "3a555001-528c-4fa5-812d-6cae8aa971f4",
+      "kind": "component",
+      "position": {
+        "x": 588.508384,
+        "y": 212.29664000000008
+      },
+      "width": 200,
+      "height": 88,
+      "name": "API Gateway",
+      "notes": "",
+      "description": "Routes requests through your system.",
+      "componentType": "network",
+      "category": "Networking",
+      "technology": "API Gateway"
+    },
+    {
+      "id": "8659da67-7116-47f8-9b30-0e71d684bdd5",
+      "kind": "component",
+      "position": {
+        "x": 905.7691839999999,
+        "y": 41.22464000000011
+      },
+      "width": 200,
+      "height": 88,
+      "name": "API Server",
+      "notes": "",
+      "description": "A service that runs application logic.",
+      "componentType": "server",
+      "category": "Compute",
+      "technology": "API Server"
+    },
+    {
+      "id": "753d33de-6f8d-4af7-baa4-e59b73d8a180",
+      "kind": "component",
+      "position": {
+        "x": 905.769184,
+        "y": 211.2598400000001
+      },
+      "width": 200,
+      "height": 88,
+      "name": "API Server",
+      "notes": "",
+      "description": "A service that runs application logic.",
+      "componentType": "server",
+      "category": "Compute",
+      "technology": "API Server"
+    },
+    {
+      "id": "e155ad61-22cc-4b0c-8db6-38d69cce2695",
+      "kind": "component",
+      "position": {
+        "x": 906.805984,
+        "y": 384.40544
+      },
+      "width": 200,
+      "height": 88,
+      "name": "API Server",
+      "notes": "",
+      "description": "A service that runs application logic.",
+      "componentType": "server",
+      "category": "Compute",
+      "technology": "API Server"
+    },
+    {
+      "id": "ddfff962-5956-4627-861c-99b007b6fcbc",
+      "kind": "component",
+      "position": {
+        "x": 1211.265058,
+        "y": -126.47800299999977
+      },
+      "width": 200,
+      "height": 88,
+      "name": "S3",
+      "notes": "",
+      "description": "Stores files and other objects.",
+      "componentType": "object-storage",
+      "category": "Storage",
+      "technology": "S3"
+    },
+    {
+      "id": "fb67dd7e-b173-42c3-9bec-10e2687d342e",
+      "kind": "component",
+      "position": {
+        "x": 1244.1108819999997,
+        "y": 31.77914900000019
+      },
+      "width": 200,
+      "height": 88,
+      "name": "PostgreSQL",
+      "notes": "",
+      "description": "Stores and retrieves application data.",
+      "componentType": "database",
+      "category": "Databases",
+      "technology": "PostgreSQL"
+    },
+    {
+      "id": "bf3dfded-4a12-47ff-b8a4-c7c929197604",
+      "kind": "component",
+      "position": {
+        "x": 1555.772962,
+        "y": 27.300173000000115
+      },
+      "width": 200,
+      "height": 88,
+      "name": "PostgreSQL",
+      "notes": "",
+      "description": "Stores and retrieves application data.",
+      "componentType": "database",
+      "category": "Databases",
+      "technology": "PostgreSQL"
+    }
+  ],
+  "edges": [
+    {
+      "id": "21a931da-f736-4dd4-9a0f-d5a31af4b2ce",
+      "source": "aec038b7-c384-4eb5-8125-0afd48d2d034",
+      "target": "3a555001-528c-4fa5-812d-6cae8aa971f4",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "",
+      "direction": "one-way"
+    },
+    {
+      "id": "398eb998-6004-4207-9598-f51f1488107a",
+      "source": "3a555001-528c-4fa5-812d-6cae8aa971f4",
+      "target": "8659da67-7116-47f8-9b30-0e71d684bdd5",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "",
+      "direction": "one-way"
+    },
+    {
+      "id": "9410374f-d269-42d0-b63d-d4cb614cdadd",
+      "source": "3a555001-528c-4fa5-812d-6cae8aa971f4",
+      "target": "753d33de-6f8d-4af7-baa4-e59b73d8a180",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "",
+      "direction": "one-way"
+    },
+    {
+      "id": "3b95efa8-361c-4775-b397-d3294f3e339b",
+      "source": "3a555001-528c-4fa5-812d-6cae8aa971f4",
+      "target": "e155ad61-22cc-4b0c-8db6-38d69cce2695",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "",
+      "direction": "one-way"
+    },
+    {
+      "id": "569a8356-5c9a-4cf1-ae83-1b362b90fe0d",
+      "source": "fb67dd7e-b173-42c3-9bec-10e2687d342e",
+      "target": "bf3dfded-4a12-47ff-b8a4-c7c929197604",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "",
+      "direction": "one-way"
+    },
+    {
+      "id": "c6943dd1-bc66-446e-ad74-1529b73d3e11",
+      "source": "fb67dd7e-b173-42c3-9bec-10e2687d342e",
+      "target": "8659da67-7116-47f8-9b30-0e71d684bdd5",
+      "sourceHandle": "left",
+      "targetHandle": "right",
+      "label": "",
+      "direction": "one-way"
+    }
+  ],
+  "viewport": {
+    "x": -41.099006014425754,
+    "y": 167.52090021543745,
+    "zoom": 0.5121928998455031
+  }
+}
