@@ -19,9 +19,9 @@ Live simulation, system analysis, language-model integration, Practice/Review co
 
 ## Components and palette
 
-Clicking a category expands its presets. Search matches category, label, and technology across groups. Clicking a preset adds it near the viewport center; dragging it onto the canvas places it at the drop position. New elements are selected immediately.
+Clicking a category expands its presets. Search matches category, label, component type and description across groups. Clicking a preset adds it near the viewport center; dragging it onto the canvas places it at the drop position. New elements are selected immediately.
 
-Initial catalog:
+Original catalog (expanded by the AI catalog follow-up below):
 
 | Category | Presets |
 | --- | --- |
@@ -39,13 +39,44 @@ Single-click selects a component and displays its properties. Dragging moves it 
 
 ## Connections
 
-- Any component can connect to any other component without compatibility restrictions. Containers and annotations are not connection endpoints.
+- Components and sticky notes can connect to one another without compatibility restrictions. Text annotations and containers are not connection endpoints (updated by the sticky-connection follow-up below).
 - Connect via visible handles; each connection stores stable endpoint IDs and handle IDs.
 - Optional editable text labels and one-way or bidirectional arrows are supported. Initial direction is one-way, from drag source to target.
 - Multiple edges between the same pair are allowed, including opposite directions. Offset parallel paths so they remain individually selectable. Self-connections are allowed and rendered as loops.
 - Select a connection to edit its label/direction or delete it. Moving a component preserves its connections.
 - Deleting a component removes its incident edges in the same undoable operation.
 - Connection labels describe intent; the editor does not validate protocols or claim to simulate traffic.
+
+## Sticky connections, remembered defaults and AI catalog — 2026-10-16
+
+Status: implemented on `feat/sticky-connections-ai-catalog`; awaiting merge and deployment. These requirements supersede the component-only endpoints and fixed solid/elbow defaults recorded in the earlier connector follow-up.
+
+- Reuse the same generic connector for component↔component, sticky↔sticky and component↔sticky links, in either direction. Sticky notes expose top/right/bottom/left handles. Multiple links and self-loops remain supported.
+- Handles stay attached when a note moves, resizes or grows with text. Connection handles and resize controls must not compete for the same pointer target. Connected notes retain square corner grips and edge resizing away from the round midpoint connection handles.
+- New connectors start **solid + straight + one-way** without a saved preference. An explicit inspector edit to stroke, path or direction updates that property's default for subsequent connectors. Selecting a connector, importing a diagram or duplicating an existing connector does not change defaults. Batch edits remember only the edited property; Mixed is never a stored default.
+- Remember defaults in this browser/origin across reloads and diagrams. Preferences are separate from diagram history and exported files. Unavailable or invalid preference storage must not prevent editing. Labels remain per-connector. The drawing preview follows the selected defaults.
+- Existing saved connectors retain their appearance, including legacy missing-path connectors rendering as elbow. Duplication preserves an edge's settings. All sticky links support save/reopen, import/export, deletion, duplication and undo/redo through the existing document model.
+- Expand the presentation-only catalog with generic options and representative technologies:
+
+| Family | Named examples |
+| --- | --- |
+| Vector databases | pgvector, Qdrant, Pinecone, Milvus |
+| Wide-column databases | Cassandra, ScyllaDB, Bigtable |
+| Graph databases | Neo4j, Neptune |
+| Geospatial databases | PostGIS |
+| Time-series databases | TimescaleDB, InfluxDB |
+| Search engines | Elasticsearch, OpenSearch |
+| Analytics / warehouses | ClickHouse, BigQuery, Snowflake |
+| Block and file storage | Amazon EBS, Amazon EFS |
+| Data lakes, lakehouses and table formats | Generic Data Lake, Generic Lakehouse, Apache Iceberg, Delta Lake |
+| Model artifact storage | Generic Model Artifact Storage |
+| AI model serving | vLLM, Triton Inference Server |
+| AI pipeline services | Embedding, retrieval and reranking services |
+| Feature stores and model registries | Feast, MLflow |
+
+Database families stay in Databases; data storage stays in Storage; model and pipeline services appear in a new AI category. Each preset includes a short capability description. Search includes capability/type/description so “vector” finds Qdrant and “geospatial” finds PostGIS. Existing presets retain their identifiers. Technology choices do not enable execution or integrations; data lake table formats are described as formats/layers, not standalone database servers.
+
+Validation covers note connection creation and editing, resize/auto-growth attachment, browser/file round trips and undo/redo; default updates without selection side effects and safe preference storage; capability search and portable catalog instances. Existing connector/drag and sticky sizing regressions must remain green.
 
 ## Connector configuration follow-up — 2026-10-16
 
@@ -85,7 +116,7 @@ Preserve connector reliability during selection, pan, drag and autosave, includi
 
 ## Rounded elbow routing follow-up — 2026-10-16
 
-Status: implemented on `fix/rounded-elbow-routing`; awaiting merge and deployment. This supersedes the sharp-corner elbow requirement above. The user reported small rectangular detours and requested smoother elbows, with an Excalidraw example.
+Status: merged into main via PR #6 (`733225d`). This supersedes the sharp-corner elbow requirement above. The user reported small rectangular detours and requested smoother elbows, with an Excalidraw example.
 
 - Keep three path choices: Straight, Curved, Elbow. Rounded elbows replace sharp elbows everywhere, including existing connections and elbow self-loops; no fourth shape or per-corner setting.
 - Elbows retain horizontal/vertical runs joined by gently rounded corners. Reduce the radius for short segments. Aligned facing endpoints remain a straight segment.

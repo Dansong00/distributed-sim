@@ -2,9 +2,20 @@
 
 Updated: 2026-10-16. This is the feature/status index, not a promise of delivery dates. Detailed agreed behavior lives in the [canvas spec](superpowers/specs/2026-10-15-canvas-design.md); completed implementation history lives in the [original plan](superpowers/plans/2026-10-15-canvas.md). Update this list as decisions change or features ship.
 
-## Current focus — rounded elbow routing
+## Current focus — sticky connections, remembered defaults and AI catalog
 
-Status: implemented on `fix/rounded-elbow-routing`; awaiting merge and deployment. See the [rounded-elbow requirements](superpowers/specs/2026-10-15-canvas-design.md#rounded-elbow-routing-follow-up--2026-10-16).
+Status: implemented on `feat/sticky-connections-ai-catalog`; awaiting merge and deployment. See the [updated requirements](superpowers/specs/2026-10-15-canvas-design.md#sticky-connections-remembered-defaults-and-ai-catalog--2026-10-16).
+
+- [x] Connect sticky notes to notes and components, preserving resize, persistence and undo/redo behavior.
+- [x] Start new connectors straight; remember the last explicitly edited stroke, path and direction across reloads/diagrams. Keep existing edges unchanged.
+- [x] Add specialized database/storage presets and an AI category, with capability descriptions and search.
+- [x] Verify new behavior and existing regressions, review and push for merge.
+
+Verification: 122 unit tests, typecheck and production build passed. All 47 Chromium cases passed across the full run and targeted reruns after updating the old no-sticky-handles assertion and moving edge-resize test gestures away from connection handles. Independent review found no blockers; its minor literal-type search suggestion was applied and tested. Screenshot inspected.
+
+## Completed — rounded elbow routing
+
+Status: merged into main via PR #6 (`733225d`). See the [rounded-elbow requirements](superpowers/specs/2026-10-15-canvas-design.md#rounded-elbow-routing-follow-up--2026-10-16).
 
 - [x] Replace sharp elbow corners with adaptive rounded corners, including existing edges, self-loops and drawing previews.
 - [x] Remove tiny rectangles caused by overshooting and backtracking; prefer simple routes respecting selected handles.
@@ -29,7 +40,7 @@ The existing 10,000-character body limit remains; a character counter is deferre
 Status: merged into main via PR #4 (`1eb13a1`). See the [connector requirements](superpowers/specs/2026-10-15-canvas-design.md#connector-configuration-follow-up--2026-10-16).
 
 - [x] Independent stroke styles (solid, dashed, dotted) and path shapes (straight, curved, elbow).
-- [x] Every new connection defaults to solid + elbow, with a matching drawing preview. Existing connections without settings use those defaults; duplicates preserve settings.
+- [x] Originally new connections defaulted to solid + elbow; superseded by remembered defaults in the current follow-up. Legacy connections without settings retain solid + elbow; duplicates preserve settings.
 - [x] Automatic simple routing, without obstacle avoidance or manual bend editing. Aligned, facing handles permit a straight elbow segment.
 - [x] Visible self-loops: rectangular for straight, rounded for elbow/curved (updated by the rounded-elbow follow-up); explain the straight fallback in the inspector.
 - [x] Keep multiple connections allowed; straight paths may overlap. Preserve separation for curved/elbow paths.
