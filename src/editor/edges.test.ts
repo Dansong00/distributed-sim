@@ -64,7 +64,7 @@ describe("connector path choices", () => {
     const e = { ...edge, path: "elbow" as const, ...changes };
     return edgeRoute(e, { ...doc, edges: [e] }, points);
   };
-  const vertices = (path: string) => [...path.matchAll(/[ML]\s*([\d.e+-]+)[ ,]+([\d.e+-]+)/g)].map(m => ({ x: Number(m[1]), y: Number(m[2]) }));
+  const vertices = routeVertices;
   it("defaults legacy connections to a direct elbow between aligned facing handles", () => {
     expect(route({ path: undefined }).path).toBe("M 0 0 L 100 0");
   });
@@ -77,16 +77,20 @@ describe("connector path choices", () => {
   const handles = ["top", "right", "bottom", "left"];
   const vectors: Record<string, { x: number; y: number }> = { top: { x: 0, y: -1 }, right: { x: 1, y: 0 }, bottom: { x: 0, y: 1 }, left: { x: -1, y: 0 } };
   for (const sourceHandle of handles) for (const targetHandle of handles) {
-    it(`routes sharp orthogonal segments naturally from ${sourceHandle} to ${targetHandle}`, () => {
-      for (const target of [{ x: 160, y: 90 }, { x: -80, y: -70 }, { x: 0, y: 0 }, { x: 1, y: 1 }]) {
+    it(`routes rounded orthogonal segments naturally from ${sourceHandle} to ${targetHandle}`, () => {
+      for (const target of [{ x: 160, y: 90 }, { x: -80, y: -70 }, { x: 0, y: 0 }, { x: 1, y: 1 }, { x: 0, y: 100 }, { x: 100, y: 0 }, { x: -1, y: 0 }]) {
         const r = route({ sourceHandle, targetHandle }, { source: endpoints.source, target });
         expect(r.path).not.toMatch(/C|NaN|Infinity/);
-        // XYFlow emits degenerate Q commands at zero corner radius.
-        for (const q of r.path.matchAll(/Q ([\d.e+-]+),([\d.e+-]+) ([\d.e+-]+),([\d.e+-]+)/g)) expect([q[1], q[2]]).toEqual([q[3], q[4]]);
+
         const ps = vertices(r.path);
         expect(ps[0]).toEqual(endpoints.source);
         expect(ps.at(-1)).toEqual(target);
         for (let i = 1; i < ps.length; i++) expect(ps[i].x === ps[i - 1].x || ps[i].y === ps[i - 1].y).toBe(true);
+        const corners = ps.filter((p, i) => !i || (p.x !== ps[i-1].x || p.y !== ps[i-1].y)).filter((p, i, a) => !i || i === a.length-1 || !((a[i-1].x === p.x && p.x === a[i+1].x) || (a[i-1].y === p.y && p.y === a[i+1].y)));
+        if (target.x || target.y) for (let i = 0; i < corners.length - 1; i++) for (let j = i + 2; j < corners.length - 1; j++) {
+          const a = corners[i], b = corners[i+1], c = corners[j], d = corners[j+1];
+          expect(Math.max(Math.min(a.x,b.x),Math.min(c.x,d.x)) <= Math.min(Math.max(a.x,b.x),Math.max(c.x,d.x)) && Math.max(Math.min(a.y,b.y),Math.min(c.y,d.y)) <= Math.min(Math.max(a.y,b.y),Math.max(c.y,d.y))).toBe(false);
+        }
         const first = { x: ps[1].x - ps[0].x, y: ps[1].y - ps[0].y };
         const last = { x: ps.at(-2)!.x - target.x, y: ps.at(-2)!.y - target.y };
         expect(first.x * vectors[sourceHandle].x + first.y * vectors[sourceHandle].y).toBeGreaterThan(0);
@@ -124,7 +128,7 @@ it("self-loop segments stay outside the card for every real handle pair", () => 
   for (const path of ["straight", "elbow"] as const) for (const sourceHandle of Object.keys(handles) as (keyof typeof handles)[]) for (const targetHandle of Object.keys(handles) as (keyof typeof handles)[]) {
     const e = { ...edge, path, source: n.id, target: n.id, sourceHandle, targetHandle };
     const r = edgeRoute(e, { ...d, edges: [e] }, { source: handles[sourceHandle], target: handles[targetHandle] });
-    const ps = [...r.path.matchAll(/[ML]\s*([\d.e+-]+)[ ,]+([\d.e+-]+)/g)].map(m => ({ x: Number(m[1]), y: Number(m[2]) }));
+    const ps = routeVertices(r.path);
     for (let i = 1; i < ps.length; i++) {
       const a = ps[i - 1], b = ps[i];
       const middle = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
@@ -134,5 +138,77 @@ it("self-loop segments stay outside the card for every real handle pair", () => 
       const b = ps[i + 1];
       return b && ((a.x === b.x && r.label.x === a.x && r.label.y >= Math.min(a.y,b.y) && r.label.y <= Math.max(a.y,b.y)) || (a.y === b.y && r.label.y === a.y && r.label.x >= Math.min(a.x,b.x) && r.label.x <= Math.max(a.x,b.x)));
     })).toBe(true);
+  }
+});
+
+// Include quadratic control points: they recover the orthogonal route's corners.
+function routeVertices(path: string) {
+  return [...path.matchAll(/[MLQ]\s*([\d.e+-]+)[ ,]+([\d.e+-]+)(?:[ ,]+([\d.e+-]+)[ ,]+([\d.e+-]+))?/g)].flatMap(m => [{ x: +m[1], y: +m[2] }, ...(m[3] ? [{ x: +m[3], y: +m[4] }] : [])]);
+}
+
+it.each([
+  ["bottom", "left", 160, 90],
+  ["left", "top", -160, 90],
+  ["bottom", "left", 1, 1],
+] as const)("uses one adaptive rounded turn from %s to %s", (sourceHandle, targetHandle, x, y) => {
+  const e = { ...edge, path: "elbow" as const, sourceHandle, targetHandle };
+  const r = edgeRoute(e, { nodes: [], edges: [e] }, { source: { x: 0, y: 0 }, target: { x, y } });
+  expect(r.path.match(/Q/g)).toHaveLength(1);
+  if (x === 1) expect(r.label).toEqual({ x: .125, y: .875 });
+  for (const p of routeVertices(r.path)) {
+    expect(p.x).toBeGreaterThanOrEqual(Math.min(0,x));
+    expect(p.x).toBeLessThanOrEqual(Math.max(0,x));
+    expect(p.y).toBeGreaterThanOrEqual(0);
+    expect(p.y).toBeLessThanOrEqual(y);
+  }
+});
+
+it("takes the short outside corner for a top-to-right self-loop", () => {
+  const e = { ...edge, path: "elbow" as const, target: "x", sourceHandle: "top", targetHandle: "right" };
+  const r = edgeRoute(e, { nodes: [], edges: [e] }, { source: { x: 90, y: 0 }, target: { x: 180, y: 50 } });
+  expect(r.path.match(/Q/g)).toHaveLength(3);
+  expect(routeVertices(r.path).every(p => p.x >= 90 && p.y <= 50)).toBe(true);
+});
+
+it("keeps perpendicular peers separate", () => {
+  const a = { ...edge, path: "elbow" as const, sourceHandle: "bottom" }, b = { ...a, id: "b" };
+  const points = { source: { x: 0, y: 0 }, target: { x: 160, y: 90 } };
+  expect(edgeRoute(a, { nodes: [], edges: [a,b] }, points).path).not.toBe(edgeRoute(b, { nodes: [], edges: [a,b] }, points).path);
+
+});
+
+it.each([1,20,48])("keeps close aligned facing peers on separate lanes at distance %s", x => {
+  const a = { ...edge, path: 'elbow' as const }, b = { ...a, id: 'b' };
+  const routes = [a,b].map(e => edgeRoute(e, { nodes: [], edges: [a,b] }, { source: { x: 0, y: 0 }, target: { x, y: 0 } }));
+  expect(routes[0].label.y).not.toBe(routes[1].label.y);
+  for (const r of routes) expect(Math.abs(r.label.y)).toBeGreaterThan(10);
+});
+
+it("places a halfway label on the rounded corner rather than its trimmed vertex", () => {
+  const e = { ...edge, path: 'elbow' as const, sourceHandle: 'bottom' };
+  const r = edgeRoute(e, { nodes: [], edges: [e] }, { source: { x: 0, y: 0 }, target: { x: 90, y: 90 } });
+  // The quadratic joins (0,76) to (14,90), with control (0,90).
+  expect(r.label).toEqual({ x: 3.5, y: 86.5 });
+});
+
+it("keeps six close perpendicular peers distinct without backtracking", () => {
+  const peers = Array.from({length: 6}, (_, i) => ({ ...edge, id: String(i), path: 'elbow' as const, sourceHandle: 'top', targetHandle: 'right' }));
+  const routes = peers.map(e => edgeRoute(e, { nodes: [], edges: peers }, { source: { x: 90, y: 0 }, target: { x: -20, y: -100 } }));
+  expect(new Set(routes.map(r => r.path)).size).toBe(6);
+  for (const r of routes) {
+    const ps = routeVertices(r.path);
+    for (let i = 1; i < ps.length; i++) {
+      expect(ps[i].x).toBeLessThanOrEqual(ps[i-1].x);
+      expect(ps[i].y).toBeLessThanOrEqual(ps[i-1].y);
+    }
+  }
+});
+
+it.each(['top','bottom'])("keeps six same-direction %s peers off their endpoint axis", handle => {
+  const peers = Array.from({length: 6}, (_, i) => ({ ...edge, id: String(i), path: 'elbow' as const, sourceHandle: handle, targetHandle: handle }));
+  for (const y of [-101,101]) {
+    const routes = peers.map(e => edgeRoute(e, { nodes: [], edges: peers }, { source: { x: 90, y: 0 }, target: { x: 90, y } }));
+    expect(new Set(routes.map(r => r.path)).size).toBe(6);
+    for (const r of routes) expect(r.label.x).toBeLessThan(90);
   }
 });

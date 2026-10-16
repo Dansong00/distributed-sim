@@ -100,13 +100,12 @@ test('new connectors and their preview reset to solid elbow and settings survive
   const preview = page.locator('.react-flow__connection-path');
   await expect(preview).toHaveCount(1);
   expect((await appearance(preview)).dash).toBe('none');
-  // Sharp elbow preview contains no nonzero-radius curves.
-  const previewPath = (await preview.getAttribute('d'))!;
-  expect(previewPath).not.toContain('C');
-  for (const q of previewPath.matchAll(/Q ([\d.e+-]+),([\d.e+-]+) ([\d.e+-]+),([\d.e+-]+)/g)) expect([q[1], q[2]]).toEqual([q[3], q[4]]);
+  await expect(preview).toHaveAttribute('d', /Q/);
   await page.mouse.move(target.x + target.width / 2, target.y + target.height / 2, { steps: 12 });
+  const hoveredPreview = await preview.getAttribute('d');
   await page.mouse.up();
   await expect(page.locator('.react-flow__edge')).toHaveCount(3);
+  await expect(page.locator('.react-flow__edge-path').last()).toHaveAttribute('d', hoveredPreview!);
   await expect(page.getByLabel('Stroke style')).toHaveValue('solid');
   await expect(page.getByLabel('Path shape')).toHaveValue('elbow');
   const saved = await exported(page);
