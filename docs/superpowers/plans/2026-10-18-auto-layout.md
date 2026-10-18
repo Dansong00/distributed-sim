@@ -92,4 +92,18 @@
 
 The user previously chose subagent-driven execution; retain that preference. After plan review, use one implementation worker at a time, review each task before the next dependent task, and finish with a whole-branch review. Task order is 1 → 2 → 3 → 4. No extra approvals between implementation tasks unless scope genuinely changes or an external permission is required.
 
+Each task review and the final branch review must follow [the repository review requirements](../../../AGENTS.md): correctness/spec alignment first, then an explicit `engineering-suite-ponytail:ponytail-review` pass. The same independent reviewer can perform both. Resolve actionable complexity findings or document why the implementation is retained; rerun affected checks after changes. Do not proceed to dependent work with unresolved findings.
+
+### Review log
+
+Record reviewed commit/diff, actionable findings and their dispositions, or an explicit no-findings result. These entries are pending, not evidence that review has run.
+
+| Checkpoint | Correctness/spec review | Ponytail complexity review | Findings/disposition and evidence |
+| --- | --- | --- | --- |
+| Task 1 | Pending | Pending | — |
+| Task 2 | Pending | Pending | — |
+| Task 3 | Pending | Pending | — |
+| Task 4 | Pending | Pending | — |
+| Final branch | Pending | Pending | — |
+
 Self-review: all approved spec sections map to the four tasks. Container growth precedes outer placement; output preserves renderer-compatible geometry; preview storage isolation and clean-tab revision checks are explicit. No new product work has begun.
