@@ -1,0 +1,416 @@
+{
+  "schemaVersion": 1,
+  "id": "layout",
+  "name": "Representative architecture",
+  "createdAt": "2026-10-18T00:00:00.000Z",
+  "updatedAt": "2026-10-18T00:00:00.000Z",
+  "viewport": {
+    "x": 55,
+    "y": -20,
+    "zoom": 0.8
+  },
+  "nodes": [
+    {
+      "id": "client",
+      "kind": "component",
+      "position": {
+        "x": 30,
+        "y": 50
+      },
+      "width": 220,
+      "height": 110,
+      "name": "Client",
+      "notes": "",
+      "description": "",
+      "componentType": "client",
+      "category": "Clients",
+      "technology": "Generic"
+    },
+    {
+      "id": "api",
+      "kind": "component",
+      "position": {
+        "x": 95,
+        "y": 50
+      },
+      "width": 220,
+      "height": 110,
+      "name": "API service",
+      "notes": "",
+      "description": "",
+      "componentType": "server",
+      "category": "Compute",
+      "technology": "Generic",
+      "parentId": "services"
+    },
+    {
+      "id": "database",
+      "kind": "component",
+      "position": {
+        "x": 160,
+        "y": 50
+      },
+      "width": 220,
+      "height": 110,
+      "name": "PostgreSQL",
+      "notes": "",
+      "description": "",
+      "componentType": "database",
+      "category": "Databases",
+      "technology": "Generic",
+      "parentId": "services"
+    },
+    {
+      "id": "queue",
+      "kind": "component",
+      "position": {
+        "x": 225,
+        "y": 50
+      },
+      "width": 220,
+      "height": 110,
+      "name": "Message queue",
+      "notes": "",
+      "description": "",
+      "componentType": "queue",
+      "category": "Messaging",
+      "technology": "Generic"
+    },
+    {
+      "id": "worker-a",
+      "kind": "component",
+      "position": {
+        "x": 30,
+        "y": 105
+      },
+      "width": 220,
+      "height": 110,
+      "name": "Worker A",
+      "notes": "",
+      "description": "",
+      "componentType": "server",
+      "category": "Compute",
+      "technology": "Generic"
+    },
+    {
+      "id": "worker-b",
+      "kind": "component",
+      "position": {
+        "x": 95,
+        "y": 105
+      },
+      "width": 220,
+      "height": 110,
+      "name": "Worker B",
+      "notes": "",
+      "description": "",
+      "componentType": "server",
+      "category": "Compute",
+      "technology": "Generic"
+    },
+    {
+      "id": "cache",
+      "kind": "component",
+      "position": {
+        "x": 160,
+        "y": 105
+      },
+      "width": 220,
+      "height": 110,
+      "name": "Redis cache",
+      "notes": "",
+      "description": "",
+      "componentType": "cache",
+      "category": "Caches",
+      "technology": "Generic"
+    },
+    {
+      "id": "storage",
+      "kind": "component",
+      "position": {
+        "x": 225,
+        "y": 105
+      },
+      "width": 220,
+      "height": 110,
+      "name": "Object storage",
+      "notes": "",
+      "description": "",
+      "componentType": "object-storage",
+      "category": "Storage",
+      "technology": "Generic"
+    },
+    {
+      "id": "services",
+      "kind": "container",
+      "position": {
+        "x": 30,
+        "y": 160
+      },
+      "width": 480,
+      "height": 320,
+      "name": "Services",
+      "notes": "",
+      "description": ""
+    },
+    {
+      "id": "empty",
+      "kind": "container",
+      "position": {
+        "x": 95,
+        "y": 160
+      },
+      "width": 480,
+      "height": 320,
+      "name": "Empty group",
+      "notes": "",
+      "description": ""
+    },
+    {
+      "id": "shared-note",
+      "kind": "sticky",
+      "position": {
+        "x": 160,
+        "y": 160
+      },
+      "width": 220,
+      "height": 110,
+      "name": "Shared transaction",
+      "notes": "",
+      "description": "",
+      "parentId": "services"
+    },
+    {
+      "id": "note-chain",
+      "kind": "sticky",
+      "position": {
+        "x": 225,
+        "y": 160
+      },
+      "width": 220,
+      "height": 110,
+      "name": "Retry policy",
+      "notes": "",
+      "description": ""
+    },
+    {
+      "id": "isolated-a",
+      "kind": "sticky",
+      "position": {
+        "x": 30,
+        "y": 215
+      },
+      "width": 220,
+      "height": 110,
+      "name": "Operations",
+      "notes": "",
+      "description": ""
+    },
+    {
+      "id": "isolated-b",
+      "kind": "sticky",
+      "position": {
+        "x": 95,
+        "y": 215
+      },
+      "width": 220,
+      "height": 110,
+      "name": "Runbook",
+      "notes": "",
+      "description": ""
+    },
+    {
+      "id": "long-note",
+      "kind": "sticky",
+      "position": {
+        "x": 160,
+        "y": 215
+      },
+      "width": 720,
+      "height": 900,
+      "name": "Long operational note",
+      "notes": "1. Keep retries idempotent and monitor the queue.\n2. Keep retries idempotent and monitor the queue.\n3. Keep retries idempotent and monitor the queue.\n4. Keep retries idempotent and monitor the queue.\n5. Keep retries idempotent and monitor the queue.\n6. Keep retries idempotent and monitor the queue.\n7. Keep retries idempotent and monitor the queue.\n8. Keep retries idempotent and monitor the queue.\n9. Keep retries idempotent and monitor the queue.\n10. Keep retries idempotent and monitor the queue.\n11. Keep retries idempotent and monitor the queue.\n12. Keep retries idempotent and monitor the queue.\n13. Keep retries idempotent and monitor the queue.\n14. Keep retries idempotent and monitor the queue.\n15. Keep retries idempotent and monitor the queue.\n16. Keep retries idempotent and monitor the queue.\n17. Keep retries idempotent and monitor the queue.\n18. Keep retries idempotent and monitor the queue.\n19. Keep retries idempotent and monitor the queue.\n20. Keep retries idempotent and monitor the queue.\n21. Keep retries idempotent and monitor the queue.\n22. Keep retries idempotent and monitor the queue.\n23. Keep retries idempotent and monitor the queue.\n24. Keep retries idempotent and monitor the queue.\n25. Keep retries idempotent and monitor the queue.\n26. Keep retries idempotent and monitor the queue.\n27. Keep retries idempotent and monitor the queue.\n28. Keep retries idempotent and monitor the queue.",
+      "description": "",
+      "parentId": "services"
+    },
+    {
+      "id": "text",
+      "kind": "text",
+      "position": {
+        "x": 225,
+        "y": 215
+      },
+      "width": 640,
+      "height": 280,
+      "name": "Architecture notes",
+      "notes": "Request path, asynchronous workers, shared state and operational notes.",
+      "description": ""
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-0",
+      "source": "client",
+      "target": "api",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "Request",
+      "direction": "one-way",
+      "stroke": "solid",
+      "path": "straight"
+    },
+    {
+      "id": "edge-1",
+      "source": "api",
+      "target": "database",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "Read/write",
+      "direction": "both",
+      "stroke": "dashed",
+      "path": "curved"
+    },
+    {
+      "id": "edge-2",
+      "source": "api",
+      "target": "queue",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "Publish",
+      "direction": "one-way",
+      "stroke": "dotted",
+      "path": "elbow"
+    },
+    {
+      "id": "edge-3",
+      "source": "queue",
+      "target": "worker-a",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "Consume",
+      "direction": "both",
+      "stroke": "solid",
+      "path": "straight"
+    },
+    {
+      "id": "edge-4",
+      "source": "queue",
+      "target": "worker-b",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "Consume",
+      "direction": "one-way",
+      "stroke": "dashed",
+      "path": "curved"
+    },
+    {
+      "id": "edge-5",
+      "source": "worker-a",
+      "target": "cache",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "Lookup",
+      "direction": "both",
+      "stroke": "dotted",
+      "path": "elbow"
+    },
+    {
+      "id": "edge-6",
+      "source": "worker-b",
+      "target": "storage",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "Persist",
+      "direction": "one-way",
+      "stroke": "solid",
+      "path": "straight"
+    },
+    {
+      "id": "edge-7",
+      "source": "worker-a",
+      "target": "api",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "Callback",
+      "direction": "both",
+      "stroke": "dashed",
+      "path": "curved"
+    },
+    {
+      "id": "edge-8",
+      "source": "api",
+      "target": "client",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "Response",
+      "direction": "one-way",
+      "stroke": "dotted",
+      "path": "elbow"
+    },
+    {
+      "id": "edge-9",
+      "source": "client",
+      "target": "api",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "Retry",
+      "direction": "both",
+      "stroke": "solid",
+      "path": "straight"
+    },
+    {
+      "id": "edge-10",
+      "source": "api",
+      "target": "api",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "Self-check",
+      "direction": "one-way",
+      "stroke": "dashed",
+      "path": "curved"
+    },
+    {
+      "id": "edge-11",
+      "source": "api",
+      "target": "shared-note",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "Transaction",
+      "direction": "both",
+      "stroke": "dotted",
+      "path": "elbow"
+    },
+    {
+      "id": "edge-12",
+      "source": "database",
+      "target": "shared-note",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "Shared state",
+      "direction": "one-way",
+      "stroke": "solid",
+      "path": "straight"
+    },
+    {
+      "id": "edge-13",
+      "source": "shared-note",
+      "target": "note-chain",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "Backoff",
+      "direction": "both",
+      "stroke": "dashed",
+      "path": "curved"
+    },
+    {
+      "id": "edge-14",
+      "source": "isolated-a",
+      "target": "isolated-b",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "See runbook",
+      "direction": "one-way",
+      "stroke": "dotted"
+    }
+  ]
+}
