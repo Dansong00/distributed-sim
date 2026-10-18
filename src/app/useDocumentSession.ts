@@ -229,6 +229,8 @@ export function useDocumentSession(store: DiagramStore) {
       };
       if (JSON.stringify(validateDiagram(allowed)) !== JSON.stringify(next))
         throw new Error("Cleanup may only change positions, container growth and attachment sides.");
+      // Retain live field order so normalization alone cannot dirty history.
+      next = allowed;
     } catch (error) {
       s.warning = `Cleanup not applied: ${error instanceof Error ? error.message : String(error)}`;
       emit(); return false;

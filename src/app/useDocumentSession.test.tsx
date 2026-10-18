@@ -7,8 +7,8 @@ import {
   DiagramConflictError,
   type DiagramStore,
 } from "../storage/diagram-store";
-import { duplicateSelection } from "../domain/operations";
-import { importDiagram } from "../domain/serialization";
+import { duplicateSelection, moveSelection, reparentMoved } from "../domain/operations";
+import { importDiagram, validateDiagram } from "../domain/serialization";
 import type { StoredDiagram } from "../domain/model";
 function fake() {
   const records = new Map<string, StoredDiagram>();
@@ -443,4 +443,52 @@ test('cleanup preparation failure retains pending text and recovery exports', as
   act(()=>edit(result.current,'Keep pending edit'));vi.mocked(store.save).mockRejectedValueOnce(new Error('quota'));
   await act(async()=>{await expect(result.current.prepareCleanup()).rejects.toThrow('quota');});
   expect(result.current.status).toBe('error');expect(JSON.parse(result.current.exportCurrent()).name).toBe('Keep pending edit');expect(result.current.busy).toBe(false);
+});
+
+
+test('no-op cleanup of a reparented live document preserves history, redo, generation and storage', async () => {
+  vi.useFakeTimers();
+  const { store, records } = fake();
+  const save = vi.mocked(store.save).getMockImplementation()!;
+  // Real storage normalizes records without replacing the live history object.
+  vi.mocked(store.save).mockImplementation((document, revision) => save(validateDiagram(document), revision));
+  const { result } = renderHook(() => useDocumentSession(store));
+  await act(async () => { await result.current.create('notes', 'Reparent cleanup'); });
+  const original = result.current.document!;
+  const container = original.nodes.find(node => node.kind === 'container')!;
+  const component = original.nodes.find(node => node.kind === 'component' && !node.parentId)!;
+  const selected = { nodeIds: [component.id], edgeIds: [] };
+  const moved = moveSelection(original, selected, {
+    x: container.position.x + 24 - component.position.x,
+    y: container.position.y + 24 - component.position.y,
+  });
+  act(() => {
+    result.current.dispatch({ type: 'preview', document: reparentMoved(moved, selected.nodeIds) });
+    result.current.dispatch({ type: 'commit' });
+    edit(result.current, 'Future name');
+    result.current.dispatch({ type: 'undo' });
+  });
+  expect(result.current.document!.nodes.find(node => node.id === component.id)?.parentId).toBe(container.id);
+  let snapshot!: Awaited<ReturnType<typeof result.current.prepareCleanup>>;
+  await act(async () => { snapshot = await result.current.prepareCleanup(); });
+  const before = result.current.history!;
+  const generation = result.current.generation;
+  const exported = result.current.exportCurrent();
+  const record = records.get(snapshot.document.id);
+  const saves = vi.mocked(store.save).mock.calls.length;
+  const read = vi.spyOn(store, 'get');
+  expect(before.past).toHaveLength(1);
+  expect(before.future).toHaveLength(1);
+  await act(async () => {
+    expect(await result.current.applyCleanup(snapshot, structuredClone(snapshot.document))).toBe(true);
+    await vi.advanceTimersByTimeAsync(401);
+  });
+  expect(read).toHaveBeenCalledOnce();
+  expect(result.current.history!.past).toBe(before.past);
+  expect(result.current.history!.future).toBe(before.future);
+  expect(result.current.generation).toBe(generation);
+  expect(result.current.status).toBe('saved');
+  expect(result.current.exportCurrent()).toBe(exported);
+  expect(vi.mocked(store.save)).toHaveBeenCalledTimes(saves);
+  expect(records.get(snapshot.document.id)).toBe(record);
 });
