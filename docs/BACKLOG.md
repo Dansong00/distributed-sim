@@ -1,8 +1,17 @@
 # Product backlog
 
-Updated: 2026-10-16. This is the feature/status index, not a promise of delivery dates. Detailed agreed behavior lives in the [canvas spec](superpowers/specs/2026-10-15-canvas-design.md); completed implementation history lives in the [original plan](superpowers/plans/2026-10-15-canvas.md). Update this list as decisions change or features ship.
+Updated: 2026-10-18. This is the feature/status index, not a promise of delivery dates. Detailed agreed behavior lives in the [canvas spec](superpowers/specs/2026-10-15-canvas-design.md); completed implementation history lives in the [original plan](superpowers/plans/2026-10-15-canvas.md). Update this list as decisions change or features ship.
 
-## Current focus — sticky connections, remembered defaults and AI catalog
+## Current focus — automatic diagram cleanup
+
+Status: interaction concept approved; [written design](superpowers/specs/2026-10-18-auto-layout-design.md) awaiting review. Implementation has not started.
+
+- [x] Agree free rearrangement, preview with Apply/Cancel, one-step undo and movable connector attachment sides.
+- [x] Agree connected notes follow components and unconnected notes use a notes area.
+- [ ] Review written edge-case behavior for containers, multiply attached notes, cycles and preview persistence.
+- [ ] After design review, write the implementation plan and choose execution method.
+
+## Implemented — sticky connections, remembered defaults and AI catalog
 
 Status: implemented on `feat/sticky-connections-ai-catalog`; awaiting merge and deployment. See the [updated requirements](superpowers/specs/2026-10-15-canvas-design.md#sticky-connections-remembered-defaults-and-ai-catalog--2026-10-16).
 
