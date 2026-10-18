@@ -4,12 +4,13 @@ Updated: 2026-10-18. This is the feature/status index, not a promise of delivery
 
 ## Current focus — automatic diagram cleanup
 
-Status: interaction concept approved; [written design](superpowers/specs/2026-10-18-auto-layout-design.md) awaiting review. Implementation has not started.
+Status: [written design](superpowers/specs/2026-10-18-auto-layout-design.md) approved; [implementation plan](superpowers/plans/2026-10-18-auto-layout.md) awaiting review. Implementation has not started.
 
 - [x] Agree free rearrangement, preview with Apply/Cancel, one-step undo and movable connector attachment sides.
 - [x] Agree connected notes follow components and unconnected notes use a notes area.
-- [ ] Review written edge-case behavior for containers, multiply attached notes, cycles and preview persistence.
-- [ ] After design review, write the implementation plan and choose execution method.
+- [x] Review written edge-case behavior for containers, multiply attached notes, cycles and preview persistence.
+- [x] Write and self-review the implementation plan; retain the user’s subagent-driven execution preference.
+- [ ] User reviews the plan before implementation begins.
 
 ## Implemented — sticky connections, remembered defaults and AI catalog
 

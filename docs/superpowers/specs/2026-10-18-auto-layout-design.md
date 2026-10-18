@@ -1,6 +1,6 @@
 # Automatic diagram cleanup
 
-Status: interaction concept approved in chat; written design awaiting review. No implementation authorized by this document alone.
+Status: written design approved by the user on 2026-10-18. The [implementation plan](../plans/2026-10-18-auto-layout.md) is written and awaiting review before execution.
 
 ## Goal and agreed behavior
 
