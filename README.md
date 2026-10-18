@@ -65,3 +65,9 @@ Diagrams autosave to IndexedDB in this browser and origin on this device. There 
 The editor rejects an entire edit before applying it if it would exceed 500 elements, 1,000 connections, or the 5 MiB portable JSON limit, preserving existing work and history. Imports accept schema version 1 and are limited to 5 MiB, 500 elements and 1,000 connections. Names, technology strings and connection labels allow 200 characters; notes/descriptions allow 10,000. Coordinates must be finite and within ±1,000,000; nesting containers is unsupported. Unknown technologies use category icons. All icons are bundled locally; seven technology marks come from [Simple Icons](https://simpleicons.org/) 16.35.0 under CC0 (see `src/assets/technology/LICENSE.txt`); other icons use lucide-react. Brand names and marks belong to their respective owners.
 
 Validation covers Chromium keyboard workflows, modal focus, responsive panels, inert imported text, editing, persistence and revision conflicts. It is not a complete accessibility audit, cross-browser certification or performance benchmark. Touch/mobile editing has not been validated.
+
+Automatic diagram cleanup uses the typed bundled entry of **elkjs 0.12.0**, pinned
+in `package-lock.json`, under **EPL-2.0 OR GPL-3.0-or-later** (see
+`node_modules/elkjs/LICENSE.md`). Its layered compound layout runs locally and
+preserves container membership; the adapter discards routing bend points so the
+existing connector styles remain authoritative.
