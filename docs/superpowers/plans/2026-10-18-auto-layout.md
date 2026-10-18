@@ -8,7 +8,7 @@
 
 **Tech Stack:** Existing React/TypeScript/Vite, React Flow, IndexedDB, Vitest and Playwright; one proposed runtime dependency, `elkjs`, with a tested exact version recorded in the lockfile during Task 1.
 
-**Spec:** [Approved cleanup design](../specs/2026-10-18-auto-layout-design.md). User approved the written spec on 2026-10-18. Implementation and browser acceptance complete on `feat/auto-layout`; final branch review and publication pending.
+**Spec:** [Approved cleanup design](../specs/2026-10-18-auto-layout-design.md). User approved the written spec on 2026-10-18. Implementation, acceptance and independent final review complete on `feat/auto-layout`; ready for merge review.
 
 ## Global Constraints
 
@@ -96,7 +96,7 @@ Each task review and the final branch review must follow [the repository review 
 
 ### Review log
 
-Record reviewed commit/diff, actionable findings and their dispositions, or an explicit no-findings result. These entries are pending, not evidence that review has run.
+Record reviewed commit/diff, actionable findings and their dispositions, or an explicit no-findings result. Completed independent review results are recorded below.
 
 | Checkpoint | Correctness/spec review | Ponytail complexity review | Findings/disposition and evidence |
 | --- | --- | --- | --- |
@@ -104,7 +104,7 @@ Record reviewed commit/diff, actionable findings and their dispositions, or an e
 | Task 2 | Passed | No actionable complexity findings | `b294a9c`; independent lifecycle review; 148 unit tests and build passed. |
 | Task 3 | Passed after fix | No actionable complexity findings (AGENTS fallback) | `5d789ad` + `556fc7c`; fixed no-op after reparenting; 171 full unit tests, 31 focused tests after fix, typecheck/build; scoped rereview passed. |
 | Task 4 | Passed | No actionable complexity findings (AGENTS fallback) | `fb03a20`; independent review; 172 unit and 53 Chromium tests, typecheck, default/prefix builds and real production worker smoke passed. Worker compatibility choices reviewed and retained for reproduced failures. |
-| Final branch | Pending | Pending | — |
+| Final branch | Passed | No actionable complexity findings (AGENTS fallback) | Independent review of `877f164..af17e31` covered all five risks, prior fix and ELK/Vite compatibility decisions. No additional test reruns needed. |
 
 Self-review: all approved spec sections map to the four tasks. Container growth precedes outer placement; output preserves renderer-compatible geometry; preview storage isolation and clean-tab revision checks are explicit. Execution began after user approval; task review evidence is recorded above.
 

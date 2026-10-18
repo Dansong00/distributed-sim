@@ -4,7 +4,7 @@ Updated: 2026-10-18. This is the feature/status index, not a promise of delivery
 
 ## Current focus — automatic diagram cleanup
 
-Status: [written design](superpowers/specs/2026-10-18-auto-layout-design.md) approved; [implementation plan](superpowers/plans/2026-10-18-auto-layout.md) approved. Implementation and acceptance checks are complete on `feat/auto-layout`; final review and publication pending.
+Status: [written design](superpowers/specs/2026-10-18-auto-layout-design.md) approved; [implementation plan](superpowers/plans/2026-10-18-auto-layout.md) approved. Implementation and acceptance checks are complete on `feat/auto-layout`; independent final review passed; awaiting merge.
 
 - [x] Agree free rearrangement, preview with Apply/Cancel, one-step undo and movable connector attachment sides.
 - [x] Agree connected notes follow components and unconnected notes use a notes area.
