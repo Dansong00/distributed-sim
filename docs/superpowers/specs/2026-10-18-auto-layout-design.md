@@ -1,6 +1,6 @@
 # Automatic diagram cleanup
 
-Status: written design approved by the user on 2026-10-18. The [implementation plan](../plans/2026-10-18-auto-layout.md) is written and awaiting review before execution.
+Status: written design approved by the user on 2026-10-18. The [implementation plan](../plans/2026-10-18-auto-layout.md) is approved; implementation and acceptance checks are complete on `feat/auto-layout`; final review and publication pending.
 
 ## Goal and agreed behavior
 

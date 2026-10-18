@@ -49,7 +49,7 @@ Single-click selects a component and displays its properties. Dragging moves it 
 
 ## Sticky connections, remembered defaults and AI catalog — 2026-10-16
 
-Status: implemented on `feat/sticky-connections-ai-catalog`; awaiting merge and deployment. These requirements supersede the component-only endpoints and fixed solid/elbow defaults recorded in the earlier connector follow-up.
+Status: merged into main via PR #7 (`5e90a02`). These requirements supersede the component-only endpoints and fixed solid/elbow defaults recorded in the earlier connector follow-up.
 
 - Reuse the same generic connector for component↔component, sticky↔sticky and component↔sticky links, in either direction. Sticky notes expose top/right/bottom/left handles. Multiple links and self-loops remain supported.
 - Handles stay attached when a note moves, resizes or grows with text. Connection handles and resize controls must not compete for the same pointer target. Connected notes retain square corner grips and edge resizing away from the round midpoint connection handles.
