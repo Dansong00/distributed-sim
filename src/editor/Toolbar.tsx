@@ -1,3 +1,4 @@
+import type { Ref } from "react";
 export function Toolbar({
   tool,
   onTool,
@@ -9,6 +10,13 @@ export function Toolbar({
   canDuplicate,
   onDelete,
   onDuplicate,
+  cleanupBusy,
+  cleanupButtonRef,
+  cleanupPhase,
+  canCleanUp,
+  onCleanUp,
+  onApplyCleanup,
+  onCancelCleanup,
 }: {
   tool: "select" | "pan";
   onTool: (tool: "select" | "pan") => void;
@@ -20,6 +28,13 @@ export function Toolbar({
   canDuplicate: boolean;
   onDelete: () => void;
   onDuplicate: () => void;
+  cleanupBusy: boolean;
+  cleanupButtonRef: Ref<HTMLButtonElement>;
+  cleanupPhase: "idle" | "preparing" | "calculating" | "preview";
+  canCleanUp: boolean;
+  onCleanUp: () => void;
+  onApplyCleanup: () => void;
+  onCancelCleanup: () => void;
 }) {
   return (
     <div className="editor-toolbar" role="toolbar" aria-label="Canvas tools">
@@ -43,6 +58,15 @@ export function Toolbar({
       <button disabled={!canDelete} onClick={onDelete}>
         Delete
       </button>
+      <span />
+      <button ref={cleanupButtonRef} disabled={!canCleanUp} onClick={onCleanUp}>Clean up</button>
+      {cleanupPhase !== "idle" && <>
+        <span className="cleanup-status" role="status" aria-live="polite">
+          {cleanupPhase === "preview" ? "Preview cleanup" : "Arranging…"}
+        </span>
+        {cleanupPhase === "preview" && <button className="primary" disabled={cleanupBusy} onClick={onApplyCleanup}>Apply</button>}
+        <button disabled={cleanupBusy && cleanupPhase === "preview"} onClick={onCancelCleanup}>Cancel</button>
+      </>}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Boxes } from "lucide-react";
 import { createDiagramStore } from "../storage/diagram-store";
 import { useDocumentSession } from "./useDocumentSession";
@@ -9,6 +9,9 @@ import { deleteSelection, duplicateSelection } from "../domain/operations";
 import { Canvas, type CanvasHandle } from "../editor/Canvas";
 import { Palette } from "../editor/Palette";
 import { Inspector } from "../editor/Inspector";
+import { useAutoLayout } from "../editor/useAutoLayout";
+import type { HistoryAction } from "../domain/history";
+import type { Viewport } from "../domain/model";
 import { Toolbar } from "../editor/Toolbar";
 import { ConnectorPreferencesContext, readConnectorPreferences, saveConnectorPreferences, type ConnectorPreferences } from "../editor/connector-preferences";
 const store = createDiagramStore();
@@ -20,7 +23,19 @@ export function App() {
     saveConnectorPreferences(next);
   };
   const session = useDocumentSession(store);
-  const { document, history, dispatch, selection, setSelection } = session;
+  const { document, history, selection, setSelection } = session;
+  const layout = useAutoLayout();
+  const [preparing, setPreparing] = useState(false);
+  const [gesture, setGesture] = useState(false);
+  const cleanupButton = useRef<HTMLButtonElement>(null);
+  const cleanupLock = useRef(false);
+  const cleanupRequest = useRef(0);
+  const originalViewport = useRef<Viewport | null>(null);
+  const previewViewport = useRef<Viewport | null>(null);
+  const applying = useRef(false);
+  const locked = preparing || layout.phase !== "idle";
+  const blocked = locked || session.busy;
+  const dispatch = (action: HistoryAction) => cleanupLock.current ? false : session.dispatch(action);
   const [modal, setModal] = useState<
     "new" | "rename" | "delete" | "reload" | "discard" | null
   >(null);
@@ -29,6 +44,7 @@ export function App() {
   const [error, setError] = useState("");
   const input = useRef<HTMLInputElement>(null);
   async function run(action: () => Promise<unknown>, close = true) {
+    if (cleanupLock.current) return;
     setError("");
     try {
       await action();
@@ -39,6 +55,7 @@ export function App() {
     }
   }
   function download() {
+    if (cleanupLock.current) return;
     try {
       const blob = new Blob([session.exportCurrent()], {
         type: "application/json",
@@ -55,8 +72,89 @@ export function App() {
   }
   const [tool, setTool] = useState<"select" | "pan">("select");
   const canvas = useRef<CanvasHandle>(null);
+  function finishCleanup(restore: boolean) {
+    cleanupRequest.current++;
+    if (restore && originalViewport.current) canvas.current?.setViewport(originalViewport.current);
+    originalViewport.current = null;
+    previewViewport.current = null;
+    cleanupLock.current = false;
+    setPreparing(false);
+    layout.cancel();
+  }
+  async function cleanUp() {
+    if (cleanupLock.current || session.busy || gesture || !document?.nodes.length ||
+      session.status === "error" || session.status === "conflict") return;
+    // Blur synchronously to finish a valid inspector text transaction first.
+    if (window.document.activeElement instanceof HTMLElement) window.document.activeElement.blur();
+    cleanupLock.current = true;
+    const request = ++cleanupRequest.current;
+    originalViewport.current = { ...document.viewport };
+    previewViewport.current = { ...document.viewport };
+    setError("");
+    setPreparing(true);
+    try {
+      const snapshot = await session.prepareCleanup();
+      if (cleanupRequest.current !== request) return;
+      originalViewport.current = snapshot.document.viewport;
+      previewViewport.current = snapshot.document.viewport;
+      layout.start(snapshot);
+    } catch (error) {
+      if (cleanupRequest.current === request) {
+        setError(error instanceof Error ? error.message : String(error));
+        finishCleanup(true);
+      }
+    } finally {
+      if (cleanupRequest.current === request) setPreparing(false);
+    }
+  }
+  async function applyCleanup() {
+    if (!cleanupLock.current || !layout.snapshot || !layout.candidate || applying.current) return;
+    applying.current = true;
+    try {
+      const applied = await session.applyCleanup(layout.snapshot, layout.candidate);
+      if (applied) {
+        if (previewViewport.current) session.dispatch({ type: "viewport", viewport: previewViewport.current });
+        finishCleanup(false);
+      }
+    } finally { applying.current = false; }
+  }
+  useEffect(() => {
+    if (layout.candidate) canvas.current?.fit();
+  }, [layout.candidate]);
+  useEffect(() => {
+    if (!layout.snapshot) return;
+    if (session.status === "error" || session.status === "conflict") {
+      finishCleanup(layout.snapshot.installation === session.installation);
+      return;
+    }
+    if (!applying.current && (layout.snapshot.installation !== session.installation ||
+      layout.snapshot.generation !== session.generation))
+      finishCleanup(layout.snapshot.installation === session.installation);
+  }, [session.installation, session.generation, session.status, layout.snapshot, session.busy]);
+  useEffect(() => {
+    if (layout.error) { setError(layout.error); finishCleanup(true); }
+  }, [layout.error]);
+  useEffect(() => {
+    if (!locked) return;
+    const escape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || applying.current) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      finishCleanup(true);
+    };
+    window.addEventListener("keydown", escape, true);
+    return () => window.removeEventListener("keydown", escape, true);
+  }, [locked]);
+  const previouslyBlocked = useRef(false);
+  useEffect(() => {
+    if (locked) previouslyBlocked.current = true;
+    if (previouslyBlocked.current && !blocked) {
+      cleanupButton.current?.focus();
+      previouslyBlocked.current = false;
+    }
+  }, [blocked, locked]);
   const remove = () => {
-    if (!document) return;
+    if (!document || cleanupLock.current) return;
     dispatch({
       type: "preview",
       document: deleteSelection(document, selection),
@@ -65,7 +163,7 @@ export function App() {
     setSelection({ nodeIds: [], edgeIds: [] });
   };
   const duplicate = () => {
-    if (!document) return;
+    if (!document || cleanupLock.current) return;
     const result = duplicateSelection(document, selection);
     if (!dispatch({ type: "preview", document: result.document })) return;
     dispatch({ type: "commit" });
@@ -78,7 +176,7 @@ export function App() {
         <button
           className="brand"
           onClick={() => void run(() => session.showPicker())}
-          disabled={session.busy}
+          disabled={blocked}
         >
           <span>
             <Boxes size={22} />
@@ -102,18 +200,18 @@ export function App() {
                       : "Save failed — edits kept"}
               </span>
               <button
-                disabled={session.busy}
+                disabled={blocked}
                 onClick={() => void run(() => session.showPicker())}
               >
                 Diagrams
               </button>
             </>
           )}
-          <button disabled={session.busy} onClick={() => setModal("new")}>
+          <button disabled={blocked} onClick={() => { if (!cleanupLock.current) setModal("new"); }}>
             New diagram
           </button>
           <button
-            disabled={session.busy}
+            disabled={blocked}
             onClick={() => input.current?.click()}
           >
             Import JSON
@@ -121,7 +219,7 @@ export function App() {
           {document && (
             <>
               <button
-                disabled={session.busy}
+                disabled={blocked}
                 onClick={() => {
                   setName(document.name);
                   setModal("rename");
@@ -131,15 +229,15 @@ export function App() {
                 Rename
               </button>
               <button
-                disabled={session.busy}
+                disabled={blocked}
                 onClick={() => void run(() => session.duplicate())}
                 aria-label="Duplicate diagram"
               >
                 Make a copy
               </button>
-              <button onClick={download}>Export JSON</button>
+              <button disabled={blocked} onClick={download}>Export JSON</button>
               <button
-                disabled={session.busy}
+                disabled={blocked}
                 onClick={() => setModal("delete")}
                 aria-label="Delete diagram"
               >
@@ -156,7 +254,7 @@ export function App() {
             onChange={(event) => {
               const file = event.target.files?.[0];
               event.target.value = "";
-              if (file) void run(() => session.importFile(file));
+              if (file && !cleanupLock.current) void run(() => session.importFile(file));
             }}
           />
         </div>
@@ -168,26 +266,26 @@ export function App() {
             document && (
               <div className="recovery-actions">
                 <button
-                  disabled={session.busy}
+                  disabled={blocked}
                   onClick={() => void run(() => session.retrySave())}
                 >
                   Retry save
                 </button>
                 <button
-                  disabled={session.busy}
+                  disabled={blocked}
                   onClick={() => void run(() => session.saveAsCopy())}
                 >
                   Save as copy
                 </button>
-                <button onClick={download}>Export JSON</button>
+                <button disabled={blocked} onClick={download}>Export JSON</button>
                 <button
-                  disabled={session.busy}
+                  disabled={blocked}
                   onClick={() => setModal("reload")}
                 >
                   Reload stored version
                 </button>
                 <button
-                  disabled={session.busy}
+                  disabled={blocked}
                   onClick={() => setModal("discard")}
                 >
                   Discard edits and leave
@@ -236,7 +334,7 @@ export function App() {
       ) : (
         <div
           className={`workspace panel-${panel ?? "none"}`}
-          inert={session.busy}
+          inert={session.busy && !locked}
         >
           <nav className="panel-switches" aria-label="Editor panels">
             <button
@@ -258,34 +356,44 @@ export function App() {
               Properties
             </button>
           </nav>
-          <Palette onAdd={(id) => canvas.current?.add(id)} />
+          <Palette disabled={blocked} onAdd={(id) => { if (!cleanupLock.current) canvas.current?.add(id); }} />
           <main>
             <Toolbar
               tool={tool}
               onTool={setTool}
               undo={() => dispatch({ type: "undo" })}
               redo={() => dispatch({ type: "redo" })}
-              canUndo={history!.past.length > 0}
-              canRedo={history!.future.length > 0}
-              canDelete={
+              canUndo={!blocked && history!.past.length > 0}
+              canRedo={!blocked && history!.future.length > 0}
+              canDelete={!blocked && (
                 document.nodes.some((node) =>
                   selection.nodeIds.includes(node.id),
                 ) ||
                 document.edges.some((edge) =>
                   selection.edgeIds.includes(edge.id),
-                )
+                ))
               }
-              canDuplicate={document.nodes.some((node) =>
+              canDuplicate={!blocked && document.nodes.some((node) =>
                 selection.nodeIds.includes(node.id),
               )}
               onDelete={remove}
               onDuplicate={duplicate}
+              cleanupBusy={session.busy}
+              cleanupButtonRef={cleanupButton}
+              cleanupPhase={preparing ? "preparing" : layout.phase}
+              canCleanUp={!blocked && !gesture && document.nodes.length > 0 && session.status !== "error" && session.status !== "conflict"}
+              onCleanUp={() => void cleanUp()}
+              onApplyCleanup={() => void applyCleanup()}
+              onCancelCleanup={() => { if (!applying.current) finishCleanup(true); }}
             />
             <Canvas
               key={session.installation}
               fitOnMount={session.fitOnOpen}
               ref={canvas}
-              document={document}
+              document={layout.candidate ?? document}
+              readOnly={blocked}
+              onPreviewViewport={(viewport) => { if (cleanupLock.current) previewViewport.current = viewport; }}
+              onGestureChange={setGesture}
               selection={selection}
               tool={tool}
               onSelectionChange={setSelection}
@@ -299,8 +407,8 @@ export function App() {
               </span>
             </div>
           </main>
-          <Inspector
-            onConnectorSetting={rememberConnectorPreferences}
+          <Inspector disabled={blocked}
+            onConnectorSetting={(patch) => { if (!cleanupLock.current) rememberConnectorPreferences(patch); }}
             document={document}
             selection={selection}
             dispatch={dispatch}
@@ -364,12 +472,12 @@ export function App() {
             Export a backup first if you need it.
           </p>
           <div className="dialog-actions">
-            <button disabled={session.busy} onClick={() => setModal(null)}>
+            <button disabled={blocked} onClick={() => setModal(null)}>
               Cancel
             </button>
             <button
               className="danger"
-              disabled={session.busy}
+              disabled={blocked}
               onClick={() => void run(() => session.remove(document.id))}
             >
               Delete permanently
@@ -389,12 +497,12 @@ export function App() {
             copy to keep them.
           </p>
           <div className="dialog-actions">
-            <button disabled={session.busy} onClick={() => setModal(null)}>
+            <button disabled={blocked} onClick={() => setModal(null)}>
               Cancel
             </button>
             <button
               className="danger"
-              disabled={session.busy}
+              disabled={blocked}
               onClick={() =>
                 void run(() =>
                   modal === "reload"

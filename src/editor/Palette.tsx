@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { categories, presets } from "../domain/catalog";
-export function Palette({ onAdd }: { onAdd: (id: string) => void }) {
+export function Palette({ onAdd, disabled = false }: { onAdd: (id: string) => void; disabled?: boolean }) {
   const [query, setQuery] = useState("");
   const item = (id: string, label: string) => (
     <button
@@ -17,7 +17,7 @@ export function Palette({ onAdd }: { onAdd: (id: string) => void }) {
     </button>
   );
   return (
-    <aside className="palette">
+    <aside className="palette" inert={disabled}>
       <div className="panel-heading">
         <span>YOUR BUILDING BLOCKS</span>
         <h1>Components</h1>

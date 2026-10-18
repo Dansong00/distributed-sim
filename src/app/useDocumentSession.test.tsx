@@ -317,3 +317,130 @@ test("undo cannot restore oversized content under a newer viewport", async () =>
   expect(result.current.history).toBe(before);
   expect(() => importDiagram(result.current.exportCurrent())).not.toThrow();
 });
+
+const rearrange = (document: import('../domain/model').Diagram) => ({
+  ...structuredClone(document),
+  nodes: document.nodes.map(n => ({ ...n, position: { x: n.position.x + 120, y: n.position.y + 80 } })),
+  edges: document.edges.map(e => ({ ...e, sourceHandle: 'bottom', targetHandle: 'top' })),
+});
+test('cleanup preparation commits pending edits, flushes original only, and clones its snapshot', async () => {
+  const {store, records} = fake();
+  const {result} = renderHook(() => useDocumentSession(store));
+  await act(async () => { await result.current.create('web', 'Cleanup'); });
+  act(() => { result.current.dispatch({type:'preview', document:{...result.current.document!, name:'Finished text'}}); });
+  let snapshot!: Awaited<ReturnType<typeof result.current.prepareCleanup>>;
+  await act(async () => { snapshot = await result.current.prepareCleanup(); });
+  expect(result.current.history?.transaction).toBeNull();
+  expect(records.get(snapshot.document.id)?.document.name).toBe('Finished text');
+  const candidate = rearrange(snapshot.document);
+  expect(records.get(snapshot.document.id)?.document.nodes[0].position).not.toEqual(candidate.nodes[0].position);
+  snapshot.document.nodes[0].position.x += 1;
+  expect(result.current.document?.nodes[0].position.x).not.toBe(snapshot.document.nodes[0].position.x);
+});
+test('cleanup Apply is one history step with geometry and handles; no-op adds none', async () => {
+  const {store} = fake(); const {result} = renderHook(() => useDocumentSession(store));
+  await act(async () => { await result.current.create('web', 'Cleanup'); });
+  let snapshot!: Awaited<ReturnType<typeof result.current.prepareCleanup>>;
+  await act(async () => { snapshot = await result.current.prepareCleanup(); });
+  await act(async () => { expect(await result.current.applyCleanup(snapshot, structuredClone(snapshot.document))).toBe(true); });
+  expect(result.current.history?.past).toHaveLength(0);
+  const candidate = rearrange(snapshot.document);
+  await act(async () => { expect(await result.current.applyCleanup(snapshot,candidate)).toBe(true); });
+  expect(result.current.history?.past).toHaveLength(1);
+  expect(result.current.document?.nodes).toEqual(candidate.nodes);
+  act(() => { result.current.dispatch({type:'undo'}); });
+  expect(result.current.document?.nodes).toEqual(snapshot.document.nodes);
+  expect(result.current.document?.edges).toEqual(snapshot.document.edges);
+  act(() => { result.current.dispatch({type:'redo'}); });
+  expect(result.current.document?.edges).toEqual(candidate.edges);
+});
+test.each(['changed', 'deleted'] as const)('cleanup detects a %s stored record even in a locally clean tab', async mode => {
+  const {store,records} = fake(); const {result} = renderHook(() => useDocumentSession(store));
+  await act(async () => { await result.current.create('web','Cleanup'); });
+  let snapshot!: Awaited<ReturnType<typeof result.current.prepareCleanup>>;
+  await act(async () => { snapshot = await result.current.prepareCleanup(); });
+  if(mode === 'changed') records.set(snapshot.document.id,{document:snapshot.document,revision:2}); else records.delete(snapshot.document.id);
+  await act(async () => { expect(await result.current.applyCleanup(snapshot,rearrange(snapshot.document))).toBe(false); });
+  expect(result.current.status).toBe('conflict'); expect(result.current.document).toEqual(snapshot.document);
+  expect(result.current.history?.past).toHaveLength(0);
+});
+test('cleanup rejects stale generations and installations without changing the live document', async () => {
+  const {store} = fake(); const {result} = renderHook(() => useDocumentSession(store));
+  await act(async () => { await result.current.create('web','Cleanup'); });
+  let snapshot!: Awaited<ReturnType<typeof result.current.prepareCleanup>>;
+  await act(async () => { snapshot = await result.current.prepareCleanup(); });
+  act(() => edit(result.current,'New content'));
+  await act(async () => { expect(await result.current.applyCleanup(snapshot,rearrange(snapshot.document))).toBe(false); });
+  expect(result.current.document?.name).toBe('New content');
+  await act(async () => { await result.current.open(snapshot.document.id); });
+  await act(async () => { expect(await result.current.applyCleanup(snapshot,rearrange(snapshot.document))).toBe(false); });
+  expect(result.current.warning).toContain('Cleanup not applied');
+});
+test.each(['text','parent','edge','note size'] as const)('cleanup rejects schema-valid semantic changes: %s', async mode => {
+  const {store} = fake(); const {result} = renderHook(() => useDocumentSession(store));
+  await act(async () => { await result.current.create('notes','Cleanup'); });
+  let snapshot!: Awaited<ReturnType<typeof result.current.prepareCleanup>>;
+  await act(async () => { snapshot = await result.current.prepareCleanup(); });
+  const candidate = rearrange(snapshot.document);
+  if(mode === 'text') candidate.nodes[0].name = 'Injected';
+  if(mode === 'parent') candidate.nodes.find(n=>n.parentId)!.parentId = undefined;
+  if(mode === 'edge') candidate.edges[0].direction = candidate.edges[0].direction === 'both' ? 'one-way' : 'both';
+  if(mode === 'note size') candidate.nodes.find(n=>n.kind === 'sticky')!.width += 20;
+  await act(async () => { expect(await result.current.applyCleanup(snapshot,candidate)).toBe(false); });
+  expect(result.current.document).toEqual(snapshot.document); expect(result.current.history?.past).toHaveLength(0);
+});
+test('cleanup freezes competing edits during its stored revision read', async () => {
+  const {store, records} = fake(); const {result} = renderHook(() => useDocumentSession(store));
+  await act(async () => { await result.current.create('web','Cleanup'); });
+  let snapshot!: Awaited<ReturnType<typeof result.current.prepareCleanup>>;
+  await act(async () => { snapshot = await result.current.prepareCleanup(); });
+  const read = deferred<StoredDiagram | undefined>(); vi.spyOn(store,'get').mockImplementationOnce(()=>read.promise);
+  let applying!: Promise<boolean>;
+  await act(async () => { applying = result.current.applyCleanup(snapshot,rearrange(snapshot.document)); });
+  act(() => edit(result.current,'Competing edit'));
+  expect(result.current.document?.name).toBe('Cleanup');
+  await act(async () => { read.resolve(records.get(snapshot.document.id)); expect(await applying).toBe(true); });
+});
+test('cleanup save failure keeps applied memory available for export and save-as-copy', async () => {
+  const {store} = fake(); const {result} = renderHook(() => useDocumentSession(store));
+  await act(async () => { await result.current.create('web','Cleanup'); });
+  let snapshot!: Awaited<ReturnType<typeof result.current.prepareCleanup>>;
+  await act(async () => { snapshot = await result.current.prepareCleanup(); });
+  const candidate = rearrange(snapshot.document);
+  await act(async () => { expect(await result.current.applyCleanup(snapshot,candidate)).toBe(true); });
+  vi.mocked(store.save).mockRejectedValueOnce(new Error('quota'));
+  await act(async () => { await expect(result.current.retrySave()).rejects.toThrow('quota'); });
+  expect(result.current.status).toBe('error'); expect(JSON.parse(result.current.exportCurrent()).nodes).toEqual(JSON.parse(JSON.stringify(candidate.nodes)));
+  await act(async () => { await result.current.saveAsCopy(); });
+  expect(result.current.document?.id).not.toBe(snapshot.document.id); expect(result.current.document?.nodes).toEqual(candidate.nodes);
+});
+
+test('cleanup preparation detects remote changes before starting a job', async () => {
+  const {store,records} = fake();const {result}=renderHook(()=>useDocumentSession(store));
+  await act(async()=>{await result.current.create('web','Original');});
+  const original=result.current.document!;
+  records.set(original.id,{document:{...original,name:'Remote'},revision:2});
+  await act(async()=>{await expect(result.current.prepareCleanup()).rejects.toBeInstanceOf(DiagramConflictError);});
+  expect(result.current.status).toBe('conflict');expect(result.current.document).toBe(original);
+});
+test('cleanup preparation waits for the current save and freezes edits until its snapshot is checked', async () => {
+  vi.useFakeTimers();const {store,records}=fake();const {result}=renderHook(()=>useDocumentSession(store));
+  await act(async()=>{await result.current.create('web','Original');});
+  const pending=deferred<StoredDiagram>();vi.mocked(store.save).mockImplementationOnce(()=>pending.promise);
+  act(()=>edit(result.current,'Pending text'));
+  await act(async()=>{await vi.advanceTimersByTimeAsync(400);});
+  let preparing!: ReturnType<typeof result.current.prepareCleanup>;
+  await act(async()=>{preparing=result.current.prepareCleanup();});
+  expect(result.current.busy).toBe(true);
+  act(()=>edit(result.current,'Must stay frozen'));
+  const document=vi.mocked(store.save).mock.calls.at(-1)![0];
+  await act(async()=>{records.set(document.id,{document,revision:2});pending.resolve({document,revision:2});const snapshot=await preparing;expect(snapshot.document.name).toBe('Pending text');expect(snapshot.revision).toBe(2);});
+  expect(result.current.busy).toBe(false);expect(result.current.document?.name).toBe('Pending text');
+});
+test('cleanup preparation failure retains pending text and recovery exports', async () => {
+  const {store}=fake();const {result}=renderHook(()=>useDocumentSession(store));
+  await act(async()=>{await result.current.create('web','Original');});
+  act(()=>edit(result.current,'Keep pending edit'));vi.mocked(store.save).mockRejectedValueOnce(new Error('quota'));
+  await act(async()=>{await expect(result.current.prepareCleanup()).rejects.toThrow('quota');});
+  expect(result.current.status).toBe('error');expect(JSON.parse(result.current.exportCurrent()).name).toBe('Keep pending edit');expect(result.current.busy).toBe(false);
+});

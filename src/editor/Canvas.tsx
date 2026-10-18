@@ -18,7 +18,7 @@ import {
   useStoreApi,
   type NodeChange,
 } from "@xyflow/react";
-import type { Diagram, DiagramNode, Point, Selection } from "../domain/model";
+import type { Diagram, DiagramNode, Point, Selection, Viewport } from "../domain/model";
 import type { HistoryAction } from "../domain/history";
 import { createComponent } from "../domain/catalog";
 import {
@@ -40,10 +40,13 @@ const nodeTypes = {
   text: TextNode,
 };
 const edgeTypes = { diagram: DiagramConnection };
-export type CanvasHandle = { add: (id: string) => void; fit: () => void };
+export type CanvasHandle = { add: (id: string) => void; fit: () => void; setViewport: (viewport: Viewport) => void };
 export type CanvasProps = {
   document: Diagram;
   fitOnMount?: boolean;
+  readOnly?: boolean;
+  onPreviewViewport?: (viewport: Viewport) => void;
+  onGestureChange?: (active: boolean) => void;
   selection: Selection;
   tool: "select" | "pan";
   onSelectionChange: (selection: Selection) => void;
@@ -56,13 +59,18 @@ function Editor({
   selection,
   tool,
   onSelectionChange: notifySelection,
-  dispatch,
+  dispatch: send,
+  readOnly = false,
+  onPreviewViewport,
+  onGestureChange,
   ref,
 }: CanvasProps) {
+  const dispatch = (action: HistoryAction) => readOnly ? false : send(action);
   const connectorPreferences = useContext(ConnectorPreferencesContext);
   const selectionRef = useRef(selection);
   selectionRef.current = selection;
   const onSelectionChange = (next: Selection) => {
+    if (readOnly) return;
     selectionRef.current = next;
     notifySelection(next);
   };
@@ -85,6 +93,7 @@ function Editor({
     return true;
   };
   const add = (id: string, point?: Point) => {
+    if (readOnly) return;
     const bounds = wrapper.current!.getBoundingClientRect();
     const position =
       point ??
@@ -126,6 +135,7 @@ function Editor({
   useImperativeHandle(ref, () => ({
     add,
     fit: () => void flow.fitView({ padding: 0.17 }),
+    setViewport: (viewport) => { void flow.setViewport(viewport); },
   }));
   useEffect(() => {
     const down = (event: KeyboardEvent) => {
@@ -134,9 +144,11 @@ function Editor({
         (event.target instanceof Element && event.target.closest("dialog"))
       )
         return;
+      if (readOnly && event.key !== " ") return;
       const mod = event.metaKey || event.ctrlKey;
       const key = event.key.toLowerCase();
       if (key === " ") {
+        if (event.target instanceof Element && event.target.closest("button")) return;
         event.preventDefault();
         setSpace(true);
         return;
@@ -176,7 +188,19 @@ function Editor({
       window.removeEventListener("blur", blur);
     };
   }, [document, selection, dispatch, onSelectionChange, flow]);
+  useEffect(() => {
+    const end = () => onGestureChange?.(false);
+    window.addEventListener("pointerup", end);
+    window.addEventListener("pointercancel", end);
+    window.addEventListener("blur", end);
+    return () => {
+      window.removeEventListener("pointerup", end);
+      window.removeEventListener("pointercancel", end);
+      window.removeEventListener("blur", end);
+    };
+  }, [onGestureChange]);
   const changes = (changes: NodeChange[]) => {
+    if (readOnly) return;
     const selected = changes.filter((c) => c.type === "select");
     if (selected.length) {
       const ids = new Set(selectionRef.current.nodeIds);
@@ -235,6 +259,8 @@ function Editor({
       className="canvas"
       aria-label="Architecture canvas"
       onPointerDownCapture={(event) => {
+        if (readOnly) return;
+        onGestureChange?.(true);
         const target = event.target as Element;
         const control = target.closest(".react-flow__resize-control");
         const id = control?.closest(".react-flow__node")?.getAttribute("data-id");
@@ -247,10 +273,11 @@ function Editor({
       }}
       onDragOver={(e) => {
         e.preventDefault();
-        e.dataTransfer.dropEffect = "copy";
+        e.dataTransfer.dropEffect = readOnly ? "none" : "copy";
       }}
       onDrop={(e) => {
         e.preventDefault();
+        if (readOnly) return;
         const id = e.dataTransfer.getData("application/system-canvas");
         if (id)
           add(id, flow.screenToFlowPosition({ x: e.clientX, y: e.clientY }));
@@ -262,13 +289,15 @@ function Editor({
           // Preserve Flow's measured dimensions so controlled rerenders retain
           // its DOM-derived handle bounds (selection, autosave, pan and drag).
           measured: flow.getInternalNode(n.id)?.measured,
-          selected: selection.nodeIds.includes(n.id),
+          selected: !readOnly && selection.nodeIds.includes(n.id),
         }))}
         edges={toFlowEdges(document).map((e) => ({
           ...e,
-          selected: selection.edgeIds.includes(e.id),
+          selected: !readOnly && selection.edgeIds.includes(e.id),
         }))}
-        nodesDraggable={tool === "select" && !space}
+        nodesDraggable={!readOnly && tool === "select" && !space}
+        nodesConnectable={!readOnly}
+        elementsSelectable={!readOnly}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         connectionMode={ConnectionMode.Loose}
@@ -280,12 +309,13 @@ function Editor({
         fitViewOptions={{ padding: 0.17 }}
         deleteKeyCode={null}
         multiSelectionKeyCode="Shift"
-        selectionOnDrag={tool === "select" && !space}
-        panOnDrag={tool === "pan" || space ? true : [1]}
+        selectionOnDrag={!readOnly && tool === "select" && !space}
+        panOnDrag={readOnly || tool === "pan" || space ? true : [1]}
         panActivationKeyCode="Space"
         selectionKeyCode={null}
         onNodesChange={changes}
         onEdgesChange={(changes) => {
+          if (readOnly) return;
           if (!changes.some((change) => change.type === "select")) return;
           const ids = new Set(selectionRef.current.edgeIds);
           for (const change of changes) {
@@ -297,6 +327,7 @@ function Editor({
           onSelectionChange({ ...selectionRef.current, edgeIds: [...ids] });
         }}
         onNodeDragStart={(_, node) => {
+          if (readOnly) return;
           const selected = selection.nodeIds.includes(node.id)
             ? selection
             : { nodeIds: [node.id], edgeIds: [] };
@@ -310,6 +341,7 @@ function Editor({
           dispatch({ type: "begin" });
         }}
         onNodeDrag={(_, node, nodes) => {
+          if (readOnly) return;
           const origin = dragOrigin.current;
           if (origin) {
             const moving = nodes.find(n => n.id === origin.rootId) ?? (node.id === origin.rootId ? node : flow.getNode(origin.rootId));
@@ -323,6 +355,7 @@ function Editor({
           }
         }}
         onNodeDragStop={() => {
+          if (readOnly) return;
           const origin = dragOrigin.current;
           if (origin) {
             dispatch({
@@ -343,6 +376,7 @@ function Editor({
           }
         }}
         onConnect={(connection) => {
+          if (readOnly) return;
           if (!connection.source || !connection.target) return;
           if (
             ![connection.source, connection.target].every(
@@ -364,6 +398,7 @@ function Editor({
           onSelectionChange({ nodeIds: [], edgeIds: [edge.id] });
         }}
         onMove={(_, viewport) => {
+          if (readOnly) { onPreviewViewport?.(viewport); return; }
           if (dispatch({ type: "viewport", viewport }))
             latest.current = { ...latest.current, viewport };
           else void flow.setViewport(latest.current.viewport);

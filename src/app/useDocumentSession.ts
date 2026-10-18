@@ -6,9 +6,9 @@ import {
   type HistoryAction,
   type HistoryState,
 } from "../domain/history";
-import type { Diagram, Selection, StoredDiagram } from "../domain/model";
+import type { CleanupSnapshot, Diagram, Selection, StoredDiagram } from "../domain/model";
 import { createDiagram } from "../domain/templates";
-import { exportDiagram, importDiagram } from "../domain/serialization";
+import { exportDiagram, importDiagram, validateDiagram } from "../domain/serialization";
 import {
   DiagramConflictError,
   type DiagramStore,
@@ -127,9 +127,13 @@ export function useDocumentSession(store: DiagramStore) {
     }
   }
   function dispatch(action: HistoryAction) {
+    if (s.busy) return false;
+    return updateHistory(action);
+  }
+  function updateHistory(action: HistoryAction) {
     // Lifecycle writes freeze editing as well as the visible workspace. Global
     // keyboard handlers can still fire while a DOM subtree is inert.
-    if (!s.history || s.busy) return false;
+    if (!s.history) return false;
     if (action.type === "preview" || action.type === "replace")
       action = { ...action, document: growStickyNotes(action.document, s.history.present) };
     const next = historyReducer(s.history, action);
@@ -171,6 +175,73 @@ export function useDocumentSession(store: DiagramStore) {
       s.busy = false;
       emit();
     }
+  }
+  function matchesCleanup(snapshot: CleanupSnapshot) {
+    return s.history && s.installation === snapshot.installation &&
+      s.generation === snapshot.generation && s.revision === snapshot.revision &&
+      JSON.stringify(s.history.present) === JSON.stringify(snapshot.document);
+  }
+  async function checkCleanupRevision(snapshot: CleanupSnapshot) {
+    const record = await store.get(snapshot.document.id);
+    if (!matchesCleanup(snapshot)) throw new Error("The diagram changed during cleanup.");
+    if (record?.revision !== snapshot.revision)
+      throw new DiagramConflictError(snapshot.document.id, snapshot.revision, record?.revision ?? null);
+  }
+  const prepareCleanup = () => {
+    if (!s.history || s.busy || s.status === "error" || s.status === "conflict")
+      return Promise.reject(s.error ?? new Error("The diagram is not ready for cleanup."));
+    dispatch({ type: "commit" });
+    return lifecycle(async (): Promise<CleanupSnapshot> => {
+      const installation = s.installation;
+      const generation = s.generation;
+      try {
+        await flush();
+        if (!s.history || s.installation !== installation || s.generation !== generation)
+          throw new Error("The diagram changed during cleanup.");
+        const snapshot = structuredClone({ document: s.history.present, installation,
+          generation, revision: s.revision! });
+        await checkCleanupRevision(snapshot);
+        return snapshot;
+      } catch (error) { fail(error); throw error; }
+    });
+  };
+  async function applyCleanup(snapshot: CleanupSnapshot, candidate: Diagram): Promise<boolean> {
+    if (s.busy) return false;
+    // Own both arguments across the asynchronous revision check.
+    const captured = structuredClone(snapshot);
+    let next: Diagram;
+    try {
+      if (!matchesCleanup(captured) || s.status === "error" || s.status === "conflict")
+        throw new Error("The diagram changed during cleanup.");
+      next = validateDiagram(candidate);
+      exportDiagram(next);
+      const allowed: Diagram = { ...captured.document,
+        nodes: captured.document.nodes.map((node, index) => {
+          const proposed = next.nodes[index];
+          if (!proposed || proposed.id !== node.id) throw new Error("Cleanup must preserve every element.");
+          if (node.kind === "container" && (proposed.width < node.width || proposed.height < node.height))
+            throw new Error("Cleanup cannot shrink containers.");
+          return { ...node, position: proposed.position,
+            ...(node.kind === "container" ? {width: proposed.width, height: proposed.height} : {}) };
+        }),
+        edges: captured.document.edges.map((edge, index) => ({ ...edge,
+          sourceHandle: next.edges[index]?.sourceHandle, targetHandle: next.edges[index]?.targetHandle })),
+      };
+      if (JSON.stringify(validateDiagram(allowed)) !== JSON.stringify(next))
+        throw new Error("Cleanup may only change positions, container growth and attachment sides.");
+    } catch (error) {
+      s.warning = `Cleanup not applied: ${error instanceof Error ? error.message : String(error)}`;
+      emit(); return false;
+    }
+    return lifecycle(async () => {
+      try {
+        await checkCleanupRevision(captured);
+        // No await between the final snapshot check and this single content transaction.
+        if (!updateHistory({ type: "preview", document: next })) return false;
+        updateHistory({ type: "commit" });
+        return true;
+      } catch (error) { fail(error); return false; }
+    });
   }
   async function prepare(discard = false) {
     clearTimeout(timer.current);
@@ -310,6 +381,7 @@ export function useDocumentSession(store: DiagramStore) {
     },
     fitOnOpen: s.fitOnOpen,
     installation: s.installation,
+    generation: s.generation,
     status: s.status,
     error: s.error,
     records: s.records,
@@ -317,6 +389,8 @@ export function useDocumentSession(store: DiagramStore) {
     loading: s.loading,
     busy: s.busy,
     dispatch,
+    prepareCleanup,
+    applyCleanup,
     create,
     open,
     showPicker,
