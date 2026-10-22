@@ -39,3 +39,9 @@ export type Diagram = {
 };
 export type StoredDiagram = { document: Diagram; revision: number };
 export type Selection = { nodeIds: string[]; edgeIds: string[] };
+export type CleanupSnapshot = {
+  document: Diagram;
+  installation: number;
+  generation: number;
+  revision: number;
+};

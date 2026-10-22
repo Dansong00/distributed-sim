@@ -1,10 +1,20 @@
 # Product backlog
 
-Updated: 2026-10-16. This is the feature/status index, not a promise of delivery dates. Detailed agreed behavior lives in the [canvas spec](superpowers/specs/2026-10-15-canvas-design.md); completed implementation history lives in the [original plan](superpowers/plans/2026-10-15-canvas.md). Update this list as decisions change or features ship.
+Updated: 2026-10-18. This is the feature/status index, not a promise of delivery dates. Detailed agreed behavior lives in the [canvas spec](superpowers/specs/2026-10-15-canvas-design.md); completed implementation history lives in the [original plan](superpowers/plans/2026-10-15-canvas.md). Update this list as decisions change or features ship.
 
-## Current focus — sticky connections, remembered defaults and AI catalog
+## Current focus — automatic diagram cleanup
 
-Status: implemented on `feat/sticky-connections-ai-catalog`; awaiting merge and deployment. See the [updated requirements](superpowers/specs/2026-10-15-canvas-design.md#sticky-connections-remembered-defaults-and-ai-catalog--2026-10-16).
+Status: [written design](superpowers/specs/2026-10-18-auto-layout-design.md) approved; [implementation plan](superpowers/plans/2026-10-18-auto-layout.md) approved. Implementation and acceptance checks are complete on `feat/auto-layout`; independent final review passed; awaiting merge.
+
+- [x] Agree free rearrangement, preview with Apply/Cancel, one-step undo and movable connector attachment sides.
+- [x] Agree connected notes follow components and unconnected notes use a notes area.
+- [x] Review written edge-case behavior for containers, multiply attached notes, cycles and preview persistence.
+- [x] Write and self-review the implementation plan; retain the user’s subagent-driven execution preference.
+- [x] User reviews the plan before implementation begins.
+
+## Implemented — sticky connections, remembered defaults and AI catalog
+
+Status: merged into main via PR #7 (`5e90a02`). See the [updated requirements](superpowers/specs/2026-10-15-canvas-design.md#sticky-connections-remembered-defaults-and-ai-catalog--2026-10-16).
 
 - [x] Connect sticky notes to notes and components, preserving resize, persistence and undo/redo behavior.
 - [x] Start new connectors straight; remember the last explicitly edited stroke, path and direction across reloads/diagrams. Keep existing edges unchanged.

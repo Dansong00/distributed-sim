@@ -6,8 +6,10 @@ export function Inspector({
   selection,
   dispatch,
   onConnectorSetting,
+  disabled = false,
 }: {
   document: Diagram;
+  disabled?: boolean;
   selection: Selection;
   dispatch: (action: HistoryAction) => void;
   onConnectorSetting?: (patch: Partial<ConnectorPreferences>) => void;
@@ -17,7 +19,7 @@ export function Inspector({
   const edge = edges[0];
   if (!node && !edge)
     return (
-      <aside className="inspector">
+      <aside className="inspector" inert={disabled}>
         <h3>Properties</h3>
         <p>Select an element or connection to shape the details.</p>
       </aside>
@@ -81,7 +83,7 @@ export function Inspector({
     </select></label>;
   };
   return (
-    <aside className="inspector">
+    <aside className="inspector" inert={disabled}>
       <h3>
         {node
           ? node.kind === "component"
