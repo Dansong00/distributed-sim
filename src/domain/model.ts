@@ -23,6 +23,7 @@ export type DiagramEdge = {
   sourceHandle: string;
   targetHandle: string;
   label: string;
+  comments?: string;
   direction: "one-way" | "both";
   stroke?: "solid" | "dashed" | "dotted";
   path?: "straight" | "curved" | "elbow";

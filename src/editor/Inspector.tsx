@@ -122,6 +122,7 @@ export function Inspector({
       ) : edges.length === 1 ? (
         <>
           {field("Label", "label", edge!.label)}
+          {field("Comments", "comments", edge!.comments ?? "", true)}
           <label>
             Direction
             <select

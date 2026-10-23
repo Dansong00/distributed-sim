@@ -33,6 +33,45 @@ async function appearance(path: Locator) {
   return path.evaluate(el => { const s = getComputedStyle(el); return { stroke: s.stroke, width: Number(s.strokeWidth.replace('px','')), dash: s.strokeDasharray }; });
 }
 
+test('connector comments stay in Properties and survive undo, cleanup, reopen and JSON round trip', async ({ page }) => {
+  await open(page, true);
+  const before = await exported(page);
+  await selectEdge(page);
+  const comments = page.getByRole('textbox', { name: 'Comments', exact: true });
+  await expect(comments).toHaveValue('');
+  const text = 'Retry on failure.\n<img src=x onerror=alert(1)> Use exponential backoff.';
+  await comments.fill(text);
+  await comments.blur();
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect(comments).toHaveValue('');
+  await page.getByRole('button', { name: 'Redo', exact: true }).click();
+  await expect(comments).toHaveValue(text);
+  await expect(page.locator('.canvas').getByText(text, { exact: true })).toHaveCount(0);
+  const edited = await exported(page);
+  expect(edited.edges).toEqual([{ ...before.edges[0], comments: text }, before.edges[1]]);
+  await expect(page.getByRole('status')).toHaveText('Saved locally');
+  await page.reload();
+  await page.getByRole('button', { name: 'Open Connector settings', exact: true }).click();
+  await selectEdge(page);
+  await expect(comments).toHaveValue(text);
+  await page.screenshot({ path: '/tmp/connector-comments.png' });
+  await page.getByRole('button', { name: 'Clean up', exact: true }).click();
+  await expect(page.getByText('Preview cleanup', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Apply', exact: true }).click();
+  await expect(page.getByText('Preview cleanup', { exact: true })).toBeHidden();
+  await expect(page.locator('.save-status')).toHaveText('Saved locally');
+  const arranged = await exported(page);
+  expect(arranged.edges[0]).toMatchObject({ comments: text, label: before.edges[0].label });
+  await page.locator('input[type=file]').setInputFiles({ name: 'comments.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(arranged)) });
+  await expect(page.getByRole('status')).toHaveText('Saved locally');
+  await selectEdge(page);
+  await expect(comments).toHaveValue(text);
+  await comments.fill('');
+  await comments.blur();
+  await expect(page.getByRole('status')).toHaveText('Saved locally');
+  expect((await exported(page)).edges[0]).toMatchObject({ comments: '' });
+});
+
 test('all stroke/path combinations visibly select the line and retain solid hit targets and arrowheads', async ({ page }) => {
   await open(page);
   await selectEdge(page);
