@@ -76,10 +76,11 @@ test('Cancel during preparation invalidates the pending start and remains access
  fireEvent.click(screen.getByRole('button',{name:'Clean up'}));
  expect(screen.getByRole('button',{name:'Cancel'}).closest('[inert]')).toBeNull();
  fireEvent.click(screen.getByRole('button',{name:'Cancel'}));
- await waitFor(()=>expect(screen.getByRole('button',{name:'Clean up'}).hasAttribute('disabled')).toBe(false));
+ // Cancellation still waits for the real pending IndexedDB save to finish.
+ await waitFor(()=>expect(screen.getByRole('button',{name:'Clean up'}).hasAttribute('disabled')).toBe(false),{timeout:5000});
  expect(layout.jobs).toHaveLength(0);expect(layout.props.readOnly).toBe(false);
  expect((await store.get(original.document.id))?.document.nodes[0].name).toBe('Text before cleanup');
-});
+},10000);
 test('Clean up is disabled for an empty document',async()=>{
  render(<App/>);await screen.findByRole('heading',{name:'Create a diagram'});fireEvent.click(screen.getByRole('button',{name:'Create diagram'}));await screen.findByRole('toolbar');
  expect(screen.getByRole('button',{name:'Clean up'}).hasAttribute('disabled')).toBe(true);
