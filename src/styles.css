@@ -462,6 +462,14 @@ button:disabled {
   line-height: 1.7;
   color: #8a95a6;
 }
+.inspector .character-count {
+  display: block;
+  margin-top: 8px;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 400;
+}
+
 .inspector label {
   display: block;
   font-size: 11px;

@@ -52,6 +52,7 @@ export function Inspector({
       {multiline ? (
         <textarea
           aria-label={label}
+          aria-describedby={`${key}-character-count`}
           maxLength={10000}
           value={value}
           onFocus={() => dispatch({ type: "begin" })}
@@ -67,6 +68,11 @@ export function Inspector({
           onChange={(e) => update(key, e.target.value)}
           onBlur={() => dispatch({ type: "commit" })}
         />
+      )}
+      {multiline && (
+        <small id={`${key}-character-count`} className="character-count">
+          {value.length.toLocaleString("en-US")} / 10,000 characters
+        </small>
       )}
     </label>
   );
