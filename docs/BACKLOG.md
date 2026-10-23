@@ -1,10 +1,38 @@
 # Product backlog
 
-Updated: 2026-10-18. This is the feature/status index, not a promise of delivery dates. Detailed agreed behavior lives in the [canvas spec](superpowers/specs/2026-10-15-canvas-design.md); completed implementation history lives in the [original plan](superpowers/plans/2026-10-15-canvas.md). Update this list as decisions change or features ship.
+Updated: 2026-10-22. This is the feature/status index, not a promise of delivery dates. Detailed agreed behavior lives in the [canvas spec](superpowers/specs/2026-10-15-canvas-design.md); completed implementation history lives in the [original plan](superpowers/plans/2026-10-15-canvas.md). Update this list as decisions change or features ship.
+
+## Implemented - connector comments
+
+Approved scope: a multiline Comments property for a single selected connector, separate from its visible label. Reuse text-edit transactions and local persistence; preserve comments through cleanup and portable JSON. Accept older diagrams without comments and enforce the existing 10,000-character note limit. Canvas comment bubbles need further design before implementation. Sticky-note-to-connector links are a separate follow-up after comments.
+
+Release approved on `feat/connector-comments`. Verification: 179 unit tests, production build including TypeScript, six cleanup browser tests and five connector browser tests passed. Independent correctness and Ponytail complexity reviews found no actionable issues. See the [review log](superpowers/plans/2026-10-15-canvas.md#connector-comments-review-log---2026-10-22).
+
+## Proposed order for small releases
+
+Relative scope estimates, not delivery dates. Each row is an independently useful release; designs remain subject to discussion. Finish connector comments first. Favor one user-visible behavior per PR, including its persistence and undo behavior where relevant.
+
+| Rank | First release | Scope | Stop before |
+| --- | --- | --- | --- |
+| 1 | Character counter for sticky-note text | XS: reuse the existing text limit and textarea | Warnings, configurable limits or broader text editing |
+| 2 | Searchable glossary with 10 core terms | S: static definitions and text search | Full learning curriculum or generated content |
+| 3 | One complete Learn topic with five short slides | S-M: navigation and reviewed educational content | Building all 37 topics at once |
+| 4 | Clickable comment indicator opening existing Properties | S-M: requires interaction design first | Popovers, threads, replies or collaboration |
+| 5 | Manual connector label placement | M: one saved offset with drag, reset and undo | Automatic collision avoidance |
+| 6 | Sticky-note annotation attached to a connector midpoint | M-L: design edge references and deletion/duplication behavior | Arbitrary attachment positions or general edge-to-edge connections |
+| 7 | One manually movable connector bend | L: route data, editing, history and cleanup interaction | Full path editor |
+| 8 | Hand-drawn appearance for connector strokes only | L: compare a visual prototype first | Restyling nodes, labels and the entire canvas |
+| 9 | Crossing indicators for straight connectors only | L: intersection detection and readable rendering | All path shapes or junction semantics |
+| 10 | Label overlap avoidance for one connector path style | L: placement rules and repeatable visual cases | Global routing optimization |
+| 11 | Obstacle-aware routing for elbow connectors only | XL: routing and editing behavior | Mixed-style automatic optimization |
+| 12 | Analyze my system for one defined scenario and explicit checks | XL: agree the input model and useful feedback first | General architecture grading or open-ended AI advice |
+| 13 | Simulate one client-service-queue scenario | XL: define workload and model assumptions first | Arbitrary architecture simulation |
+
+Connector-style optimization remains an experiment after collecting real diagrams where cleanup is hard to read. Accounts, cloud collaboration and dedicated phone editing remain outside the current release.
 
 ## Current focus — automatic diagram cleanup
 
-Status: [written design](superpowers/specs/2026-10-18-auto-layout-design.md) approved; [implementation plan](superpowers/plans/2026-10-18-auto-layout.md) approved. Implementation and acceptance checks are complete on `feat/auto-layout`; independent final review passed; awaiting merge.
+Status: merged into main via PR #8 (`cfaf836`). The [written design](superpowers/specs/2026-10-18-auto-layout-design.md) and [implementation plan](superpowers/plans/2026-10-18-auto-layout.md) record completed implementation, acceptance checks and independent review.
 
 - [x] Agree free rearrangement, preview with Apply/Cancel, one-step undo and movable connector attachment sides.
 - [x] Agree connected notes follow components and unconnected notes use a notes area.
@@ -80,6 +108,8 @@ These are recorded possibilities, not commitments to build.
 - Manual label placement and automatic label overlap avoidance.
 - Bridge arcs or other special crossing indicators.
 - Sticky-note character counter (existing text limit remains enforced).
+- Clickable connector comment bubbles, pending a separate design discussion.
+- Connect a sticky note to a connector, after the connector comments feature.
 
 ## Outside the current release
 

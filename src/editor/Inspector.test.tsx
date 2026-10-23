@@ -64,3 +64,37 @@ it('remembers only explicit setting edits, including just the changed Mixed prop
   fireEvent.change(screen.getByLabelText('Path shape'), { target: { value: 'straight' } });
   expect(patches).toEqual([{ stroke: 'dotted' }, { direction: 'both' }, { path: 'straight' }]);
 });
+
+it('edits only the selected connector comments in one undoable text transaction', () => {
+  const original = createDiagram('web', 'Comments');
+  function Harness() {
+    const [state, dispatch] = useReducer(historyReducer, original, createHistory);
+    return <>
+      <Inspector document={state.present} selection={{ nodeIds: [], edgeIds: [original.edges[0].id] }} dispatch={dispatch} />
+      <button onClick={() => dispatch({ type: 'undo' })}>Undo test</button>
+      <button onClick={() => dispatch({ type: 'redo' })}>Redo test</button>
+      <output data-testid="document">{JSON.stringify(state.present)}</output>
+      <output data-testid="history">{state.past.length}</output>
+    </>;
+  }
+  render(<Harness />);
+  const comments = screen.getByRole('textbox', { name: 'Comments' });
+  expect(comments.getAttribute('maxlength')).toBe('10000');
+  fireEvent.focus(comments);
+  fireEvent.change(comments, { target: { value: 'Retry' } });
+  fireEvent.change(comments, { target: { value: 'Retry on failure.\nUse exponential backoff.' } });
+  expect(screen.getByTestId('history').textContent).toBe('0');
+  fireEvent.blur(comments);
+  expect(screen.getByTestId('history').textContent).toBe('1');
+  const changed = JSON.parse(screen.getByTestId('document').textContent!);
+  expect(changed.edges).toEqual([{ ...original.edges[0], comments: 'Retry on failure.\nUse exponential backoff.' }, original.edges[1]]);
+  expect(changed.nodes).toEqual(original.nodes);
+  fireEvent.click(screen.getByText('Undo test'));
+  expect(JSON.parse(screen.getByTestId('document').textContent!)).toEqual(original);
+  fireEvent.click(screen.getByText('Redo test'));
+  expect(JSON.parse(screen.getByTestId('document').textContent!)).toEqual(changed);
+  fireEvent.focus(comments);
+  fireEvent.change(comments, { target: { value: '' } });
+  fireEvent.blur(comments);
+  expect(JSON.parse(screen.getByTestId('document').textContent!).edges[0].comments).toBe('');
+});

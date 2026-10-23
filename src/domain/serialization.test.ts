@@ -119,3 +119,16 @@ it('round trips sticky-to-component and sticky-to-sticky connections with remapp
   expect(imported.edges[1].source).toBe(imported.nodes[1].id);
   expect(imported.edges[1].target).toBe(imported.nodes[2].id);
 });
+
+it.each(['', 'Retry on failure.\n<img src=x onerror=alert(1)>', 'x'.repeat(10000)])('preserves connector comments through portable documents (%#)', comments => {
+  const doc = fixture();
+  Object.assign(doc.edges[0], { comments });
+  expect(validateDiagram(doc).edges[0]).toMatchObject({ comments });
+  expect(importDiagram(exportDiagram(doc)).edges[0]).toMatchObject({ comments });
+});
+
+it.each([null, 42, 'x'.repeat(10001)])('rejects invalid connector comments (%#)', comments => {
+  const doc = fixture();
+  Object.assign(doc.edges[0], { comments });
+  expect(() => validateDiagram(doc)).toThrow(/Connection comments/);
+});

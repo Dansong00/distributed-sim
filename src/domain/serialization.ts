@@ -79,6 +79,7 @@ export function validateDiagram(value: unknown): Diagram {
       targetHandle: choice(e.targetHandle, 'Target handle', handles), label: string(e.label, 'Connection label', 200),
       direction: choice(e.direction, 'Connection direction', ['one-way', 'both']),
     };
+    if (e.comments !== undefined) edge.comments = string(e.comments, 'Connection comments', 10_000);
     if (e.stroke !== undefined) edge.stroke = choice(e.stroke, 'Connection stroke', ['solid', 'dashed', 'dotted'] as const);
     if (e.path !== undefined) edge.path = choice(e.path, 'Connection path', ['straight', 'curved', 'elbow'] as const);
     if (![edge.source, edge.target].every(id => ['component', 'sticky'].includes(nodeMap.get(id)?.kind ?? ''))) fail('Connection endpoints must reference existing components or sticky notes.');
