@@ -52,7 +52,7 @@ export function Inspector({
       {multiline ? (
         <textarea
           aria-label={label}
-          aria-describedby={node?.kind === "sticky" && key === "notes" ? "sticky-note-count" : undefined}
+          aria-describedby={`${key}-character-count`}
           maxLength={10000}
           value={value}
           onFocus={() => dispatch({ type: "begin" })}
@@ -69,8 +69,8 @@ export function Inspector({
           onBlur={() => dispatch({ type: "commit" })}
         />
       )}
-      {node?.kind === "sticky" && key === "notes" && (
-        <small id="sticky-note-count" className="character-count">
+      {multiline && (
+        <small id={`${key}-character-count`} className="character-count">
           {value.length.toLocaleString("en-US")} / 10,000 characters
         </small>
       )}
