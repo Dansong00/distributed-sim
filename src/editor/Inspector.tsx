@@ -1,6 +1,9 @@
 import type { ConnectorPreferences } from "./connector-preferences";
 import type { Diagram, Selection } from "../domain/model";
 import type { HistoryAction } from "../domain/history";
+import { useState } from "react";
+import { BookOpen } from "lucide-react";
+import { LessonDialog } from "../learn/LessonDialog";
 export function Inspector({
   document,
   selection,
@@ -14,6 +17,7 @@ export function Inspector({
   dispatch: (action: HistoryAction) => void;
   onConnectorSetting?: (patch: Partial<ConnectorPreferences>) => void;
 }) {
+  const [learning, setLearning] = useState(false);
   const node = document.nodes.find((n) => selection.nodeIds.includes(n.id));
   const edges = document.edges.filter((e) => selection.edgeIds.includes(e.id));
   const edge = edges[0];
@@ -152,6 +156,10 @@ export function Inspector({
         {connectorSetting("Path shape", "path", ["straight", "curved", "elbow"], "elbow")}
         {edges.some(e => e.source === e.target && e.path === "straight") && <p>Straight self-connections use a rectangular loop so they stay visible.</p>}
       </>}
+      {node?.kind === "component" && selection.nodeIds.length === 1 && selection.edgeIds.length === 0 &&
+        (node.componentType === "client" || node.componentType === "server") &&
+        <div className="inspector-learn"><button disabled={disabled} aria-label="Learn about client/server" onClick={() => setLearning(true)}><BookOpen size={16} aria-hidden="true" /><span>Client / Server Model</span></button></div>}
+      {learning && <LessonDialog onClose={() => setLearning(false)} />}
     </aside>
   );
 }
