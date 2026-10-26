@@ -26,4 +26,5 @@ Keep existing manual mode behavior, Space override, Shift selection, connectors,
 - Desktop and 390px screenshots inspected: mode controls visible, no toolbar overlap.
 - Local combined preview: 202 unit tests and eight browser tests for Auto/header/panels passed.
 - Independent correctness review: no actionable findings. Separate Ponytail complexity review: no actionable findings. No new dependency, custom gesture engine, or persisted preference.
-- Auto remains local for review. Header PR12 was independently merged and deployed before this change.
+- User approved shipping Auto on 2026-10-26. Header PR12 was independently merged and deployed before this change. Release is isolated from pending SQLite, lesson-deck, and retractable-panel work.
+- Release recheck: 184 unit tests, the production-base build, and all 27 targeted browser regressions passed on the unchanged reviewed implementation. The known unrelated sticky-connector resize endpoint failure is outside this targeted run; no claim of a green full browser suite.
