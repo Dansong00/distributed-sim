@@ -48,7 +48,7 @@ export type CanvasProps = {
   onPreviewViewport?: (viewport: Viewport) => void;
   onGestureChange?: (active: boolean) => void;
   selection: Selection;
-  tool: "select" | "pan";
+  tool: "auto" | "select" | "pan";
   onSelectionChange: (selection: Selection) => void;
   dispatch: (action: HistoryAction) => boolean;
   ref?: Ref<CanvasHandle>;
@@ -295,7 +295,7 @@ function Editor({
           ...e,
           selected: !readOnly && selection.edgeIds.includes(e.id),
         }))}
-        nodesDraggable={!readOnly && tool === "select" && !space}
+        nodesDraggable={!readOnly && tool !== "pan" && !space}
         nodesConnectable={!readOnly}
         elementsSelectable={!readOnly}
         nodeTypes={nodeTypes}
@@ -310,7 +310,7 @@ function Editor({
         deleteKeyCode={null}
         multiSelectionKeyCode="Shift"
         selectionOnDrag={!readOnly && tool === "select" && !space}
-        panOnDrag={readOnly || tool === "pan" || space ? true : [1]}
+        panOnDrag={readOnly || tool !== "select" || space ? true : [1]}
         panActivationKeyCode="Space"
         selectionKeyCode={null}
         onNodesChange={changes}

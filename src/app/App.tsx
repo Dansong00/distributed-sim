@@ -72,7 +72,7 @@ export function App() {
       setError(String(e));
     }
   }
-  const [tool, setTool] = useState<"select" | "pan">("select");
+  const [tool, setTool] = useState<"auto" | "select" | "pan">("auto");
   const canvas = useRef<CanvasHandle>(null);
   function finishCleanup(restore: boolean) {
     cleanupRequest.current++;
