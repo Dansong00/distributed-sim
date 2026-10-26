@@ -932,3 +932,17 @@ dialog.lesson-dialog::backdrop { background: rgb(18 24 35 / 65%); }
   .lesson-node { font-size: 12px; }
   .lesson-body h3 { font-size: 22px; }
 }
+
+/* Selected connectors expose the library's native endpoint drag targets. */
+.react-flow__edgeupdater {
+  fill: #fff;
+  stroke: #6573df;
+  stroke-width: 2;
+  cursor: grab;
+}
+.react-flow__edgeupdater:hover {
+  fill: #e9ecff;
+}
+.react-flow__edgeupdater:active {
+  cursor: grabbing;
+}

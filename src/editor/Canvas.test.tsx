@@ -4,6 +4,7 @@ import { afterEach, expect, test, vi } from 'vitest';
 import { createRef } from 'react';
 import { Canvas, type CanvasHandle } from './Canvas';
 import { createDiagram } from '../domain/templates';
+import { createHistory, historyReducer } from '../domain/history';
 const flow = vi.hoisted(() => ({props:{} as Record<string, any>, cancelConnection:vi.fn(), fitView:vi.fn(), setViewport:vi.fn(), getInternalNode:vi.fn(()=>({measured:{width:200,height:104}})), screenToFlowPosition:vi.fn(p=>p), getViewport:vi.fn(()=>({x:0,y:0,zoom:1}))}));
 vi.mock('@xyflow/react',()=>({
  ReactFlowProvider:({children}:any)=>children, ReactFlow:(props:any)=>{flow.props=props;return <div>{props.children}</div>},
@@ -67,4 +68,37 @@ test('preview toolbar buttons keep native Space activation',()=>{
  const event=new KeyboardEvent('keydown',{key:' ',bubbles:true,cancelable:true});
  fireEvent(getByRole('button',{name:'Apply'}),event);
  expect(event.defaultPrevented).toBe(false);
+});
+
+test.each(['source', 'target'] as const)('reconnecting the %s keeps properties and creates one undo step', (end) => {
+ const document = createDiagram('web', 'Reconnect');
+ document.edges[0] = {...document.edges[0], comments:'Keep this note', direction:'both', stroke:'dashed', path:'curved'};
+ let history = createHistory(document);
+ const edge = document.edges[0];
+ render(<Canvas document={document} selection={{nodeIds:[],edgeIds:[edge.id]}} tool="auto" dispatch={action=>{history=historyReducer(history,action);return true;}} onSelectionChange={()=>{}}/>);
+ expect(flow.props.edges[0].reconnectable).toBe(true);
+ expect(flow.props.edges[1].reconnectable).toBe(false);
+ const connection = {...edge, [end]:document.nodes[2].id, [`${end}Handle`]:'top'};
+ act(()=>{flow.props.onReconnectStart({},edge);flow.props.onReconnect(edge,connection);flow.props.onReconnectEnd();});
+ expect(history.present.edges).toEqual([connection, document.edges[1]]);
+ expect(history.past).toHaveLength(1);
+ history = historyReducer(history,{type:'undo'});
+ expect(history.present.edges).toEqual(document.edges);
+ history = historyReducer(history,{type:'redo'});
+ expect(history.present.edges[0]).toEqual(connection);
+});
+
+test.each(['escape','invalid','same','readOnly'] as const)('%s reconnection leaves the document and history unchanged', (reason) => {
+ const document=createDiagram('web','Cancel');
+ const edge=document.edges[0];
+ let history=createHistory(document);
+ render(<Canvas document={document} readOnly={reason==='readOnly'} selection={{nodeIds:[],edgeIds:[edge.id]}} tool="auto" dispatch={action=>{history=historyReducer(history,action);return true;}} onSelectionChange={()=>{}}/>);
+ act(()=>flow.props.onReconnectStart({},edge));
+ if(reason==='escape') fireEvent.keyDown(window,{key:'Escape'});
+ act(()=>{
+  if(reason!=='invalid') flow.props.onReconnect(edge, reason==='same' ? edge : {...edge,target:document.nodes[2].id});
+  flow.props.onReconnectEnd();
+ });
+ expect(history.present).toEqual(document);
+ expect(history.past).toHaveLength(0);
 });

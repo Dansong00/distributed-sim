@@ -86,6 +86,8 @@ function Editor({
     selection: Selection;
   } | null>(null);
   const resizeAnchor = useRef<{ id: string; right?: number; bottom?: number } | null>(null);
+  const reconnecting = useRef<string | null>(null);
+  const reconnectCancelled = useRef(false);
   const [space, setSpace] = useState(false);
   const transact = (next: Diagram) => {
     if (!dispatch({ type: "preview", document: next })) return false;
@@ -171,6 +173,8 @@ function Editor({
         transact(deleteSelection(document, selection));
         onSelectionChange({ nodeIds: [], edgeIds: [] });
       } else if (key === "escape") {
+        reconnectCancelled.current = true;
+        reconnecting.current = null;
         onSelectionChange({ nodeIds: [], edgeIds: [] });
         store.getState().cancelConnection();
       }
@@ -260,6 +264,7 @@ function Editor({
       aria-label="Architecture canvas"
       onPointerDownCapture={(event) => {
         if (readOnly) return;
+        reconnectCancelled.current = false;
         onGestureChange?.(true);
         const target = event.target as Element;
         const control = target.closest(".react-flow__resize-control");
@@ -294,9 +299,12 @@ function Editor({
         edges={toFlowEdges(document).map((e) => ({
           ...e,
           selected: !readOnly && selection.edgeIds.includes(e.id),
+          reconnectable: !readOnly && selection.edgeIds.includes(e.id),
         }))}
         nodesDraggable={!readOnly && tool !== "pan" && !space}
         nodesConnectable={!readOnly}
+        edgesReconnectable={!readOnly}
+        reconnectRadius={8}
         elementsSelectable={!readOnly}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
@@ -374,6 +382,30 @@ function Editor({
             dispatch({ type: "commit" });
             dragOrigin.current = null;
           }
+        }}
+        onReconnectStart={(_, edge) => {
+          // Flow starts after movement, so Escape may already have cancelled this press.
+          reconnecting.current = readOnly || reconnectCancelled.current ? null : edge.id;
+        }}
+        onReconnectEnd={() => { reconnecting.current = null; }}
+        onReconnect={(previous, connection) => {
+          // Escape can cancel the preview before Flow delivers its final drop.
+          if (readOnly || reconnecting.current !== previous.id) return;
+          const current = latest.current;
+          const edge = current.edges.find((candidate) => candidate.id === previous.id);
+          if (!edge || ![connection.source, connection.target].every((id) =>
+            current.nodes.some((node) => node.id === id && (node.kind === "component" || node.kind === "sticky")),
+          )) return;
+          const updated = {
+            ...edge,
+            source: connection.source,
+            target: connection.target,
+            sourceHandle: connection.sourceHandle ?? edge.sourceHandle,
+            targetHandle: connection.targetHandle ?? edge.targetHandle,
+          };
+          if (updated.source === edge.source && updated.target === edge.target &&
+              updated.sourceHandle === edge.sourceHandle && updated.targetHandle === edge.targetHandle) return;
+          transact({ ...current, edges: current.edges.map((candidate) => candidate.id === edge.id ? updated : candidate) });
         }}
         onConnect={(connection) => {
           if (readOnly) return;
