@@ -4,6 +4,7 @@ import type { HistoryAction } from "../domain/history";
 import { useState } from "react";
 import { BookOpen } from "lucide-react";
 import { LessonDialog } from "../learn/LessonDialog";
+import { lessons, lessonsFor, type LessonId } from "../learn/lessons";
 export function Inspector({
   document,
   selection,
@@ -17,7 +18,7 @@ export function Inspector({
   dispatch: (action: HistoryAction) => void;
   onConnectorSetting?: (patch: Partial<ConnectorPreferences>) => void;
 }) {
-  const [learning, setLearning] = useState(false);
+  const [learning, setLearning] = useState<LessonId | null>(null);
   const node = document.nodes.find((n) => selection.nodeIds.includes(n.id));
   const edges = document.edges.filter((e) => selection.edgeIds.includes(e.id));
   const edge = edges[0];
@@ -156,10 +157,9 @@ export function Inspector({
         {connectorSetting("Path shape", "path", ["straight", "curved", "elbow"], "elbow")}
         {edges.some(e => e.source === e.target && e.path === "straight") && <p>Straight self-connections use a rectangular loop so they stay visible.</p>}
       </>}
-      {node?.kind === "component" && selection.nodeIds.length === 1 && selection.edgeIds.length === 0 &&
-        (node.componentType === "client" || node.componentType === "server") &&
-        <div className="inspector-learn"><button disabled={disabled} aria-label="Learn about client/server" onClick={() => setLearning(true)}><BookOpen size={16} aria-hidden="true" /><span>Client / Server Model</span></button></div>}
-      {learning && <LessonDialog onClose={() => setLearning(false)} />}
+      {node && selection.nodeIds.length === 1 && selection.edgeIds.length === 0 && lessonsFor(node).length > 0 &&
+        <div className="inspector-learn">{lessonsFor(node).map(id => <button key={id} disabled={disabled} aria-label={id === "client-server" ? "Learn about client/server" : `Learn about ${lessons[id].title}`} onClick={() => setLearning(id)}><BookOpen size={16} aria-hidden="true" /><span>{lessons[id].title}</span></button>)}</div>}
+      {learning && <LessonDialog key={learning} lessonId={learning} onClose={() => setLearning(null)} />}
     </aside>
   );
 }
