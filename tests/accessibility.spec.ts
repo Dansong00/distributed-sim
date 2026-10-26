@@ -7,14 +7,15 @@ test("dialog traps focus, Escape closes and restores the trigger", async ({
   await startEditor(page);
   await page.locator(".component-copy strong", { hasText: "Notes API" }).click();
   const trigger = page.getByRole("button", {
-    name: "Rename diagram",
+    name: "Diagram actions",
     exact: true,
   });
   await trigger.click();
-  const dialog = page.getByRole("dialog", { name: "Rename diagram" });
-  await expect(page.getByLabel("Diagram name", { exact: true })).toBeFocused();
+  await page.getByRole("button", { name: "Delete diagram", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Delete this diagram?" });
+  await expect(page.getByRole("button", { name: "Cancel", exact: true })).toBeFocused();
   await page.keyboard.press("Shift+Tab");
-  await expect(page.getByRole("button", { name: "Save name", exact: true })).toBeFocused();
+  await expect(page.getByRole("button", { name: "Delete permanently", exact: true })).toBeFocused();
   for (let i = 0; i < 6; i++) {
     await page.keyboard.press("Tab");
     expect(

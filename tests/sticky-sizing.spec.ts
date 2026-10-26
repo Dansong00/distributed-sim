@@ -90,6 +90,7 @@ for (const corner of ['top.left', 'top.right', 'bottom.left', 'bottom.right']) {
 
 async function exported(page: Page) {
   const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Diagram actions' }).click();
   await page.getByRole('button', { name: 'Export JSON', exact: true }).click();
   const path = await (await download).path();
   const { readFile } = await import('node:fs/promises');
@@ -229,6 +230,7 @@ test('resizing a container member keeps membership and world geometry through un
 test('opening an old stored overflow repairs and autosaves geometry without an undo entry', async ({ page }) => {
   const node = await create(page);
   const original = await exported(page);
+  await page.getByRole('button', { name: 'Diagram actions' }).click();
   await page.getByRole('button', { name: 'Diagrams', exact: true }).click();
   await page.evaluate(async id => {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {

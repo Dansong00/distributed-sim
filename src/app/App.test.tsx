@@ -30,7 +30,7 @@ const candidateFor=(document:Diagram)=>({...structuredClone(document),nodes:docu
 test('preview stays out of IndexedDB/export/history and Cancel restores viewport and focus',async()=>{
  await open(); const original=(await store.list())[0];
  fireEvent.click(screen.getByRole('button',{name:'Clean up'}));
- await screen.findByText('Arranging…');expect(screen.getByRole('button',{name:'Export JSON'}).hasAttribute('disabled')).toBe(true);
+ await screen.findByText('Arranging…');expect(screen.getByRole('button',{name:'Diagram actions'}).hasAttribute('disabled')).toBe(true);
  await waitFor(()=>expect(layout.jobs).toHaveLength(1));const job=layout.jobs[0];const candidate=candidateFor(job.document);
  await act(async()=>{job.resolve(candidate);});
  await screen.findByRole('button',{name:'Apply'});expect(layout.props.readOnly).toBe(true);expect(window.document.querySelector('.palette')?.hasAttribute('inert')).toBe(true);expect(window.document.querySelector('.inspector')?.hasAttribute('inert')).toBe(true);expect(layout.props.document.nodes).toEqual(candidate.nodes);expect(layout.fit).toHaveBeenCalled();

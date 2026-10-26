@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { Boxes } from "lucide-react";
+import { Boxes, FolderOpen, Plus, Upload, Copy, Download, Trash2 } from "lucide-react";
+import { EditableTitle } from "./EditableTitle";
+import { FileMenu } from "./FileMenu";
+import "./header.css";
 import { createDiagramStore } from "../storage/diagram-store";
 import { useDocumentSession } from "./useDocumentSession";
 import { DiagramPicker } from "./DiagramPicker";
@@ -37,10 +40,9 @@ export function App() {
   const blocked = locked || session.busy;
   const dispatch = (action: HistoryAction) => cleanupLock.current ? false : session.dispatch(action);
   const [modal, setModal] = useState<
-    "new" | "rename" | "delete" | "reload" | "discard" | null
+    "new" | "delete" | "reload" | "discard" | null
   >(null);
   const [panel, setPanel] = useState<"components" | "properties" | null>(null);
-  const [name, setName] = useState("");
   const [error, setError] = useState("");
   const input = useRef<HTMLInputElement>(null);
   async function run(action: () => Promise<unknown>, close = true) {
@@ -184,9 +186,7 @@ export function App() {
           System Canvas
         </button>
         <div className="header-divider" />
-        <span className="document-title">
-          {document?.name || "Your workspace"}
-        </span>
+        {document ? <EditableTitle key={document.id} name={document.name} disabled={blocked} onRename={name => void run(() => session.rename(name))} /> : <span className="document-title">Your workspace</span>}
         <div className="file-actions">
           {document && (
             <>
@@ -199,52 +199,45 @@ export function App() {
                       ? "Conflict — edits kept"
                       : "Save failed — edits kept"}
               </span>
-              <button
+            </>
+          )}
+          <FileMenu disabled={blocked}>
+          {document && <button
                 disabled={blocked}
                 onClick={() => void run(() => session.showPicker())}
               >
-                Diagrams
+                <FolderOpen size={16} aria-hidden="true" /> Diagrams
               </button>
-            </>
-          )}
+          }
           <button disabled={blocked} onClick={() => { if (!cleanupLock.current) setModal("new"); }}>
-            New diagram
+            <Plus size={16} aria-hidden="true" /> New diagram
           </button>
           <button
             disabled={blocked}
             onClick={() => input.current?.click()}
           >
-            Import JSON
+            <Upload size={16} aria-hidden="true" /> Import JSON
           </button>
           {document && (
             <>
               <button
                 disabled={blocked}
-                onClick={() => {
-                  setName(document.name);
-                  setModal("rename");
-                }}
-                aria-label="Rename diagram"
-              >
-                Rename
-              </button>
-              <button
-                disabled={blocked}
                 onClick={() => void run(() => session.duplicate())}
                 aria-label="Duplicate diagram"
               >
-                Make a copy
+                <Copy size={16} aria-hidden="true" /> Make a copy
               </button>
-              <button disabled={blocked} onClick={download}>Export JSON</button>
+              <button disabled={blocked} onClick={download}><Download size={16} aria-hidden="true" /> Export JSON</button>
               <button
                 disabled={blocked}
                 onClick={() => setModal("delete")}
                 aria-label="Delete diagram"
               >
-                Delete diagram
+                <Trash2 size={16} aria-hidden="true" /> Delete diagram
               </button>
             </>
           )}
+          </FileMenu>
           <input
             ref={input}
             aria-label="Import diagram file"
@@ -429,35 +422,6 @@ export function App() {
               void run(() => session.create(template, name))
             }
           />
-        </Dialog>
-      )}
-      {modal === "rename" && (
-        <Dialog title="Rename diagram" onClose={() => setModal(null)}>
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              void run(() => session.rename(name));
-            }}
-          >
-            <label>
-              Diagram name
-              <input
-                autoFocus
-                maxLength={200}
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </label>
-            <div className="dialog-actions">
-              <button type="button" onClick={() => setModal(null)}>
-                Cancel
-              </button>
-              <button className="primary" type="submit">
-                Save name
-              </button>
-            </div>
-          </form>
         </Dialog>
       )}
       {modal === "delete" && document && (

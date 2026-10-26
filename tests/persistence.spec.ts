@@ -17,21 +17,22 @@ test("all starters, rename, duplicate, switch, viewport and reload", async ({
   await expect(page.getByLabel("Starter")).toHaveValue("blank");
   await create(page, "blank", "Blank one");
   await expect(page.locator(".component-card")).toHaveCount(0);
+  await page.getByRole('button', { name: 'Diagram actions' }).click();
   await page.getByRole("button", { name: "New diagram", exact: true }).click();
   await create(page, "web", "Web one");
   await expect(page.locator(".component-card")).toHaveCount(3);
+  await page.getByRole('button', { name: 'Diagram actions' }).click();
   await page.getByRole("button", { name: "New diagram", exact: true }).click();
   await create(page, "notes", "Notes one");
   await expect(page.locator(".sticky-node")).toHaveCount(1);
-  await page
-    .getByRole("button", { name: "Rename diagram", exact: true })
-    .click();
-  await page.getByLabel("Diagram name", { exact: true }).fill("Renamed");
-  await page.getByRole("button", { name: "Save name", exact: true }).click();
+  await page.getByRole('textbox', { name: 'Diagram title' }).fill("Renamed");
+  await page.getByRole('textbox', { name: 'Diagram title' }).press('Enter');
+  await page.getByRole('button', { name: 'Diagram actions' }).click();
   await page
     .getByRole("button", { name: "Duplicate diagram", exact: true })
     .click();
-  await expect(page.locator(".document-title")).toHaveText("Renamed copy");
+  await expect(page.locator(".document-title")).toHaveValue("Renamed copy");
+  await page.getByRole('button', { name: 'Diagram actions' }).click();
   await page.getByRole("button", { name: "Diagrams", exact: true }).click();
   await page.getByRole("button", { name: "Open Web one", exact: true }).click();
   await page.getByRole("button", { name: "Zoom Out", exact: true }).click();
@@ -60,11 +61,13 @@ test("export/import makes a new diagram; malformed import preserves work; delete
   await page.goto("/");
   await create(page, "web", "Portable");
   const downloadPromise = page.waitForEvent("download");
+  await page.getByRole('button', { name: 'Diagram actions' }).click();
   await page.getByRole("button", { name: "Export JSON", exact: true }).click();
   const download = await downloadPromise;
   const path = await download.path();
   await page.locator("input[type=file]").setInputFiles(path!);
-  await expect(page.locator(".document-title")).toHaveText("Portable");
+  await expect(page.locator(".document-title")).toHaveValue("Portable");
+  await page.getByRole('button', { name: 'Diagram actions' }).click();
   await page.getByRole("button", { name: "Diagrams", exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Open Portable", exact: true }),
@@ -74,7 +77,7 @@ test("export/import makes a new diagram; malformed import preserves work; delete
     .first()
     .click();
   await expect(
-    page.getByRole("button", { name: "Import JSON", exact: true }),
+    page.getByRole("button", { name: "Diagram actions", exact: true }),
   ).toBeEnabled();
   await page
     .locator("input[type=file]")
@@ -85,11 +88,13 @@ test("export/import makes a new diagram; malformed import preserves work; delete
     });
   await expect(page.getByRole("alert")).toContainText("not valid JSON");
   await expect(page.locator(".component-card")).toHaveCount(3);
+  await page.getByRole('button', { name: 'Diagram actions' }).click();
   await page
     .getByRole("button", { name: "Delete diagram", exact: true })
     .click();
   await page.getByRole("button", { name: "Cancel", exact: true }).click();
   await expect(page.locator(".component-card")).toHaveCount(3);
+  await page.getByRole('button', { name: 'Diagram actions' }).click();
   await page
     .getByRole("button", { name: "Delete diagram", exact: true })
     .click();
@@ -102,6 +107,7 @@ test("export/import makes a new diagram; malformed import preserves work; delete
   await page
     .getByRole("button", { name: "Open Portable", exact: true })
     .click();
+  await page.getByRole('button', { name: 'Diagram actions' }).click();
   await page
     .getByRole("button", { name: "Delete diagram", exact: true })
     .click();
@@ -121,26 +127,22 @@ test("another tab causes a conflict; local edits survive as a copy", async ({
   const other = await context.newPage();
   await other.goto("/");
   await other.getByRole("button", { name: "Open Shared", exact: true }).click();
-  await page
-    .getByRole("button", { name: "Rename diagram", exact: true })
-    .click();
-  await page.getByLabel("Diagram name", { exact: true }).fill("Stored change");
-  await page.getByRole("button", { name: "Save name", exact: true }).click();
+  await expect(other.getByRole('textbox', { name: 'Diagram title' })).toHaveValue('Shared');
+  await page.getByRole('textbox', { name: 'Diagram title' }).fill("Stored change");
+  await page.getByRole('textbox', { name: 'Diagram title' }).press('Enter');
   await expect(page.getByRole("status")).toHaveText("Saved locally");
-  await other
-    .getByRole("button", { name: "Rename diagram", exact: true })
-    .click();
-  await other.getByLabel("Diagram name", { exact: true }).fill("Local change");
-  await other.getByRole("button", { name: "Save name", exact: true }).click();
+  await other.getByRole('textbox', { name: 'Diagram title' }).fill("Local change");
+  await other.getByRole('textbox', { name: 'Diagram title' }).press('Enter');
   await expect(other.getByRole("status")).toHaveText("Conflict — edits kept");
-  await expect(other.locator(".document-title")).toHaveText("Local change");
+  await expect(other.locator(".document-title")).toHaveValue("Local change");
   await other
     .getByRole("button", { name: "Save as copy", exact: true })
     .click();
-  await expect(other.locator(".document-title")).toHaveText(
+  await expect(other.locator(".document-title")).toHaveValue(
     "Local change copy",
   );
   await expect(other.getByRole("status")).toHaveText("Saved locally");
+  await other.getByRole('button', { name: 'Diagram actions' }).click();
   await other.getByRole("button", { name: "Diagrams", exact: true }).click();
   await expect(
     other.getByRole("button", { name: "Open Stored change", exact: true }),
@@ -160,18 +162,16 @@ test("conflict reload restores stored viewport and preserves it through the next
   await expect(page.getByRole("status")).toHaveText("Saving…");
   await expect(page.getByRole("status")).toHaveText("Saved locally");
   const storedTransform = await page.locator(".react-flow__viewport").getAttribute("style");
-  await other.getByRole("button", { name: "Rename diagram", exact: true }).click();
-  await other.getByLabel("Diagram name", { exact: true }).fill("Discarded name");
-  await other.getByRole("button", { name: "Save name", exact: true }).click();
+  await other.getByRole('textbox', { name: 'Diagram title' }).fill("Discarded name");
+  await other.getByRole('textbox', { name: 'Diagram title' }).press('Enter');
   await expect(other.getByRole("status")).toHaveText("Conflict — edits kept");
   await other.getByRole("button", { name: "Reload stored version", exact: true }).click();
   await other.getByRole("button", { name: "Discard and reload", exact: true }).click();
   await expect(other.getByRole("status")).toHaveText("Saved locally");
   await expect(other.locator(".react-flow__viewport")).toHaveAttribute("style", storedTransform!);
-  await expect(other.locator(".document-title")).toHaveText("Shared viewport");
-  await other.getByRole("button", { name: "Rename diagram", exact: true }).click();
-  await other.getByLabel("Diagram name", { exact: true }).fill("After reload");
-  await other.getByRole("button", { name: "Save name", exact: true }).click();
+  await expect(other.locator(".document-title")).toHaveValue("Shared viewport");
+  await other.getByRole('textbox', { name: 'Diagram title' }).fill("After reload");
+  await other.getByRole('textbox', { name: 'Diagram title' }).press('Enter');
   await expect(other.getByRole("status")).toHaveText("Saved locally");
   await other.reload();
   await other.getByRole("button", { name: "Open After reload", exact: true }).click();
@@ -218,6 +218,7 @@ test("exact editor limits reject add, duplicate and connect atomically and prese
   await expect(page.locator(".react-flow__edge")).toHaveCount(1000);
   await expect(page.getByRole("status")).toHaveText("Saved locally");
   const download = page.waitForEvent("download");
+  await page.getByRole('button', { name: 'Diagram actions' }).click();
   await page.getByRole("button", { name: "Export JSON", exact: true }).click();
   const path = await (await download).path();
   await page.locator("input[type=file]").setInputFiles(path!);

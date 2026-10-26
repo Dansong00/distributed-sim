@@ -26,6 +26,7 @@ async function selectEdge(page: Page, index = 0) {
 }
 async function exported(page: Page): Promise<Diagram> {
   const pending = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Diagram actions' }).click();
   await page.getByRole('button', { name: 'Export JSON', exact: true }).click();
   return JSON.parse(await readFile((await (await pending).path())!, 'utf8'));
 }
@@ -153,6 +154,7 @@ test('new connectors and their preview start solid straight and settings survive
   await page.reload();
   await page.getByRole('button', { name: 'Open Connector settings', exact: true }).click();
   expect((await exported(page)).edges).toEqual(saved.edges);
+  await page.getByRole('button', { name: 'Diagram actions' }).click();
   await page.getByRole('button', { name: 'Duplicate diagram', exact: true }).click();
   const copy = await exported(page);
   expect(copy.edges.map(({stroke,path,direction}) => ({stroke,path,direction}))).toEqual(saved.edges.map(({stroke,path,direction}) => ({stroke,path,direction})));
