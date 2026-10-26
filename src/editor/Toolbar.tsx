@@ -18,8 +18,8 @@ export function Toolbar({
   onApplyCleanup,
   onCancelCleanup,
 }: {
-  tool: "select" | "pan";
-  onTool: (tool: "select" | "pan") => void;
+  tool: "auto" | "select" | "pan";
+  onTool: (tool: "auto" | "select" | "pan") => void;
   undo: () => void;
   redo: () => void;
   canUndo: boolean;
@@ -38,6 +38,9 @@ export function Toolbar({
 }) {
   return (
     <div className="editor-toolbar" role="toolbar" aria-label="Canvas tools">
+      <button aria-pressed={tool === "auto"} onClick={() => onTool("auto")}>
+        Auto
+      </button>
       <button aria-pressed={tool === "select"} onClick={() => onTool("select")}>
         Select
       </button>

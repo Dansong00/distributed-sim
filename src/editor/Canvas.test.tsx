@@ -13,6 +13,24 @@ vi.mock('@xyflow/react',()=>({
  Handle:()=>null, NodeResizer:()=>null,
 }));
 afterEach(()=>{cleanup();vi.clearAllMocks();});
+test.each([
+ { tool: 'auto', draggable: true, box: false, pan: true },
+ { tool: 'select', draggable: true, box: true, pan: [1] },
+ { tool: 'pan', draggable: false, box: false, pan: true },
+] as const)('$tool keeps the intended node and background gestures', ({ tool, draggable, box, pan }) => {
+ render(<Canvas document={createDiagram('web', 'Tools')} selection={{nodeIds:[],edgeIds:[]}} tool={tool} dispatch={()=>true} onSelectionChange={()=>{}} />);
+ expect(flow.props.nodesDraggable).toBe(draggable);
+ expect(flow.props.selectionOnDrag).toBe(box);
+ expect(flow.props.panOnDrag).toEqual(pan);
+ expect(flow.props.elementsSelectable).toBe(true);
+ fireEvent.keyDown(window, { key: ' ' });
+ expect(flow.props.nodesDraggable).toBe(false);
+ expect(flow.props.selectionOnDrag).toBe(false);
+ expect(flow.props.panOnDrag).toBe(true);
+ fireEvent.keyUp(window, { key: ' ' });
+ expect(flow.props.nodesDraggable).toBe(draggable);
+ expect(flow.props.selectionOnDrag).toBe(box);
+});
 test('read-only canvas blocks mutation handlers, shortcuts, drops and imperative adds while preserving inspection',()=>{
  const document=createDiagram('notes','Preview'); const dispatch=vi.fn(()=>true), selection=vi.fn(), viewport=vi.fn(); const ref=createRef<CanvasHandle>();
  const {getByLabelText}=render(<Canvas ref={ref} document={document} readOnly onPreviewViewport={viewport} selection={{nodeIds:document.nodes.map(n=>n.id),edgeIds:[]}} tool="select" dispatch={dispatch} onSelectionChange={selection}/>);
