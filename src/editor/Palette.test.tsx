@@ -8,6 +8,19 @@ import { validateDiagram } from "../domain/serialization";
 
 afterEach(cleanup);
 
+it("finds SQLite and adds a portable database component", () => {
+  const add = vi.fn();
+  render(<Palette onAdd={add} />);
+  fireEvent.change(screen.getByLabelText("Search components"), { target: { value: "sqlite" } });
+  fireEvent.click(screen.getByRole("button", { name: "Add SQLite" }));
+  expect(add).toHaveBeenCalledWith("sqlite");
+  const doc = createDiagram("blank", "SQLite system");
+  doc.nodes = [createComponent("sqlite", { x: 10, y: 20 })];
+  expect(validateDiagram(JSON.parse(JSON.stringify(doc))).nodes[0]).toMatchObject({
+    name: "SQLite", technology: "SQLite", category: "Databases", componentType: "database",
+  });
+});
+
 it("finds specialized databases by capability and adds a portable component", () => {
   const add = vi.fn();
   render(<Palette onAdd={add} />);

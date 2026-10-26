@@ -28,7 +28,7 @@ const groups: [Category, string, string[], string?][] = [
   [
     "Databases",
     "database",
-    ["Generic Database", "PostgreSQL", "MySQL", "MongoDB", "DynamoDB"],
+    ["Generic Database", "PostgreSQL", "MySQL", "SQLite", "MongoDB", "DynamoDB"],
   ],
   ["Caches", "cache", ["Generic Cache", "Redis", "Memcached"]],
   ["Messaging", "queue", ["Generic Queue", "Kafka", "RabbitMQ", "SQS"]],
