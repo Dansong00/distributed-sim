@@ -32,3 +32,11 @@ User approved shipping the header cleanup on 2026-10-26. Prepared an isolated br
 - Isolated release verification: 179 unit tests passed, production-base build passed, 15 focused header/accessibility/persistence/layout browser tests passed on port 5174.
 - Remaining migrated browser tests: 35 passed, for 50 release browser checks in total. The known sticky-connector endpoint failure was excluded and remains documented above. Independent correctness/complexity review is in progress before merge.
 - Canvas Auto mode is a separate proposal, not part of this release.
+
+### Independent release review
+
+- P2 at App.tsx inline rename callback: delayed rename completion could close a subsequently opened New diagram dialog. Fixed by using the existing `run` close=false option. Added a deferred-save regression using the real IndexedDB store.
+- P2 at EditableTitle.tsx key handler: IME Enter/Escape could prematurely commit or cancel. Fixed by ignoring composition key events; added a regression for both keys.
+- Both regressions failed before the fixes and passed afterward. Final unit suite: 181 passed.
+- Final production-base build and all nine header/accessibility/persistence browser rechecks passed. The two fixes and their tests were also synced to the original local preview, preserving its unrelated work.
+- Independent Ponytail pass: No actionable complexity findings.

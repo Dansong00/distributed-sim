@@ -186,7 +186,7 @@ export function App() {
           System Canvas
         </button>
         <div className="header-divider" />
-        {document ? <EditableTitle key={document.id} name={document.name} disabled={blocked} onRename={name => void run(() => session.rename(name))} /> : <span className="document-title">Your workspace</span>}
+        {document ? <EditableTitle key={document.id} name={document.name} disabled={blocked} onRename={name => void run(() => session.rename(name), false)} /> : <span className="document-title">Your workspace</span>}
         <div className="file-actions">
           {document && (
             <>

@@ -7,6 +7,15 @@ import { App } from './App';
 import { createDiagramStore } from '../storage/diagram-store';
 import type { Diagram } from '../domain/model';
 const layout = vi.hoisted(()=>({jobs:[] as {document:Diagram,resolve:(v:Diagram)=>void,cancel:ReturnType<typeof vi.fn>}[], props:null as any, fit:vi.fn(), setViewport:vi.fn()}));
+const delayedSave = vi.hoisted(() => ({ gate: null as Promise<void> | null }));
+vi.mock('../storage/diagram-store', async importOriginal => {
+ const original = await importOriginal<typeof import('../storage/diagram-store')>();
+ return { ...original, createDiagramStore: (name?: string) => {
+  const store = original.createDiagramStore(name), save = store.save;
+  store.save = async (...args) => { const result = await save(...args); await delayedSave.gate; return result; };
+  return store;
+ } };
+});
 vi.mock('../editor/layout/layout-job',()=>({startLayout:(document:Diagram)=>{
  let resolve!:(v:Diagram)=>void; const result=new Promise<Diagram>(r=>{resolve=r;});const cancel=vi.fn();
  layout.jobs.push({document,resolve,cancel});return {result,cancel};
@@ -27,6 +36,26 @@ async function open(){
  await screen.findByRole('toolbar',{name:'Canvas tools'});
 }
 const candidateFor=(document:Diagram)=>({...structuredClone(document),nodes:document.nodes.map(n=>({...n,position:{x:n.position.x+400,y:n.position.y+100}}))});
+test('a pending inline rename does not close a newly opened dialog', async () => {
+ HTMLDialogElement.prototype.showModal = function () { this.open = true; };
+ HTMLDialogElement.prototype.close = function () { this.open = false; };
+ await open();
+ let finish!: () => void;
+ delayedSave.gate = new Promise<void>(resolve => { finish = resolve; });
+ try {
+  const title = screen.getByRole('textbox', { name: 'Diagram title' });
+  act(() => title.focus());
+  fireEvent.change(title, { target: { value: 'Renamed' } });
+  fireEvent.keyDown(title, { key: 'Enter' });
+  await screen.findByText('Saving…');
+  fireEvent.click(screen.getByRole('button', { name: 'Diagram actions' }));
+  fireEvent.click(screen.getByRole('button', { name: 'New diagram' }));
+  fireEvent.change(screen.getByLabelText('Diagram name'), { target: { value: 'Unsaved new diagram' } });
+  await act(async () => { finish(); });
+  await screen.findByText('Saved locally');
+  expect((screen.getByLabelText('Diagram name') as HTMLInputElement).value).toBe('Unsaved new diagram');
+ } finally { finish(); delayedSave.gate = null; }
+});
 test('preview stays out of IndexedDB/export/history and Cancel restores viewport and focus',async()=>{
  await open(); const original=(await store.list())[0];
  fireEvent.click(screen.getByRole('button',{name:'Clean up'}));

@@ -14,6 +14,7 @@ export function EditableTitle({ name, disabled, onRename }: { name: string; disa
     }}
     onKeyDown={event => {
       event.stopPropagation();
+      if (event.nativeEvent.isComposing) return;
       if (event.key === "Escape") { cancelled.current = true; event.currentTarget.blur(); }
       if (event.key === "Enter") { event.preventDefault(); event.currentTarget.blur(); }
     }} />;
