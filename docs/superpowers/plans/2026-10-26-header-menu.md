@@ -30,7 +30,7 @@
 User approved shipping the header cleanup on 2026-10-26. Prepared an isolated branch from main 4429d75, excluding pending SQLite, learning-deck, and retractable-panel changes. The original working directory is untouched.
 
 - Isolated release verification: 179 unit tests passed, production-base build passed, 15 focused header/accessibility/persistence/layout browser tests passed on port 5174.
-- Remaining migrated browser tests: 35 passed, for 50 release browser checks in total. The known sticky-connector endpoint failure was excluded and remains documented above. Independent correctness/complexity review is in progress before merge.
+- Remaining migrated browser tests: 35 passed, for 50 release browser checks in total. The known sticky-connector endpoint failure was excluded and remains documented above. Independent review completed; both findings below were fixed and re-reviewed with no new actionable defects or complexity findings.
 - Canvas Auto mode is a separate proposal, not part of this release.
 
 ### Independent release review
