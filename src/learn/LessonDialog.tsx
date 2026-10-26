@@ -6,12 +6,14 @@ import { Dialog } from "../ui/Dialog";
 import { lessons, type LessonId } from "./lessons";
 import { ApiServerDiagram } from "./ApiServerDiagram";
 import { DatabaseOverviewDiagram, PostgresDiagram } from "./DatabaseDiagrams";
+import { SQLiteDiagram } from "./SQLiteDiagram";
 
 const diagrams = {
   "client-server": LessonDiagram,
   "api-server": ApiServerDiagram,
   databases: DatabaseOverviewDiagram,
   postgresql: PostgresDiagram,
+  sqlite: SQLiteDiagram,
 } satisfies Record<LessonId, typeof LessonDiagram>;
 
 export function LessonDialog({ lessonId, onClose }: { lessonId: LessonId; onClose: () => void }) {
