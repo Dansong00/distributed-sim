@@ -12,8 +12,16 @@ it("orders shared then specific lessons for API servers even after a rename", ()
 it.each(["mobile-app", "web-browser", "generic-server", "worker", "serverless-function"])("keeps %s on the shared lesson only", preset => {
   expect(lessonsFor(createComponent(preset, { x: 0, y: 0 }))).toEqual(["client-server"]);
 });
-it.each(["generic-database", "mongodb", "neo4j", "cassandra", "postgis", "pgvector", "sqlite", "mysql"])("offers the shared database overview for %s", preset => {
+it.each(["generic-database", "mongodb", "neo4j", "cassandra", "postgis", "pgvector", "mysql"])("offers the shared database overview for %s", preset => {
   expect(lessonsFor(createComponent(preset, { x: 0, y: 0 }))).toEqual(["databases"]);
+});
+it("orders the overview before SQLite and uses technology rather than the display name", () => {
+  const node = createComponent("sqlite", { x: 0, y: 0 });
+  node.name = "Local storage";
+  node.technology = " SQLite ";
+  expect(lessonsFor(node)).toEqual(["databases", "sqlite"]);
+  node.technology = "MySQL";
+  expect(lessonsFor(node)).toEqual(["databases"]);
 });
 it("orders the overview before PostgreSQL and keeps lessons after a rename", () => {
   const node = createComponent("postgresql", { x: 0, y: 0 });
