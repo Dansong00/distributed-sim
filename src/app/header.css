@@ -1,0 +1,10 @@
+.app-header .title-input { min-width: 80px; width: 220px; flex: 1 1 180px; max-width: 360px; font: inherit; font-size: 13px; font-weight: 600; color: inherit; padding: 7px 8px; border: 1px solid transparent; border-radius: 6px; background: transparent; text-overflow: ellipsis; }
+.app-header .title-input:hover { border-color: #dce3ee; }
+.app-header .title-input:focus { border-color: #5362de; background: #fff; outline: 2px solid #e2e6ff; }
+.file-menu { position: relative; }
+.file-menu > button { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; }
+.file-menu-items { position: absolute; right: 0; top: calc(100% + 8px); z-index: 100; width: 210px; padding: 6px; border: 1px solid #dce3ee; border-radius: 8px; background: white; box-shadow: 0 8px 24px rgb(30 45 70 / 14%); }
+.file-actions .file-menu-items button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: 0; background: transparent; text-align: left; }
+.file-actions .file-menu-items button:hover { background: #f0f3fb; }
+.file-actions .file-menu-items button[aria-label="Delete diagram"] { color: #b33737; border-top: 1px solid #edf0f5; border-radius: 0; margin-top: 4px; }
+@media (max-width: 600px) { .app-header { gap: 8px; padding-inline: 12px; } .app-header .brand { font-size: 14px; gap: 6px; } .app-header .file-actions { margin-left: auto; gap: 6px; } .app-header .header-divider { display: none; } }

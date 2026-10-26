@@ -372,6 +372,7 @@ test("drag auto-pan persists the visible viewport through export and reopen", as
   expect(geometryAfter).not.toBe(geometryBefore);
   expect(Math.abs(after.x - before.x)).toBeGreaterThan(20);
   const download = page.waitForEvent("download");
+  await page.getByRole('button', { name: 'Diagram actions' }).click();
   await page.getByRole("button", { name: "Export JSON", exact: true }).click();
   const path = await (await download).path();
   const { readFile } = await import("node:fs/promises");

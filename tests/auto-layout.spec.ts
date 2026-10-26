@@ -19,6 +19,7 @@ async function open(page: Page, document = sample()) {
 }
 async function exported(page: Page): Promise<Diagram> {
   const pending = page.waitForEvent('download');
+  await button(page, 'Diagram actions').click();
   await page.getByRole('banner').getByRole('button', { name: 'Export JSON', exact: true }).click();
   return JSON.parse(await readFile((await (await pending).path())!, 'utf8'));
 }
@@ -57,7 +58,8 @@ test('preview isolates storage, blocks edits/export, and Cancel/Escape restore g
   for (const cancel of ['Cancel', 'Escape']) {
     await preview(page);
     expect(await rendered(page)).not.toEqual(nodes);
-    for (const name of ['Export JSON', 'Diagrams', 'New diagram', 'Import JSON', 'Undo', 'Redo', 'Duplicate', 'Delete']) await expect(button(page, name)).toBeDisabled();
+    for (const name of ['Diagram actions', 'Undo', 'Redo', 'Duplicate', 'Delete']) await expect(button(page, name)).toBeDisabled();
+    await expect(page.getByRole('textbox', { name: 'Diagram title' })).toBeDisabled();
     await expect(page.locator('.palette')).toHaveAttribute('inert', '');
     await expect(page.locator('.inspector')).toHaveAttribute('inert', '');
     await expect(page.locator('.react-flow__resize-control')).toHaveCount(0);
@@ -137,11 +139,11 @@ for (const remote of ['change', 'delete']) test(`clean tab preview detects anoth
   await button(other, `Open ${before.name}`).click();
   await preview(page);
   if (remote === 'change') {
-    await button(other, 'Rename diagram').click();
-    await other.getByLabel('Diagram name', { exact: true }).fill('Remote revision');
-    await button(other, 'Save name').click();
+    await other.getByRole('textbox', { name: 'Diagram title' }).fill('Remote revision');
+    await other.getByRole('textbox', { name: 'Diagram title' }).press('Enter');
     await saved(other);
   } else {
+    await button(other, 'Diagram actions').click();
     await button(other, 'Delete diagram').click();
     await button(other, 'Delete permanently').click();
     await expect(other.getByRole('heading', { name: 'Create a diagram' })).toBeVisible();

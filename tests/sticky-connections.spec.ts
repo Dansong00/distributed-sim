@@ -24,7 +24,8 @@ async function connect(page: Page, from: Locator, to: Locator, preview?: (line: 
   await expect(page.locator('.react-flow__edge-path').last()).toHaveAttribute('d', route!);
 }
 async function exported(page: Page): Promise<Diagram> {
-  const pending = page.waitForEvent('download'); await page.getByRole('button', { name: 'Export JSON', exact: true }).click();
+  const pending = page.waitForEvent('download'); await page.getByRole('button', { name: 'Diagram actions' }).click();
+  await page.getByRole('button', { name: 'Export JSON', exact: true }).click();
   return JSON.parse(await readFile((await (await pending).path())!, 'utf8'));
 }
 
@@ -85,7 +86,7 @@ test('explicit connector settings persist across reloads and diagrams and style 
   expect((await exported(page)).edges[1]).toMatchObject({path:'curved',stroke:'dotted',direction:'both'});
   const other = createDiagram('web','Another diagram');
   await page.locator('input[type=file]').setInputFiles({name:'other.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(other))});
-  await expect(page.locator('.document-title')).toHaveText('Another diagram');
+  await expect(page.locator('.document-title')).toHaveValue('Another diagram');
   await expect(page.locator('.react-flow__edge')).toHaveCount(2);
   await expect(page.getByRole('status')).toHaveText('Saved locally');
   await connect(page,h(0,'bottom'),h(1,'bottom'));

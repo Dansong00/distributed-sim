@@ -6,7 +6,7 @@ test("renders the notes starter with members, links, boundary, and assumptions",
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await startEditor(page);
-  await expect(page.locator(".document-title")).toHaveText("Note-Taking App");
+  await expect(page.locator(".document-title")).toHaveValue("Note-Taking App");
   await expect(page.locator(".component-card")).toHaveCount(3);
   await expect(
     page.locator(".component-card").filter({ hasText: "Notes API" }),
