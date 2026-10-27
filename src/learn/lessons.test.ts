@@ -12,7 +12,7 @@ it("orders shared then specific lessons for API servers even after a rename", ()
 it.each(["mobile-app", "web-browser", "generic-server", "worker", "serverless-function"])("keeps %s on the shared lesson only", preset => {
   expect(lessonsFor(createComponent(preset, { x: 0, y: 0 }))).toEqual(["client-server"]);
 });
-it.each(["generic-database", "mongodb", "neo4j", "cassandra", "postgis", "pgvector", "mysql"])("offers the shared database overview for %s", preset => {
+it.each(["generic-database", "mongodb", "neo4j", "cassandra", "postgis", "pgvector"])("offers the shared database overview for %s", preset => {
   expect(lessonsFor(createComponent(preset, { x: 0, y: 0 }))).toEqual(["databases"]);
 });
 it("orders the overview before SQLite and uses technology rather than the display name", () => {
@@ -21,13 +21,21 @@ it("orders the overview before SQLite and uses technology rather than the displa
   node.technology = " SQLite ";
   expect(lessonsFor(node)).toEqual(["databases", "sqlite"]);
   node.technology = "MySQL";
-  expect(lessonsFor(node)).toEqual(["databases"]);
+  expect(lessonsFor(node)).toEqual(["databases", "mysql"]);
 });
 it("orders the overview before PostgreSQL and keeps lessons after a rename", () => {
   const node = createComponent("postgresql", { x: 0, y: 0 });
   node.name = "Orders";
   expect(lessonsFor(node)).toEqual(["databases", "postgresql"]);
   node.technology = "MySQL";
+  expect(lessonsFor(node)).toEqual(["databases", "mysql"]);
+});
+it("orders the overview before MySQL after renaming and normalizes technology", () => {
+  const node = createComponent("mysql", { x: 0, y: 0 });
+  node.name = "Shared storage";
+  node.technology = " MySQL ";
+  expect(lessonsFor(node)).toEqual(["databases", "mysql"]);
+  node.technology = "MongoDB";
   expect(lessonsFor(node)).toEqual(["databases"]);
 });
 it("hides lessons on unrelated components and annotations", () => {
