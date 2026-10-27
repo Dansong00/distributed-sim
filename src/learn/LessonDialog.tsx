@@ -8,6 +8,7 @@ import { ApiServerDiagram } from "./ApiServerDiagram";
 import { DatabaseOverviewDiagram, PostgresDiagram } from "./DatabaseDiagrams";
 import { SQLiteDiagram } from "./SQLiteDiagram";
 import { MySQLDiagram } from "./MySQLDiagram";
+import { CAPDiagram } from "./CAPDiagram";
 
 const diagrams = {
   "client-server": LessonDiagram,
@@ -16,6 +17,7 @@ const diagrams = {
   postgresql: PostgresDiagram,
   sqlite: SQLiteDiagram,
   mysql: MySQLDiagram,
+  cap: CAPDiagram,
 } satisfies Record<LessonId, typeof LessonDiagram>;
 
 export function LessonDialog({ lessonId, onClose }: { lessonId: LessonId; onClose: () => void }) {

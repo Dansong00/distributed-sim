@@ -12,31 +12,31 @@ it("orders shared then specific lessons for API servers even after a rename", ()
 it.each(["mobile-app", "web-browser", "generic-server", "worker", "serverless-function"])("keeps %s on the shared lesson only", preset => {
   expect(lessonsFor(createComponent(preset, { x: 0, y: 0 }))).toEqual(["client-server"]);
 });
-it.each(["generic-database", "mongodb", "neo4j", "cassandra", "postgis", "pgvector"])("offers the shared database overview for %s", preset => {
-  expect(lessonsFor(createComponent(preset, { x: 0, y: 0 }))).toEqual(["databases"]);
+it.each(["generic-database", "mongodb", "neo4j", "cassandra", "postgis", "pgvector"])("offers overview then CAP for %s", preset => {
+  expect(lessonsFor(createComponent(preset, { x: 0, y: 0 }))).toEqual(["databases", "cap"]);
 });
 it("orders the overview before SQLite and uses technology rather than the display name", () => {
   const node = createComponent("sqlite", { x: 0, y: 0 });
   node.name = "Local storage";
   node.technology = " SQLite ";
-  expect(lessonsFor(node)).toEqual(["databases", "sqlite"]);
+  expect(lessonsFor(node)).toEqual(["databases", "cap", "sqlite"]);
   node.technology = "MySQL";
-  expect(lessonsFor(node)).toEqual(["databases", "mysql"]);
+  expect(lessonsFor(node)).toEqual(["databases", "cap", "mysql"]);
 });
 it("orders the overview before PostgreSQL and keeps lessons after a rename", () => {
   const node = createComponent("postgresql", { x: 0, y: 0 });
   node.name = "Orders";
-  expect(lessonsFor(node)).toEqual(["databases", "postgresql"]);
+  expect(lessonsFor(node)).toEqual(["databases", "cap", "postgresql"]);
   node.technology = "MySQL";
-  expect(lessonsFor(node)).toEqual(["databases", "mysql"]);
+  expect(lessonsFor(node)).toEqual(["databases", "cap", "mysql"]);
 });
 it("orders the overview before MySQL after renaming and normalizes technology", () => {
   const node = createComponent("mysql", { x: 0, y: 0 });
   node.name = "Shared storage";
   node.technology = " MySQL ";
-  expect(lessonsFor(node)).toEqual(["databases", "mysql"]);
+  expect(lessonsFor(node)).toEqual(["databases", "cap", "mysql"]);
   node.technology = "MongoDB";
-  expect(lessonsFor(node)).toEqual(["databases"]);
+  expect(lessonsFor(node)).toEqual(["databases", "cap"]);
 });
 it("hides lessons on unrelated components and annotations", () => {
   const node = createComponent("api-gateway", { x: 0, y: 0 });

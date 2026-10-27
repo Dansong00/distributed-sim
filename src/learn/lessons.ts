@@ -5,18 +5,19 @@ import { databasesLesson } from "./databases";
 import { postgresqlLesson } from "./postgresql";
 import { sqliteLesson } from "./sqlite";
 import { mysqlLesson } from "./mysql";
+import { capLesson } from "./cap";
 
-export const lessons = { "client-server": clientServerLesson, "api-server": apiServerLesson, databases: databasesLesson, postgresql: postgresqlLesson, sqlite: sqliteLesson, mysql: mysqlLesson };
+export const lessons = { "client-server": clientServerLesson, "api-server": apiServerLesson, databases: databasesLesson, cap: capLesson, postgresql: postgresqlLesson, sqlite: sqliteLesson, mysql: mysqlLesson };
 export type LessonId = keyof typeof lessons;
 
 export function lessonsFor(node: DiagramNode): LessonId[] {
   if (node.kind !== "component") return [];
   const technology = node.technology?.trim().toLowerCase();
   if (node.category === "Databases" || node.componentType === "database") {
-    if (technology === "postgresql") return ["databases", "postgresql"];
-    if (technology === "sqlite") return ["databases", "sqlite"];
-    if (technology === "mysql") return ["databases", "mysql"];
-    return ["databases"];
+    if (technology === "postgresql") return ["databases", "cap", "postgresql"];
+    if (technology === "sqlite") return ["databases", "cap", "sqlite"];
+    if (technology === "mysql") return ["databases", "cap", "mysql"];
+    return ["databases", "cap"];
   }
   if (!["client", "server"].includes(node.componentType ?? "")) return [];
   return node.componentType === "server" && technology === "api server"
