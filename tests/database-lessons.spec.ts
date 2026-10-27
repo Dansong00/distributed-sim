@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { startEditor } from "./start-editor";
 
-for (const product of ["PostgreSQL", "SQLite"]) {
+for (const product of ["PostgreSQL", "SQLite", "MySQL"]) {
 for (const viewport of [{ width: 1280, height: 900 }, { width: 985, height: 543 }, { width: 390, height: 700 }]) {
   test(`${product} decks remain independent and usable at ${viewport.width}x${viewport.height}`, async ({ page }) => {
     await startEditor(page);
@@ -18,7 +18,7 @@ for (const viewport of [{ width: 1280, height: 900 }, { width: 985, height: 543 
     if (viewport.width <= 900) await page.getByRole("button", { name: "Properties panel", exact: true }).click();
 
     for (const title of ["Database Overview", product]) {
-      const slideCount = title === "SQLite" ? 9 : 8;
+      const slideCount = title === "SQLite" || title === "MySQL" ? 9 : 8;
       const opener = page.getByRole("button", { name: `Learn about ${title}`, exact: true });
       await opener.click();
       const dialog = page.getByRole("dialog", { name: title, exact: true });
@@ -35,7 +35,7 @@ for (const viewport of [{ width: 1280, height: 900 }, { width: 985, height: 543 
           await expect(dialog.getByText("I · Isolation", { exact: true })).toBeVisible();
           await expect(dialog.getByText("D · Durability", { exact: true })).toBeVisible();
         }
-        if (title === "SQLite" && slide === 4) {
+        if ((title === "SQLite" || title === "MySQL") && slide === 4) {
           for (const concept of ["Atomicity", "Consistency", "Isolation", "Durability"]) {
             await expect(content.locator("strong").filter({ hasText: `${concept}:` })).toHaveCount(1);
           }
@@ -60,7 +60,7 @@ for (const viewport of [{ width: 1280, height: 900 }, { width: 985, height: 543 
     await expect(page.locator(".react-flow__node")).toHaveCount(nodeCount);
     await expect(page.locator(".react-flow__node.selected")).toHaveCount(1);
     await expect(page.locator(".react-flow__viewport")).toHaveAttribute("style", transform!);
-    await page.getByLabel("Technology", { exact: true }).fill("MySQL");
+    await page.getByLabel("Technology", { exact: true }).fill("MongoDB");
     await page.getByLabel("Technology", { exact: true }).press("Tab");
     await expect(page.locator(".inspector-learn button")).toHaveText(["Database Overview"]);
   });

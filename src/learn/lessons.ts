@@ -4,8 +4,9 @@ import { apiServerLesson } from "./api-server";
 import { databasesLesson } from "./databases";
 import { postgresqlLesson } from "./postgresql";
 import { sqliteLesson } from "./sqlite";
+import { mysqlLesson } from "./mysql";
 
-export const lessons = { "client-server": clientServerLesson, "api-server": apiServerLesson, databases: databasesLesson, postgresql: postgresqlLesson, sqlite: sqliteLesson };
+export const lessons = { "client-server": clientServerLesson, "api-server": apiServerLesson, databases: databasesLesson, postgresql: postgresqlLesson, sqlite: sqliteLesson, mysql: mysqlLesson };
 export type LessonId = keyof typeof lessons;
 
 export function lessonsFor(node: DiagramNode): LessonId[] {
@@ -14,6 +15,7 @@ export function lessonsFor(node: DiagramNode): LessonId[] {
   if (node.category === "Databases" || node.componentType === "database") {
     if (technology === "postgresql") return ["databases", "postgresql"];
     if (technology === "sqlite") return ["databases", "sqlite"];
+    if (technology === "mysql") return ["databases", "mysql"];
     return ["databases"];
   }
   if (!["client", "server"].includes(node.componentType ?? "")) return [];
