@@ -11,14 +11,14 @@ for (const viewport of [{ width: 1280, height: 900 }, { width: 985, height: 543 
     const name = page.getByLabel("Name", { exact: true });
     await name.fill("Order store");
     await name.press("Tab");
-    await expect(page.locator(".inspector-learn button")).toHaveText(["Database Overview", "CAP Theorem", product]);
+    await expect(page.locator(".inspector-learn button")).toHaveText(["Database Overview", "CAP Theorem", "Replication", product]);
     const nodeCount = await page.locator(".react-flow__node").count();
     const transform = await page.locator(".react-flow__viewport").getAttribute("style");
     await page.setViewportSize(viewport);
     if (viewport.width <= 900) await page.getByRole("button", { name: "Properties panel", exact: true }).click();
 
-    for (const title of ["Database Overview", "CAP Theorem", product]) {
-      const slideCount = title === "SQLite" || title === "MySQL" || title === "CAP Theorem" ? 9 : 8;
+    for (const title of ["Database Overview", "CAP Theorem", "Replication", product]) {
+      const slideCount = title === "SQLite" || title === "MySQL" || title === "CAP Theorem" || title === "Replication" ? 9 : 8;
       const opener = page.getByRole("button", { name: `Learn about ${title}`, exact: true });
       await opener.click();
       const dialog = page.getByRole("dialog", { name: title, exact: true });
@@ -37,6 +37,11 @@ for (const viewport of [{ width: 1280, height: 900 }, { width: 985, height: 543 
         }
         if ((title === "SQLite" || title === "MySQL") && slide === 4) {
           for (const concept of ["Atomicity", "Consistency", "Isolation", "Durability"]) {
+            await expect(content.locator("strong").filter({ hasText: `${concept}:` })).toHaveCount(1);
+          }
+        }
+        if (title === "Replication" && slide === 4) {
+          for (const concept of ["Received", "Stored durably", "Applied"]) {
             await expect(content.locator("strong").filter({ hasText: `${concept}:` })).toHaveCount(1);
           }
         }
@@ -62,7 +67,7 @@ for (const viewport of [{ width: 1280, height: 900 }, { width: 985, height: 543 
     await expect(page.locator(".react-flow__viewport")).toHaveAttribute("style", transform!);
     await page.getByLabel("Technology", { exact: true }).fill("MongoDB");
     await page.getByLabel("Technology", { exact: true }).press("Tab");
-    await expect(page.locator(".inspector-learn button")).toHaveText(["Database Overview", "CAP Theorem"]);
+    await expect(page.locator(".inspector-learn button")).toHaveText(["Database Overview", "CAP Theorem", "Replication"]);
   });
 }
 }
