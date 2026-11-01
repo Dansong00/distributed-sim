@@ -1,0 +1,41 @@
+{
+  "lessonHash": "30c8f88726679273d8190d60f4b99a2d7165b8fd91e31755cc75b89381d04688",
+  "rubricHash": "680744bc4eaf285a23a7008f22d4a7e22d2d2949531887731248342678b9843b",
+  "respondent": "/root/r2_c5",
+  "answers": [
+    {
+      "id": "card-5-parking-display",
+      "answer": "In case A, the 09:02 request can use the original 09:00 copy because its TTL has not expired, but that copy is stale after the source changed at 09:01. The original entry expires at 09:05, so the 09:06 request cannot use it; the API gets a cache miss, fetches the source, stores a copy, and returns it. In separate case B, removal at 09:03 is eviction to make room, even though the TTL would last until 09:05. The 09:04 request therefore misses and the API must fetch the source and fill the cache. Neither eviction nor expiration fetches a replacement itself: this cache-aside API does the work on a later miss. Five minutes of TTL promises a limit on the lifetime of that entry, not five minutes of fresh data or a scheduled refresh. The original data can become stale during the TTL, and an entry can disappear earlier through eviction. No teaching needed to answer this scenario is missing.",
+      "evidence": [
+        {
+          "slide": 5,
+          "quote": "Sets how long an entry may remain before it expires. A 60-second TTL does not refresh the product every minute; a later miss must load it again."
+        },
+        {
+          "slide": 5,
+          "quote": "Removes entries to make room. A least-recently-used policy favors removing entries that have not been read recently."
+        },
+        {
+          "slide": 5,
+          "quote": "A product can be evicted before its TTL ends. Some configurations reject new entries when full instead of evicting existing ones."
+        },
+        {
+          "slide": 5,
+          "quote": "TTL limits an entry's lifetime, not the age of the source data used to fill it."
+        },
+        {
+          "slide": 3,
+          "quote": "The API checks and fills the cache explicitly. The cache does not fetch the product from the database on its own."
+        },
+        {
+          "slide": 2,
+          "quote": "The entry is absent. The API reads the database, stores a copy in the cache, and returns the details."
+        },
+        {
+          "slide": 2,
+          "quote": "A hit can still return an old price. Finding a value does not prove it matches the database."
+        }
+      ]
+    }
+  ]
+}

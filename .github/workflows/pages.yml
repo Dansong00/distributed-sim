@@ -25,6 +25,10 @@ jobs:
         run: npm ci
       - name: Run unit tests
         run: npm test
+      - name: Test lesson evaluation gates
+        run: npm run test:lesson-eval
+      - name: Verify caching release evidence
+        run: npm run eval:lessons -- check-release caching evals/lessons/runs/caching-card-loop-4
       - name: Build for the repository URL
         run: npm run build -- --base /distributed-sim/
       - name: Upload site artifact

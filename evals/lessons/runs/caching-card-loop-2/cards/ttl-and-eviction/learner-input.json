@@ -1,0 +1,105 @@
+{
+  "lessonId": "caching",
+  "lessonHash": "30c8f88726679273d8190d60f4b99a2d7165b8fd91e31755cc75b89381d04688",
+  "rubricHash": "680744bc4eaf285a23a7008f22d4a7e22d2d2949531887731248342678b9843b",
+  "cardId": "ttl-and-eviction",
+  "audience": "Engineers who know APIs and databases and need practical system-design reasoning about caches. Answers should explain what happens, who does the work, and what can go wrong in plain English.",
+  "prerequisites": [
+    "An API handler can read and write records in a database.",
+    "Several application instances can handle requests at the same time.",
+    "Latency is the time a request takes; a system has limited processing capacity.",
+    "A database commit makes a completed write available to subsequent database reads in these scenarios."
+  ],
+  "lesson": {
+    "title": "Caching Fundamentals",
+    "reviewed": "2026-10-29",
+    "slides": [
+      {
+        "section": "Why Cache?",
+        "title": "Stop repeating the same product lookup",
+        "paragraphs": [
+          "A popular product page keeps asking the API for the same name, description, and price. Each request repeats a database lookup.",
+          {
+            "label": "Cache",
+            "text": "Keeps a reusable copy of a result. Reading that copy can save database work and shorten the wait for the page."
+          },
+          "Before a copy exists, the API still does the database lookup. Storing that copy uses memory and adds a cache write.",
+          "In this example, the database owns the product record. Losing the cached copy must not lose the product."
+        ],
+        "remember": "First identify repeated work that is worth avoiding. A cache adds another copy to manage.",
+        "source": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching"
+      },
+      {
+        "section": "Follow a Read",
+        "title": "The same request can take two paths",
+        "paragraphs": [
+          {
+            "label": "Cache hit",
+            "text": "The API finds product:42 in the cache and returns its stored details."
+          },
+          {
+            "label": "Cache miss",
+            "text": "The entry is absent. The API reads the database, stores a copy in the cache, and returns the details."
+          },
+          "A hit can still return an old price. Finding a value does not prove it matches the database."
+        ],
+        "remember": "A hit avoids this database lookup. A miss still needs the database.",
+        "source": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside"
+      },
+      {
+        "section": "Cache-Aside",
+        "title": "The application manages the cached copy",
+        "paragraphs": [
+          {
+            "label": "Cache-aside",
+            "text": "The API checks and fills the cache explicitly. The cache does not fetch the product from the database on its own."
+          },
+          {
+            "label": "Cache key",
+            "text": "Identifies the result to reuse. product:42 works for shared product details; prices in different currencies need distinct keys, such as product:42:USD."
+          },
+          "Include the inputs that change the answer. Reusing one person's private result for another person is a data leak."
+        ],
+        "remember": "Define what the key identifies, who fills it, and where the authoritative data lives.",
+        "source": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching"
+      },
+      {
+        "section": "Data Changes",
+        "title": "The price changed. What does the next reader see?",
+        "paragraphs": [
+          "A seller changes the price from $20 to $25. The cached $20 is now stale.",
+          {
+            "label": "Invalidation",
+            "text": "Remove the cached entry after saving the new price in the database. A later miss reloads it."
+          },
+          "Saving the price and removing the copy are separate steps. A reader can fetch $20 before the update, pause, then refill $20 after removal. The next cache hit still returns $20. Removal can also fail."
+        ],
+        "remember": "Invalidation alone does not guarantee freshness. To avoid charging an old price at checkout, validate the price against the authoritative data as part of accepting the order.",
+        "source": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside"
+      },
+      {
+        "section": "Expiration and Eviction",
+        "title": "An entry can disappear for different reasons",
+        "paragraphs": [
+          {
+            "label": "Time to live, or TTL",
+            "text": "Sets how long an entry may remain before it expires. A 60-second TTL does not refresh the product every minute; a later miss must load it again."
+          },
+          {
+            "label": "Eviction",
+            "text": "Removes entries to make room. A least-recently-used policy favors removing entries that have not been read recently."
+          },
+          "A product can be evicted before its TTL ends. Some configurations reject new entries when full instead of evicting existing ones."
+        ],
+        "remember": "TTL limits an entry's lifetime, not the age of the source data used to fill it.",
+        "source": "https://redis.io/docs/latest/develop/reference/eviction/"
+      }
+    ]
+  },
+  "questions": [
+    {
+      "id": "card-5-parking-display",
+      "question": "A parking API caches an availability display at 09:00 with a five-minute TTL. The source changes at 09:01. There is no refresh process, no write-triggered deletion, and expired entries cannot be served. In case A, the entry stays until expiration: requests arrive at 09:02 and 09:06. In separate case B, the cache removes the entry at 09:03 to make room, and the next request arrives at 09:04. Using cache-aside, explain which requests can use the original copy and which must fetch the source. Does removal itself fetch a replacement, and does a five-minute TTL promise five minutes of fresh data?"
+    }
+  ]
+}

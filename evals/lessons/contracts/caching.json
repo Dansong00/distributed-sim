@@ -1,0 +1,367 @@
+{
+  "audience": "Engineers who know APIs and databases and need practical system-design reasoning about caches. Answers should explain what happens, who does the work, and what can go wrong in plain English.",
+  "prerequisites": [
+    "An API handler can read and write records in a database.",
+    "Several application instances can handle requests at the same time.",
+    "Latency is the time a request takes; a system has limited processing capacity.",
+    "A database commit makes a completed write available to subsequent database reads in these scenarios."
+  ],
+  "objectives": [
+    {
+      "id": "why-cache",
+      "description": "Connect repeated, expensive reads to the latency or source-load benefit of reusing a stored result, while recognizing cache costs."
+    },
+    {
+      "id": "read-flow",
+      "description": "Trace a cache hit and a cache miss through the application, cache, and source database."
+    },
+    {
+      "id": "ownership-key",
+      "description": "Explain the application's responsibility in cache-aside and choose a key that distinguishes requests with different answers."
+    },
+    {
+      "id": "invalidation",
+      "description": "Reason about stale copies after a source write, including a concurrent read that refills a deleted entry."
+    },
+    {
+      "id": "ttl-eviction",
+      "description": "Distinguish time-based expiration from removal to free space, and explain why neither refreshes a value by itself."
+    },
+    {
+      "id": "local-shared",
+      "description": "Choose between per-instance and shared caches using copy visibility, network cost, and failure consequences."
+    },
+    {
+      "id": "stampede-outage",
+      "description": "Explain how simultaneous misses or cache failure can overload the source, and propose a basic response that limits source work."
+    },
+    {
+      "id": "cache-decision",
+      "description": "Decide whether caching earns its complexity given reuse, read cost, capacity, and freshness requirements."
+    }
+  ],
+  "questions": [
+    {
+      "id": "q1-station-guides",
+      "question": "A travel API returns a station guide for a station ID and a requested language. English and Spanish guides differ. The database takes 80 ms to build a guide; a cache lookup takes 2 ms. The same few station-language pairs account for most reads, and guides change only weekly. The application uses cache-aside, and the database remains the source of truth. Explain why caching could help, propose a cache key, and walk through both a hit and a miss. Identify who reads the database and who stores the cached result. Explain what work and cost remain on a miss and what extra operations the cache adds. You do not need to calculate an average latency.",
+      "criteria": [
+        "Connects repeated reads to reusing an already computed guide, reducing database work and usually reducing latency on a hit.",
+        "Uses a key that includes both station identity and language, with any clear equivalent representation accepted.",
+        "On a hit, the application returns the matching cached guide without fetching that guide from the database.",
+        "On a miss, the application fetches the guide from the database, puts a reusable copy in the cache, and returns the guide.",
+        "Identifies the application as the actor coordinating cache-aside reads and fills; recognizes that a miss still pays for database work and cache operations add cost."
+      ],
+      "criticalMisconceptions": [
+        "A station-only key is sufficient even though requested languages produce different guides.",
+        "Cache-aside means the cache automatically fetches or tracks database changes without application work.",
+        "Every request becomes faster or database reads disappear once a cache is added."
+      ]
+    },
+    {
+      "id": "q2-opening-hours-race",
+      "question": "A library API caches opening hours under one key. Its cache-aside reader fetches a database value on a miss and later stores that fetched value. Its writer commits new database hours and then deletes the cache key. Consider this exact order, with no other operations: 1. Reader A misses the cache and reads the old hours from the database, then pauses before filling the cache. 2. Writer B commits the new hours. 3. Writer B deletes the cache key. 4. Reader A resumes and stores the old hours it already fetched. 5. Reader C looks up the key before it expires. Which hours does C receive, why did deletion fail to prevent that, and can the team claim that every read after B finishes sees the new hours? If this endpoint must always show the latest committed hours, name a simple way to avoid serving this stale cached copy; you do not need to design a concurrency protocol.",
+      "criteria": [
+        "Traces the given order and concludes that Reader C receives the old hours from the cache.",
+        "Explains that deletion removed only what existed at that moment; Reader A subsequently reintroduced an older value.",
+        "Rejects an unconditional freshness guarantee from commit-then-delete alone when reads and fills overlap writes.",
+        "Offers bypassing this cache and reading the source for this freshness-sensitive endpoint, or another clearly explained approach that actually prevents the stated stale response; no advanced protocol is required."
+      ],
+      "criticalMisconceptions": [
+        "Deleting the key cancels all in-flight readers or prevents later cache fills.",
+        "Writing the database automatically changes Reader A's previously fetched value.",
+        "A nonzero TTL guarantees every read after the write sees the new hours."
+      ]
+    },
+    {
+      "id": "q3-weather-expiration",
+      "question": "A weather API stores the current forecast at 12:00 with a TTL of ten minutes. There is no background refresh, no write-triggered invalidation, and no serving expired entries. The source forecast changes at 12:02. In case A, the entry stays in memory until it expires; requests arrive at 12:03 and 12:11. In case B, the cache removes the entry at 12:04 to free memory, and the next request arrives at 12:05. For each request, explain whether it can use the original cached forecast or must fetch the source. Explain what the ten-minute TTL promises, what it does not promise, and why the memory removal is a different event.",
+      "criteria": [
+        "In case A, identifies the 12:03 request as a hit that can return the original, now stale forecast, and the 12:11 request as a miss that fetches the source.",
+        "In case B, identifies the 12:05 request as a miss because the original entry was removed before its TTL elapsed.",
+        "Explains that TTL limits the lifetime of this stored entry under the stated expiration rules; it does not keep the entry present for ten minutes or synchronize it with source updates.",
+        "Distinguishes expiration because time elapsed from eviction to free space, and explains that neither event itself fetches a new forecast."
+      ],
+      "criticalMisconceptions": [
+        "TTL means the source is refreshed continuously or exactly when the source changes.",
+        "An entry cannot be evicted before its TTL ends.",
+        "Removing or expiring an entry automatically loads the latest value without a reader or refresh mechanism."
+      ]
+    },
+    {
+      "id": "q4-event-room-map",
+      "question": "An event API runs on four application instances. Each currently has its own in-memory cache of the same room map. Any instance can handle the next request. When an organizer changes the map, the database updates and only the instance handling that write deletes its local copy. The team wants one cache deletion to remove the cached map used by every instance. It can accept a 2 ms network lookup. Compare keeping these independent local caches with moving the map to one shared cache. Choose the simpler fit for this specific goal, explain what happens to requests sent to the other instances today, and name one cost or failure consequence of your choice. Explain where local and shared lookups happen. Compare which instances lose cache access if one local cache is lost versus if the shared cache is unreachable. Assume a single shared cache entry and no concurrent cache fills for this question.",
+      "criteria": [
+        "Explains that deleting one local copy leaves the other instances' copies available, so a later request may still receive an old map depending on which instance handles it.",
+        "Chooses the shared cache as the simpler fit for one deletion affecting the entry all instances use, under the stated assumptions.",
+        "Explains that a shared cache moves cache access over the network, whereas a local cache is read inside the application instance.",
+        "Names a concrete shared-cache cost or failure consequence, such as network latency, network errors, or a cache outage affecting all four instances, and does not imply sharing automatically keeps it synchronized with the database.",
+        "Explains that losing one independent local cache leaves the other instances' local copies accessible, whereas an unreachable shared cache removes cache access for every instance using it; losing cache access does not by itself establish whether application requests fail."
+      ],
+      "criticalMisconceptions": [
+        "Independent local caches automatically share writes or deletions.",
+        "A shared cache guarantees database freshness without an update or invalidation strategy.",
+        "Sharing a cache removes network or availability concerns."
+      ]
+    },
+    {
+      "id": "q5-tournament-burst",
+      "question": "A tournament schedule endpoint receives 10,000 requests per second, mostly for the same schedule. The database can safely handle only 500 schedule reads per second. The cache normally absorbs almost all reads. First, the popular key expires while many requests arrive together. Second, consider a separate incident where the entire cache is unreachable for a minute. The product permits returning the last known schedule for up to 60 seconds, and it permits a temporary error if necessary to protect the database. Explain how each incident threatens the database. Propose one concrete way to reduce duplicate database reads after the single-key expiration, and describe an outage response that does not send every request straight to the database. Explain how your response reduces work; naming a technique alone is insufficient.",
+      "criteria": [
+        "Explains that simultaneous misses can cause many requests to fetch the same value from the database before any fill is available, despite the cache itself being operational.",
+        "Proposes a mechanism that reduces duplicate source work during a refill, such as allowing one request to fetch while others wait or use an allowed old copy; equivalent mechanisms are accepted when their effect is explained.",
+        "Explains that blindly falling back during a cache outage can redirect roughly 10,000 reads per second to a database that safely handles only 500.",
+        "Describes an outage response that limits database work, such as capping source requests and temporarily rejecting the rest; an available last-known copy may supplement this only within the stated 60-second allowance.",
+        "If relying on a stale copy during an outage, explains where that copy remains available when the failed cache cannot be reached; otherwise no stale-copy mechanism is required."
+      ],
+      "criticalMisconceptions": [
+        "An expired key necessarily causes only one database read, regardless of concurrent requests.",
+        "A database fallback automatically makes a cache outage harmless.",
+        "The application can read an old value from an unreachable cache, or can serve stale schedules indefinitely despite the stated limit."
+      ]
+    },
+    {
+      "id": "q6-single-use-results",
+      "question": "An internal inspection service stores a result for each newly completed inspection. Every result has a unique ID, and each result is retrieved exactly once before archival. A database read takes 2 ms. The endpoint has a 100 ms latency budget and receives ten reads per second; the database can comfortably handle 1,000 reads per second. There is no other reader of these results. A teammate proposes filling a cache after every database read so future requests can reuse the result. Should the team add this cache now? Explain the expected benefit and costs, and name a change in the workload that would make you reconsider.",
+      "criteria": [
+        "Recommends not adding the proposed cache for this workload.",
+        "Explains that each key is read only once, so a fill after the read has no later request to benefit from it.",
+        "Uses the low database read cost and ample capacity or latency headroom to show there is no stated performance problem that this cache solves.",
+        "Names a concrete added cost such as cache storage, extra operations, deployment or failure handling complexity.",
+        "Names a relevant reconsideration trigger, such as many repeated reads of the same results combined with expensive source work or capacity pressure, without implying that repetition alone always justifies a cache."
+      ],
+      "criticalMisconceptions": [
+        "Caching improves every workload even when every key is read only once.",
+        "Filling the cache after a read speeds up that already completed database read.",
+        "A cache is required simply because the service uses a database."
+      ]
+    }
+  ],
+  "diagramFile": "src/learn/CachingDiagram.tsx",
+  "cards": [
+    {
+      "id": "why-cache",
+      "slide": 1,
+      "objective": "Explain when reusing a stored result can reduce repeated source work and request latency, and identify a cost of keeping that copy.",
+      "questions": [
+        {
+          "id": "card-1-campus-summary",
+          "question": "A campus API repeatedly builds the same public building summary. Building it from database records takes 90 ms; reading a previously stored summary takes 3 ms. Most requests ask for one of twenty summaries. Explain how keeping reusable copies could help both callers and the database. Name one cost of keeping the copies, and explain why the first request for a summary might still require the expensive work.",
+          "criteria": [
+            "Connects repeated requests for the same summary to reuse of work already done.",
+            "Explains that requests able to reuse a stored summary avoid rebuilding it, usually lowering their latency and reducing database work.",
+            "Explains that a summary not yet stored must first be obtained or built; adding storage does not eliminate that initial work.",
+            "Names a concrete cost of reusable copies, such as memory or storage, an extra lookup or write, or keeping copies useful when data changes; no invalidation mechanism is required."
+          ],
+          "criticalMisconceptions": [
+            "A cache makes every request faster even when the requested result has never been stored.",
+            "Keeping cached copies eliminates all source work.",
+            "Cached results require no storage or operational work."
+          ]
+        }
+      ],
+      "prerequisites": []
+    },
+    {
+      "id": "hits-and-misses",
+      "slide": 2,
+      "objective": "Trace a request that finds a cached result and a request that must obtain a missing result from the source.",
+      "questions": [
+        {
+          "id": "card-2-restaurant-menu",
+          "question": "A restaurant API first checks its cache for a menu. If a menu is missing, the API handler reads it from the database, stores a copy, and returns it. At the start, the cache holds menu A but no menu B. Trace a request for A, then a request for B, then another request for B. No entries change or disappear during these requests. Which requests read the database, and which are cache hits or misses?",
+          "criteria": [
+            "Identifies the request for A as a hit that returns the cached menu without reading that menu from the database.",
+            "Identifies the first request for B as a miss; the handler reads the database, stores a reusable copy, and returns the menu.",
+            "Identifies the second request for B as a hit using the copy stored by the previous request.",
+            "Explains that only the first request for B reads the database in this sequence."
+          ],
+          "criticalMisconceptions": [
+            "A cache miss means the menu does not exist in the database or the request must fail.",
+            "A cache hit still requires reading the same menu from the database under the stated flow.",
+            "The second request for B is necessarily another miss despite the completed fill."
+          ]
+        }
+      ],
+      "prerequisites": [
+        "why-cache"
+      ]
+    },
+    {
+      "id": "cache-aside-and-keys",
+      "slide": 3,
+      "objective": "Assign cache-aside reads and fills to the application and choose keys that distinguish requests with different results.",
+      "questions": [
+        {
+          "id": "card-3-ticket-currency",
+          "question": "A ticket API returns an event price in a requested currency. Prices for the same event differ between USD and EUR. The API uses cache-aside, and the database is the source of truth. A teammate proposes using only the event ID as the cache key. Give a safer key and explain the failure the proposed key could cause. When the safer key is missing, identify who reads the database and who puts the result in the cache.",
+          "criteria": [
+            "Uses both event identity and requested currency in the key; any unambiguous equivalent representation is accepted.",
+            "Explains that an event-only key can return the price for the wrong currency after a request in a different currency fills it.",
+            "Identifies the application or API handler as coordinating the database read on a miss and storing the resulting copy.",
+            "Recognizes the database as the source of truth and the cache as a reusable copy; no currency-conversion algorithm is required."
+          ],
+          "criticalMisconceptions": [
+            "Event ID alone distinguishes these requests even though their responses differ.",
+            "Cache-aside automatically makes the cache query the database without application coordination.",
+            "The requested currency can be omitted because the cached value will automatically adjust itself."
+          ]
+        }
+      ],
+      "prerequisites": [
+        "why-cache",
+        "hits-and-misses"
+      ]
+    },
+    {
+      "id": "invalidation-and-old-fills",
+      "slide": 4,
+      "objective": "Explain stale cache entries after a source update and trace how an older in-flight read can refill an entry after deletion.",
+      "questions": [
+        {
+          "id": "card-4-dispatch-contact",
+          "question": "An API caches the dispatch contact for a delivery depot. Its writer commits a new contact to the database and then deletes the cached contact. Follow this exact order: reader R misses the cache, reads the old contact, and pauses; writer W commits the new contact and deletes the key; R resumes and caches the old contact it already read; reader S checks that key. No other operations occur. What contact does S receive? Explain why deleting the key did not ensure freshness. If this endpoint must always read the latest committed contact, name a simple way to avoid serving this stale cached copy; no concurrency protocol is needed.",
+          "criteria": [
+            "Concludes that S receives the old contact stored by R.",
+            "Explains that the database update does not change the value R already fetched.",
+            "Explains that deletion affects the entry at that moment and does not prevent R from putting the old value back later.",
+            "Rejects a guarantee that commit-then-delete alone makes all subsequent cache reads fresh when reads and fills overlap writes.",
+            "Offers bypassing this cache and reading the database for this endpoint, or another explained approach that prevents the stated stale cached response."
+          ],
+          "criticalMisconceptions": [
+            "Deleting a key cancels pending fills or permanently prevents the key from returning.",
+            "A completed database write automatically updates an already fetched value held by R.",
+            "S must receive the new contact simply because W completed before S began."
+          ]
+        }
+      ],
+      "prerequisites": [
+        "why-cache",
+        "hits-and-misses",
+        "cache-aside-and-keys"
+      ]
+    },
+    {
+      "id": "ttl-and-eviction",
+      "slide": 5,
+      "objective": "Distinguish expiration by elapsed time from eviction for space, and explain why neither removal event fetches a fresh value.",
+      "questions": [
+        {
+          "id": "card-5-parking-display",
+          "question": "A parking API caches an availability display at 09:00 with a five-minute TTL. The source changes at 09:01. There is no refresh process, no write-triggered deletion, and expired entries cannot be served. In case A, the entry stays until expiration: requests arrive at 09:02 and 09:06. In separate case B, the cache removes the entry at 09:03 to make room, and the next request arrives at 09:04. Using cache-aside, explain which requests can use the original copy and which must fetch the source. Does removal itself fetch a replacement, and does a five-minute TTL promise five minutes of fresh data?",
+          "criteria": [
+            "In case A, identifies 09:02 as a hit on the original, now stale copy and 09:06 as a miss that causes the application to fetch the source.",
+            "In case B, identifies 09:04 as a miss because the entry was evicted before its TTL elapsed.",
+            "Distinguishes expiration after a time limit from eviction to free capacity.",
+            "Explains that TTL limits this stored entry's usable lifetime under the stated rules; it neither guarantees freshness throughout that period nor guarantees that the entry remains present.",
+            "Explains that removal does not itself fetch a replacement; a subsequent reader performs the stated cache-aside fetch."
+          ],
+          "criticalMisconceptions": [
+            "A five-minute TTL means the value tracks source changes for five minutes.",
+            "An entry cannot be removed for capacity reasons before its TTL ends.",
+            "Expiration or eviction automatically reloads the source value without a reader or refresh process."
+          ]
+        }
+      ],
+      "prerequisites": [
+        "why-cache",
+        "hits-and-misses",
+        "cache-aside-and-keys",
+        "invalidation-and-old-fills"
+      ]
+    },
+    {
+      "id": "local-and-shared",
+      "slide": 6,
+      "objective": "Compare per-instance and shared caches using copy visibility, network access, and failure consequences.",
+      "questions": [
+        {
+          "id": "card-6-museum-audio",
+          "question": "Three application instances serve a museum audio guide. Each keeps its own local cached guide, and requests can reach any instance. A guide edit commits to the database, and instance A deletes only its local copy. The team wants one cache deletion to remove the cached copy used by all three instances and can accept a small network lookup cost. Assume there are no concurrent fills. Explain what a request sent to instance B can receive today. Choose between these independent local caches and one shared cache for the team's goal, and explain one cost or failure consequence of that choice. Explain where local and shared lookups happen. Compare which instances lose cache access if one local cache is lost versus if the shared cache is unreachable.",
+          "criteria": [
+            "Explains that B can still return its old local guide because A's deletion did not affect B's copy.",
+            "Chooses one shared cache as the simpler fit for all instances using an entry removed by one deletion, under the stated assumptions.",
+            "Explains that local access occurs inside each application instance while accessing the shared cache requires network communication.",
+            "Names a concrete shared-cache cost or failure consequence, such as added network latency, network errors, or all instances losing cache access during its outage.",
+            "Does not imply that sharing alone updates or invalidates the cached guide when the database changes.",
+            "Explains that losing one independent local cache leaves the other instances' local copies accessible, whereas an unreachable shared cache removes cache access for every instance using it; losing cache access does not by itself establish whether application requests fail."
+          ],
+          "criticalMisconceptions": [
+            "Independent local copies automatically receive another instance's deletion.",
+            "A shared cache automatically stays synchronized with every database write.",
+            "A shared cache has no network cost or common failure consequences."
+          ]
+        }
+      ],
+      "prerequisites": [
+        "why-cache",
+        "hits-and-misses",
+        "cache-aside-and-keys",
+        "invalidation-and-old-fills",
+        "ttl-and-eviction"
+      ]
+    },
+    {
+      "id": "stampede-and-outage",
+      "slide": 7,
+      "objective": "Explain how simultaneous misses and cache failure can overload the source and propose responses that limit source work.",
+      "questions": [
+        {
+          "id": "card-7-ferry-departures",
+          "question": "A ferry-departure endpoint receives 6,000 requests per second, mostly for the same departure board. Its database can safely handle only 300 board reads per second. Consider two separate incidents: the popular cache entry expires while many requests arrive together, and the entire cache becomes unreachable. The product permits temporary errors to protect the database. Explain the database risk in each incident. For expiration, describe how to reduce duplicate database reads while refilling the board. For the outage, describe a response that prevents all 6,000 requests per second from falling through to the database. Explain how each response limits work; a technique name alone is insufficient.",
+          "criteria": [
+            "Explains that many simultaneous misses can each start fetching the same board before any refill completes.",
+            "Describes a concrete way to reduce duplicate refill work, such as one request fetching the board while other requests wait for its result; explains why fewer database reads occur.",
+            "Explains that blindly falling back during an outage sends demand far above the database's stated safe capacity.",
+            "Describes limiting admitted database work and temporarily rejecting excess requests, or an equally concrete response that keeps source work within safe capacity.",
+            "Does not rely on reading a cached value from the unreachable cache; no stale-copy mechanism is required."
+          ],
+          "criticalMisconceptions": [
+            "A missing popular key causes only one database read automatically, regardless of concurrent requests.",
+            "Fallback to the database makes a cache outage harmless despite its lower capacity.",
+            "The application can keep fetching old values from a cache that is unreachable."
+          ]
+        }
+      ],
+      "prerequisites": [
+        "why-cache",
+        "hits-and-misses",
+        "cache-aside-and-keys",
+        "invalidation-and-old-fills",
+        "ttl-and-eviction",
+        "local-and-shared"
+      ]
+    },
+    {
+      "id": "cache-or-not",
+      "slide": 8,
+      "objective": "Decide whether cache reuse benefits justify costs given source latency, capacity, workload reuse, and freshness requirements.",
+      "questions": [
+        {
+          "id": "card-8-export-receipts",
+          "question": "A service generates a unique export receipt for each completed job. Each receipt is fetched exactly once, and no other consumer reads it. Reading a receipt from the database takes 4 ms against a 150 ms request budget. The service receives 15 receipt reads per second; the database comfortably supports 800. A teammate wants to cache each receipt after reading it, for use by later requests. Would you add this cache now? Explain your decision, identify an added cost, and describe a workload change that could make this cache worth reconsidering. If the changed workload requires every read to reflect the latest committed update, explain how that affects the decision.",
+          "criteria": [
+            "Recommends against the proposed cache for the stated workload because each receipt has no later read to reuse the stored copy.",
+            "Uses the inexpensive source reads and ample latency or capacity headroom to explain why the proposal does not solve a stated performance problem.",
+            "Names a concrete added cost such as storage, extra cache operations, deployment, or failure handling.",
+            "Names a relevant reconsideration trigger, such as repeated reads of the same receipts together with more expensive source work or capacity pressure; does not claim repetition alone always justifies caching.",
+            "Recognizes that a strict latest-committed-value requirement makes stale cache responses unacceptable, so the team must account for freshness or read the source; no advanced coherence design is required."
+          ],
+          "criticalMisconceptions": [
+            "Filling a cache after a database read speeds up that same completed read.",
+            "Caching always helps even when each key is read only once.",
+            "TTL or commit-then-delete alone necessarily guarantees the latest committed value for every read."
+          ]
+        }
+      ],
+      "prerequisites": [
+        "why-cache",
+        "hits-and-misses",
+        "cache-aside-and-keys",
+        "invalidation-and-old-fills",
+        "ttl-and-eviction",
+        "local-and-shared",
+        "stampede-and-outage"
+      ]
+    }
+  ]
+}

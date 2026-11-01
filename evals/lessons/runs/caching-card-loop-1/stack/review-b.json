@@ -1,0 +1,133 @@
+{
+  "dimensions": {
+    "accuracy": {
+      "score": 4,
+      "reason": "Core cache-aside, ownership, staleness, lifetime, and capacity claims align with the linked primary sources and avoid automatic freshness promises.",
+      "evidence": [
+        {
+          "slide": 5,
+          "quote": "TTL limits an entry's lifetime, not the age of the source data used to fill it."
+        },
+        {
+          "slide": 6,
+          "quote": "Sharing reduces separate copies. It does not automatically keep the cache current with the database."
+        }
+      ]
+    },
+    "mechanisms": {
+      "score": 3,
+      "reason": "The hit/miss actors and transitions are traceable and the race and coalescing statements support the supplied scenarios. The old-fill interleaving and fallback coordination are compressed rather than demonstrated in the lesson.",
+      "evidence": [
+        {
+          "slide": 2,
+          "quote": "The entry is absent. The API reads the database, stores a copy in the cache, and returns the details."
+        },
+        {
+          "slide": 4,
+          "quote": "These steps are not atomic. Removal can fail, or an overlapping read can put an older value back after removal."
+        }
+      ]
+    },
+    "coherence": {
+      "score": 4,
+      "reason": "A consistent product example progresses from repeat work through reads, keys, stale data, retention, topology, failure, and a decision. Full-stack later teaching supplies the initial card missing concrete costs.",
+      "evidence": [
+        {
+          "slide": 8,
+          "quote": "For our product page, propose caching frequently read descriptions that tolerate a brief delay after edits. Keep checkout price validation tied to the order's authoritative data."
+        }
+      ]
+    },
+    "decisions": {
+      "score": 4,
+      "reason": "Explains source-work benefit, network and operations costs, freshness limits, low-reuse rejection, and capacity-limited failure behavior; ties adoption to measurement.",
+      "evidence": [
+        {
+          "slide": 8,
+          "quote": "If requests rarely reuse results, or freshness is too hard to maintain, the cache may cost more than it saves."
+        },
+        {
+          "slide": 7,
+          "quote": "A cache outage can turn most reads into database traffic. Limit fallback work to what the database can handle; reject excess requests or serve older data only where the product rules permit it."
+        }
+      ]
+    },
+    "clarity": {
+      "score": 3,
+      "reason": "Mostly clear definitions and examples; atomic and warm cache are introduced without direct definitions, and concise concurrency statements require unpacking. Sufficient overall, short of uniformly precise transfer teaching.",
+      "evidence": [
+        {
+          "slide": 4,
+          "quote": "These steps are not atomic. Removal can fail, or an overlapping read can put an older value back after removal."
+        },
+        {
+          "slide": 7,
+          "quote": "Test with an empty or unavailable cache. A warm cache can hide insufficient database capacity."
+        }
+      ]
+    }
+  },
+  "outcomes": [
+    {
+      "id": "q1-station-guides",
+      "score": 1,
+      "reason": "Supports repeated-work saving, station+language key, hit/miss sequence, API responsibility, and source authority. It describes miss DB work, but does not identify cache operations as an added cost as required by criterion 5. The answer cannot receive full credit merely because a reader could infer overhead from the named operations."
+    },
+    {
+      "id": "q2-opening-hours-race",
+      "score": 2,
+      "reason": "All four criteria met: old value returned, deletion followed by stale refill, rejected freshness guarantee, and source-read bypass under the declared commit prerequisite. Prefix quotes on independent read/fill and old-value reinsertion support the reasoning."
+    },
+    {
+      "id": "q3-weather-expiration",
+      "score": 2,
+      "reason": "All four criteria met: correct stale hit and later expired miss, early eviction miss, TTL neither residency nor source synchronization, and distinct time/capacity removal with later reader-driven source fetch. Quotes directly support the answer."
+    },
+    {
+      "id": "q4-event-room-map",
+      "score": 2,
+      "reason": "All criteria met: untouched local copies stay stale, one shared entry fits one deletion, local versus network access explained, and operating/network/fallback costs without automatic synchronization. Full-stack outage teaching supports its failure reasoning."
+    },
+    {
+      "id": "q5-tournament-burst",
+      "score": 2,
+      "reason": "All criteria met: parallel duplicate reads, one shared pending lookup, 10000-versus-500 overload, capped fallback plus errors, and no reliance on a stale copy in the unreachable cache. It explicitly marks optional stale storage as unspecified and unnecessary to its proposed protection."
+    },
+    {
+      "id": "q6-single-use-results",
+      "score": 2,
+      "reason": "All five criteria met: rejects zero-reuse fills, uses low source cost and headroom, names storage/fill costs, and qualifies repeated-read reconsideration with measured benefit rather than automatic adoption."
+    }
+  ],
+  "hardFailures": [],
+  "sourceChecks": [
+    {
+      "slide": 1,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
+      "claim": "Reusable copies reduce repeated work and may diverge from their source.",
+      "verified": true
+    },
+    {
+      "slide": 2,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
+      "claim": "Application reads and fills on a miss; writes followed by invalidation do not guarantee consistency.",
+      "verified": true
+    },
+    {
+      "slide": 5,
+      "url": "https://redis.io/docs/latest/develop/reference/eviction/",
+      "claim": "Memory policies can remove entries with remaining TTL or reject new writes; LRU favors entries not accessed recently.",
+      "verified": true
+    },
+    {
+      "slide": 7,
+      "url": "https://aws.amazon.com/builders-library/caching-challenges-and-strategies/",
+      "claim": "External caches add operational dependencies; simultaneous misses can duplicate source work, and coalescing or bounded fallback can prevent source overload.",
+      "verified": true
+    }
+  ],
+  "lessonHash": "dbbca9251a24a25c021f27e3618539f63e432600ccd8957da67ed6f73081406b",
+  "rubricHash": "44d7618464f45edc85a2166f658ddda4b1c946a16381f1d8d5d9f901c78ff549",
+  "learnerHash": "a7b21a3aae2ecc78eeb82b0a4f8d5e89f73baf6f1945f1b24a7d0f81f5525547",
+  "reviewer": "/root/card_judge_b"
+}

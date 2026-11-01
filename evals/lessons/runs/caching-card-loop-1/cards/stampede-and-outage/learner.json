@@ -1,0 +1,33 @@
+{
+  "lessonHash": "2008af471aae2f4d7e3ce61757ed05f891f26be49f5c6023eaf5571615bf5b7c",
+  "rubricHash": "b45f34590160de52ff2320d67cfb457ebafe8dfefcd0b8428c78e1adea1d96e7",
+  "respondent": "/root/learn_c7",
+  "answers": [
+    {
+      "id": "card-7-ferry-departures",
+      "answer": "When the popular board entry expires, concurrent requests find it absent. Without coordination, each API handler can read the same board from the database and try to refill the cache, producing duplicate reads that can exceed its 300-reads-per-second capacity. The API should coalesce concurrent requests for that board: let one request start the database lookup and have the other readers share that in-progress lookup and its result. The API stores the fetched board in the cache so subsequent requests can use it. This reduces the simultaneous misses to one lookup for that shared refill; TTL itself does not refresh the board. During an outage, all 6,000 requests per second could otherwise become database reads, twenty times the stated safe capacity. Limit the aggregate fallback board reads across API instances to at most the database's safe 300 reads per second and return temporary errors for requests beyond the allowed work. This uses the product's permission for errors and stops excess traffic before it reaches the database. An independent allowance of 300 reads per second on every API instance would not enforce the database's total limit. The lesson teaches limiting fallback work but does not specify the implementation of an aggregate limit. Coalescing the refill addresses duplicate concurrent work on the same board; bounding fallback work protects the database during the cache-wide outage even if misses continue.",
+      "evidence": [
+        {
+          "slide": 2,
+          "quote": "The entry is absent. The API reads the database, stores a copy in the cache, and returns the details."
+        },
+        {
+          "slide": 3,
+          "quote": "The API checks and fills the cache explicitly. The cache does not fetch the product from the database on its own."
+        },
+        {
+          "slide": 5,
+          "quote": "Sets how long an entry may remain before it expires. A 60-second TTL does not refresh the product every minute; a later miss must load it again."
+        },
+        {
+          "slide": 7,
+          "quote": "Many requests miss the same product together and repeat its database lookup. Coalescing requests lets concurrent readers share one in-progress lookup."
+        },
+        {
+          "slide": 7,
+          "quote": "A cache outage can turn most reads into database traffic. Limit fallback work to what the database can handle; reject excess requests or serve older data only where the product rules permit it."
+        }
+      ]
+    }
+  ]
+}

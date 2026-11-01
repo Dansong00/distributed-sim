@@ -1,0 +1,141 @@
+{
+  "lessonHash": "c5e87e440525cb254f97f5223ffa7650a1f3b4a5ea25bc7a0f7ce59741a441e9",
+  "rubricHash": "44d7618464f45edc85a2166f658ddda4b1c946a16381f1d8d5d9f901c78ff549",
+  "learnerHash": "6c22f3826aff1e6a2a493237ef72755e6d0ba70968179e97589b06bf33d00ed0",
+  "reviewer": "/root/r2_judge_b",
+  "dimensions": {
+    "accuracy": {
+      "score": 4,
+      "reason": "Primary pages support stated cache-aside ownership, stale copies, expiration/eviction, placement tradeoffs and overload mitigation. The lesson avoids unconditional freshness or fallback guarantees.",
+      "evidence": [
+        {
+          "slide": 5,
+          "quote": "TTL limits an entry's lifetime, not the age of the source data used to fill it."
+        }
+      ]
+    },
+    "mechanisms": {
+      "score": 4,
+      "reason": "Readers can trace application reads/fills, the old-fill race and bounded fallback; actors and state transitions are named.",
+      "evidence": [
+        {
+          "slide": 4,
+          "quote": "Saving the price and removing the copy are separate steps. A reader can fetch $20 before the update, pause, then refill $20 after removal. The next cache hit still returns $20. Removal can also fail."
+        }
+      ]
+    },
+    "coherence": {
+      "score": 4,
+      "reason": "A continuous product scenario builds reuse, paths, ownership, updates, removal, placement, failure and decision in dependency order.",
+      "evidence": [
+        {
+          "slide": 8,
+          "quote": "For our product page, propose caching frequently read descriptions that tolerate a brief delay after edits. Keep checkout price validation tied to the order's authoritative data."
+        }
+      ]
+    },
+    "decisions": {
+      "score": 4,
+      "reason": "Explains when to decline caching, how to measure benefit, and how product tolerance/capacity determines failure response.",
+      "evidence": [
+        {
+          "slide": 7,
+          "quote": "A cache outage can turn most reads into database traffic. Limit fallback work to what the database can handle; reject excess requests or serve older data only where the product rules permit it."
+        }
+      ]
+    },
+    "clarity": {
+      "score": 4,
+      "reason": "Plain definitions, short concrete examples and explicit limits support transfer without unnecessary implementation protocols.",
+      "evidence": [
+        {
+          "slide": 3,
+          "quote": "The API checks and fills the cache explicitly. The cache does not fetch the product from the database on its own."
+        }
+      ]
+    }
+  },
+  "outcomes": [
+    {
+      "id": "q1-station-guides",
+      "score": 1,
+      "reason": "Reuse benefit, station-plus-language key, hit path, miss read/fill/return and application ownership are correct and entailed by the quotes. The final criterion also requires recognizing that cache operations add cost. This answer names a fill but does not explain its added work or storage/lookup cost. Slide 1 teaches the cost, so the gap is in this answer rather than missing lesson content; explicitly state that a miss still incurs the database build plus cache lookup/write and storage overhead."
+    },
+    {
+      "id": "q2-opening-hours-race",
+      "score": 2,
+      "reason": "All four criteria met: old value is reintroduced after deletion, C hits it, no post-write freshness guarantee, and direct authoritative read prevents this cached response under the stated commit prerequisite. Evidence entails the race and freshness-sensitive response."
+    },
+    {
+      "id": "q3-weather-expiration",
+      "score": 2,
+      "reason": "All four criteria met: stale early hit and expired later miss; eviction before TTL causes a miss; lifetime does not ensure residency or source synchronization; removal and later fetch are distinct. Exact slide 5 evidence and established cache-aside flow support the response."
+    },
+    {
+      "id": "q4-event-room-map",
+      "score": 2,
+      "reason": "All four criteria met: other local copies survive deletion; shared entry fits stated goal; inside-process versus network access distinguished; network/operations/outage costs named without automatic freshness. Outage statement is supported by slide 7 in the complete stack."
+    },
+    {
+      "id": "q5-tournament-burst",
+      "score": 2,
+      "reason": "All criteria met: duplicate same-key misses, one in-progress lookup shared, 10000 versus 500 overload, application-wide bound with temporary errors, and no reliance on unreachable cache data. Full limiter implementation is outside the requested scope."
+    },
+    {
+      "id": "q6-single-use-results",
+      "score": 2,
+      "reason": "All five criteria met: rejects single-use cache, identifies lack of subsequent reuse, uses read cost/headroom, names memory/write cost, and ties reconsideration to repeated reads plus measured load/latency. Evidence directly entails the judgment."
+    }
+  ],
+  "hardFailures": [],
+  "sourceChecks": [
+    {
+      "slide": 1,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
+      "claim": "Reusable copies reduce repeated source work while consuming storage and requiring population.",
+      "verified": true
+    },
+    {
+      "slide": 2,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
+      "claim": "Application checks cache, fetches on miss, fills and returns; a hit is not a freshness guarantee.",
+      "verified": true
+    },
+    {
+      "slide": 3,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
+      "claim": "Keys distinguish values, and application code owns cache-aside reads and writes.",
+      "verified": true
+    },
+    {
+      "slide": 4,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
+      "claim": "Source commit and cache deletion are separate operations and cache-aside consistency is not guaranteed; old-fill race follows documented operations.",
+      "verified": true
+    },
+    {
+      "slide": 5,
+      "url": "https://redis.io/docs/latest/develop/reference/eviction/",
+      "claim": "Redis distinguishes expiration from capacity eviction, allows eviction of TTL-bearing keys, and supports noeviction refusal.",
+      "verified": true
+    },
+    {
+      "slide": 6,
+      "url": "https://aws.amazon.com/builders-library/caching-challenges-and-strategies/",
+      "claim": "Process-local copies may disagree; external caches share entries but add operations and availability risks.",
+      "verified": true
+    },
+    {
+      "slide": 7,
+      "url": "https://aws.amazon.com/builders-library/caching-challenges-and-strategies/",
+      "claim": "AWS documents concurrent-miss overload, coalescing, limiting downstream requests or shedding, and testing with cache disabled.",
+      "verified": true
+    },
+    {
+      "slide": 8,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
+      "claim": "Reuse, source cost, volatility and observed performance determine whether caching is beneficial.",
+      "verified": true
+    }
+  ]
+}

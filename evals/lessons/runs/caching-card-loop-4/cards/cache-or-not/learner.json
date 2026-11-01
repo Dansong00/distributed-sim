@@ -1,0 +1,41 @@
+{
+  "lessonHash": "5f47c237e6228d440ce4504e6e8e24922affc0eedf7d721d759225043253cb47",
+  "rubricHash": "16837d370ac3fe5478b8bd5f773fd872c63b2309605cf73dfba1d47fbf0bca8d",
+  "respondent": "/root/r4_c8",
+  "answers": [
+    {
+      "id": "card-8-export-receipts",
+      "answer": "I would not add this cache now. Every receipt is fetched exactly once, so a copy written after that read has no later reader and avoids no database work. The existing 4 ms database read is small within the 150 ms budget, and 15 reads per second is comfortably below the stated database capacity of 800. The API would still perform the database lookup and then add a cache write, consume memory, and manage another copy. Reconsider if the same receipts are fetched repeatedly, particularly if that repeated work starts to make database load or request latency a problem. Measure response time, database load, cache hits, and misses to check whether the reuse pays for the added work. If that changed workload requires every read to reflect the latest committed update, a cached hit cannot itself satisfy the requirement: it may contain old data, invalidation can fail or race with a refill, TTL does not guarantee source freshness, and sharing the cache does not fix this. Keep these reads tied to the authoritative database unless a design can establish the required freshness; needing a database read to validate every cached result also reduces the lookup-saving benefit. The lesson does not teach a cache consistency mechanism that guarantees every read sees the latest committed update.",
+      "evidence": [
+        {
+          "slide": 1,
+          "quote": "Before a copy exists, the API still does the database lookup. Storing that copy uses memory and adds a cache write."
+        },
+        {
+          "slide": 8,
+          "quote": "If requests rarely reuse results, or freshness is too hard to maintain, the cache may cost more than it saves."
+        },
+        {
+          "slide": 8,
+          "quote": "Compare response time and database load before and after caching. Track the fraction of lookups that hit, and what happens during misses."
+        },
+        {
+          "slide": 2,
+          "quote": "A hit can still return an old price. Finding a value does not prove it matches the database."
+        },
+        {
+          "slide": 4,
+          "quote": "Saving the price and removing the copy are separate steps. A reader can fetch $20 before the update, pause, then refill $20 after removal. The next cache hit still returns $20. Removal can also fail."
+        },
+        {
+          "slide": 5,
+          "quote": "TTL limits an entry's lifetime, not the age of the source data used to fill it."
+        },
+        {
+          "slide": 6,
+          "quote": "Sharing reduces separate copies. It does not automatically keep the cache current with the database."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "lessonHash": "4cd92ecc9873230b28aa4980442c7b8cbd1aec209d33b9ff3e89c8026e48c948",
+  "rubricHash": "09a65e71be17c41fb36a6de6d094ee932b7b309f2d047b738290b149338d9cc1",
+  "respondent": "/root/r2_c6",
+  "answers": [
+    {
+      "id": "card-6-museum-audio",
+      "answer": "A request to instance B can still receive the old guide from B's local cache. Committing the edit changes the database, and A's deletion removes only A's copy; each other process keeps its own copy. Choose one shared cache used by all three instances for this goal. Deleting the shared entry removes the cached copy all three use. With no concurrent fills, the next request misses; its API instance reads the committed guide from the database, stores a new shared copy, and returns it. The cost is a network call for every cache lookup, plus operating a separate cache service. Sharing alone does not keep the guide current: the application must still remove the shared entry after saving the edit, and removal can fail. No additional teaching is needed to choose this arrangement under the stated assumptions.",
+      "evidence": [
+        {
+          "slide": 6,
+          "quote": "Lives inside each API process. Reads avoid a network call, but each process fills and updates its own copy. One can hold $20 while another holds $25."
+        },
+        {
+          "slide": 6,
+          "quote": "Several API servers use a separate cache service, such as Redis or Memcached. They can reuse entries, but each lookup adds a network call and the service needs operating."
+        },
+        {
+          "slide": 6,
+          "quote": "Sharing reduces separate copies. It does not automatically keep the cache current with the database."
+        },
+        {
+          "slide": 4,
+          "quote": "Remove the cached entry after saving the new price in the database. A later miss reloads it."
+        },
+        {
+          "slide": 2,
+          "quote": "The entry is absent. The API reads the database, stores a copy in the cache, and returns the details."
+        },
+        {
+          "slide": 4,
+          "quote": "Saving the price and removing the copy are separate steps. A reader can fetch $20 before the update, pause, then refill $20 after removal. The next cache hit still returns $20. Removal can also fail."
+        }
+      ]
+    }
+  ]
+}

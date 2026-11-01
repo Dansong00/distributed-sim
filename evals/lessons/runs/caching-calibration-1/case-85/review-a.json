@@ -1,0 +1,125 @@
+{
+  "lessonHash": "d01ae33c85d93d55ef259b11d3e1897978841140d9360730560fc66fe90488a1",
+  "rubricHash": "18d3ab6d55c604ebde5c150e5827ebccc1a63fa0ad4d3c6ef5afde5b41d9a85d",
+  "reviewer": "judge_a",
+  "dimensions": {
+    "accuracy": {
+      "score": 1,
+      "reason": "The repeated collection of named techniques is not supported as a universal prescription by the cited pages. It also omits the basic operational distinctions and limits required by the contract; correct embedded read/stale-copy diagrams cannot supply the rest.",
+      "evidence": [
+        {
+          "slide": 1,
+          "quote": "Use read-through locality amortization, keyspace canonicalization, singleflight, TTL jitter, LRU, coherence fencing and bounded origin concurrency."
+        }
+      ]
+    },
+    "mechanisms": {
+      "score": 1,
+      "reason": "The diagrams contain a valid basic read path and stale snapshot, but the repeated text never explains what singleflight, fencing, CAS or bounded concurrency do, who acts, or what state changes. Named mechanisms are not taught mechanisms.",
+      "evidence": [
+        {
+          "slide": 7,
+          "quote": "Use read-through locality amortization, keyspace canonicalization, singleflight, TTL jitter, LRU, coherence fencing and bounded origin concurrency."
+        }
+      ]
+    },
+    "coherence": {
+      "score": 0,
+      "reason": "The same technique list appears under all eight distinct headings. There is no progression from API/database prerequisites to these advanced terms and no developed product scenario.",
+      "evidence": [
+        {
+          "slide": 2,
+          "quote": "Use read-through locality amortization, keyspace canonicalization, singleflight, TTL jitter, LRU, coherence fencing and bounded origin concurrency."
+        }
+      ]
+    },
+    "decisions": {
+      "score": 1,
+      "reason": "The deck orders the reader to choose a strategy without explaining selection conditions, costs, tolerable staleness, outage response or when not to cache.",
+      "evidence": [
+        {
+          "slide": 8,
+          "quote": "Choose the correct coherence strategy and admission policy."
+        }
+      ]
+    },
+    "clarity": {
+      "score": 0,
+      "reason": "Unexplained specialized terms dominate every card. None of p99, CAS, coherence fencing, singleflight or TTL jitter is a declared prerequisite or defined at first use.",
+      "evidence": [
+        {
+          "slide": 1,
+          "quote": "Optimize p99 under cache coherence, stale-while-revalidate, CAS, and invalidation topology."
+        },
+        {
+          "slide": 1,
+          "quote": "Use read-through locality amortization, keyspace canonicalization, singleflight, TTL jitter, LRU, coherence fencing and bounded origin concurrency."
+        }
+      ]
+    }
+  },
+  "outcomes": [
+    {
+      "id": "q1-station-guides",
+      "score": 0,
+      "reason": "Unsupported: the learner cannot explain reuse, key inputs or hit/miss actors and sequence. Only the ownership title is cited. Embedded diagrams supply part of the read path, but no supported learner walkthrough or key/cost analysis satisfies the five criteria."
+    },
+    {
+      "id": "q2-opening-hours-race",
+      "score": 0,
+      "reason": "Unsupported by lesson evidence: old hours, later refill, failed freshness and direct-source bypass are inferred from the exact question/prerequisite, with an empty evidence list. The list of coherence terms teaches none of the four required causal steps."
+    },
+    {
+      "id": "q3-weather-expiration",
+      "score": 0,
+      "reason": "Unsupported/incomplete: the learner infers two facts from the prompt but cannot establish the 12:11 fetch, TTL guarantees, early eviction semantics or non-refresh behavior. No lesson evidence supports the four criteria."
+    },
+    {
+      "id": "q4-event-room-map",
+      "score": 0,
+      "reason": "Unsupported by lesson: shared-entry selection, retained copies and 2 ms cost come from question assumptions. No evidence teaches local process versus network access, shared-cache failure/update behavior or the response to retained/missing values. All four criteria lack adequate lesson support."
+    },
+    {
+      "id": "q5-tournament-burst",
+      "score": 0,
+      "reason": "Unsupported/incomplete: overload arithmetic and cap/reject follow question facts; singleflight is never explained, so the learner cannot supply the required duplicate-work mitigation. No cited lesson mechanism supports criteria 1-4. Criterion 5 is inapplicable because stale serving is not relied upon."
+    },
+    {
+      "id": "q6-single-use-results",
+      "score": 0,
+      "reason": "Unsupported by lesson: the no-cache decision, no reuse, headroom and extra fill all come from the question. A repeated-use trigger lacks taught benefit/cost evaluation. The learner reports no evidence; all five criteria cannot receive teaching credit."
+    }
+  ],
+  "hardFailures": [
+    "Missing prerequisites: p99, CAS, coherence fencing, singleflight, TTL jitter and admission policy are used without explanation for an API/database-only audience.",
+    "Fails to teach cache keys, invalidation races and freshness limits, TTL/eviction, local/shared choices, concrete overload control and when not to cache.",
+    "Technique names and blanket optimization prescriptions are unsupported substitutes for causal teaching."
+  ],
+  "sourceChecks": [
+    {
+      "slide": 1,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
+      "claim": "Microsoft discusses selective caching; it does not support this unexplained blanket suite of optimization prescriptions.",
+      "verified": false
+    },
+    {
+      "slide": 2,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
+      "claim": "Microsoft distinguishes cache-aside operations; the read-through technique list does not establish that flow.",
+      "verified": false
+    },
+    {
+      "slide": 5,
+      "url": "https://redis.io/docs/latest/develop/reference/eviction/",
+      "claim": "Redis explains LRU and memory eviction, not this complete bundle of coherence and latency prescriptions.",
+      "verified": false
+    },
+    {
+      "slide": 7,
+      "url": "https://aws.amazon.com/builders-library/caching-challenges-and-strategies/",
+      "claim": "AWS supports coalescing and capped origin work, but not the unexplained bundle as a complete design recommendation.",
+      "verified": false
+    }
+  ],
+  "learnerHash": "2d8eb948c04c66c23a2e5dfbca72619cfe4a6c4b448f2626b3708a4a285458ef"
+}

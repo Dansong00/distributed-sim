@@ -1,0 +1,29 @@
+{
+  "lessonHash": "d6f3ad54a8263e8ba76adaa402b30f5c429ef272408e3ed52ff082052c0e8b03",
+  "rubricHash": "e238e52cc46806dd53ef0756824e29cb165729072f4dda207533ac7c8f7a0290",
+  "respondent": "/root/learn_c4",
+  "answers": [
+    {
+      "id": "card-4-dispatch-contact",
+      "answer": "S receives the old contact. R read that contact before W committed the replacement. W deleted the cached entry, but that deletion did not erase the old contact already held by R. R then stored that old contact after the deletion, so S finds a cache hit and returns it. Deletion and filling are separate operations; the given ordering allows the earlier database read to refill the cache with stale data. For an endpoint that must read the latest committed contact, skip the cached copy and have its API handler read the contact directly from the database on every request. Under the declared commit prerequisite, a database read after W commits sees the new contact. This uses the lesson's authoritative-data principle and the prerequisite about subsequent database reads; no concurrency protocol is required for this answer.",
+      "evidence": [
+        {
+          "slide": 2,
+          "quote": "The API finds product:42 in the cache and returns its stored details."
+        },
+        {
+          "slide": 3,
+          "quote": "The API checks and fills the cache explicitly. The cache does not fetch the product from the database on its own."
+        },
+        {
+          "slide": 4,
+          "quote": "These steps are not atomic. Removal can fail, or an overlapping read can put an older value back after removal."
+        },
+        {
+          "slide": 4,
+          "quote": "Invalidation alone does not guarantee freshness. For checkout, validate the price against the authoritative data as part of accepting the order."
+        }
+      ]
+    }
+  ]
+}

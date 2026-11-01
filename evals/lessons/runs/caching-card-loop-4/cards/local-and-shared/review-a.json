@@ -1,0 +1,96 @@
+{
+  "lessonHash": "b8476888d327d06c7a025bbb5b664b12a8ede6a2efe1234e3f69855dc3c3d40d",
+  "rubricHash": "d0dd6615a952f648e1a9b6fa9ab2def4bd742f7217274b6c5a91c76b93bf6bb0",
+  "learnerHash": "e68e55325ff3023c43d182017d0b539ca8a66735f6756a1fa512279b194571c4",
+  "reviewer": "/root/r4_judge_a",
+  "dimensions": {
+    "accuracy": {
+      "score": 4,
+      "reason": "The target accurately separates process-local copies from an external shared service, including common loss of cache access without claiming request failure or automatic database freshness. Primary sources support the distinctions.",
+      "evidence": [
+        {
+          "slide": 6,
+          "quote": "Sharing reduces separate copies. It does not automatically keep the cache current with the database."
+        }
+      ]
+    },
+    "mechanisms": {
+      "score": 4,
+      "reason": "Identifies where each lookup occurs, which copies each process owns, and exactly which instances lose cached state or access. The preceding read and deletion flow supports the shared-deletion inference.",
+      "evidence": [
+        {
+          "slide": 6,
+          "quote": "Restarting one API process discards its local cache; other processes keep their copies. If the shared cache is unreachable, every API server using it loses access to those cached entries."
+        },
+        {
+          "slide": 4,
+          "quote": "Remove the cached entry after saving the new price in the database. A later miss reloads it."
+        }
+      ]
+    },
+    "coherence": {
+      "score": 4,
+      "reason": "The recurring product price connects database authority and invalidation to divergent per-process copies. Earlier hit/miss and key instruction supplies the prerequisites for the museum transfer.",
+      "evidence": [
+        {
+          "slide": 6,
+          "quote": "Lives inside each API process. Reads avoid a network call, but each process fills and updates its own copy. One can hold $20 while another holds $25."
+        }
+      ]
+    },
+    "decisions": {
+      "score": 4,
+      "reason": "Gives enough causal tradeoffs to choose sharing for one commonly used entry while accounting for network access, operations, and common cache-access failure. It explicitly limits the freshness benefit.",
+      "evidence": [
+        {
+          "slide": 6,
+          "quote": "Several API servers use a separate cache service, such as Redis or Memcached. They can reuse entries, but each lookup adds a network call and the service needs operating."
+        }
+      ]
+    },
+    "clarity": {
+      "score": 4,
+      "reason": "Plain language and a concrete old/new price comparison make ownership and consequences directly usable. Local and shared are defined where introduced; no unexplained protocol detail is needed.",
+      "evidence": [
+        {
+          "slide": 6,
+          "quote": "Lives inside each API process. Reads avoid a network call, but each process fills and updates its own copy. One can hold $20 while another holds $25."
+        }
+      ]
+    }
+  },
+  "outcomes": [
+    {
+      "id": "card-6-museum-audio",
+      "score": 2,
+      "reason": "All six criteria are met: B may return its independently retained old guide; sharing one entry fits the stated single-deletion goal with no concurrent fills; local lookup is in-process and shared lookup uses a network; network and operating costs are named; database synchronization is explicitly rejected; local loss affects only A while shared unreachability removes cache access from all three. The answer stays at cache access and does not infer request failure. Quotes from slides 2, 4, and 6 entail the reasoning."
+    }
+  ],
+  "hardFailures": [],
+  "sourceChecks": [
+    {
+      "slide": 1,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
+      "claim": "Repeated reads can reuse a stored copy to reduce latency and source work.",
+      "verified": true
+    },
+    {
+      "slide": 2,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
+      "claim": "On a miss the application retrieves source data, adds it to the cache, and returns it.",
+      "verified": true
+    },
+    {
+      "slide": 5,
+      "url": "https://redis.io/docs/latest/develop/reference/eviction/",
+      "claim": "Memory limits trigger configured eviction; LRU removes less recently used keys, while noeviction rejects writes adding data.",
+      "verified": true
+    },
+    {
+      "slide": 6,
+      "url": "https://aws.amazon.com/builders-library/caching-challenges-and-strategies/",
+      "claim": "Local caches can differ across servers; external caches share entries but add operational burden and cache availability failure handling.",
+      "verified": true
+    }
+  ]
+}

@@ -1,0 +1,110 @@
+{
+  "lessonHash": "0066fa5c48bbf8df4ec87ea0bc8e92087b3d4cdffcd5149ad93687710fd6c5a9",
+  "rubricHash": "b45f34590160de52ff2320d67cfb457ebafe8dfefcd0b8428c78e1adea1d96e7",
+  "learnerHash": "8a5039de9e7ddf89018e76b59d93b070cf63a65730f6d989e36341e2268763f8",
+  "reviewer": "/root/r2_judge_b",
+  "dimensions": {
+    "accuracy": {
+      "score": 4,
+      "reason": "AWS explicitly supports coalescing, limiting downstream work, and testing without cache. No unconditional fallback guarantee.",
+      "evidence": [
+        {
+          "slide": 7,
+          "quote": "Falling back to the database is a load decision, not a free recovery path."
+        }
+      ]
+    },
+    "mechanisms": {
+      "score": 4,
+      "reason": "Explains duplicate misses, shared in-progress fetches, and admission/rejection as distinct controls on source work.",
+      "evidence": [
+        {
+          "slide": 7,
+          "quote": "Many requests miss the same product together and repeat its database lookup. Coalescing requests lets concurrent readers share one in-progress lookup."
+        }
+      ]
+    },
+    "coherence": {
+      "score": 4,
+      "reason": "Combines the already taught miss path, expiration and shared service into a concrete overload scenario.",
+      "evidence": [
+        {
+          "slide": 7,
+          "quote": "A cache outage can turn most reads into database traffic. Limit fallback work to what the database can handle; reject excess requests or serve older data only where the product rules permit it."
+        }
+      ]
+    },
+    "decisions": {
+      "score": 4,
+      "reason": "Makes capacity and product tolerance govern fallback and requires testing the expensive path.",
+      "evidence": [
+        {
+          "slide": 7,
+          "quote": "Test with an empty or unavailable cache. A warm cache can hide insufficient database capacity."
+        }
+      ]
+    },
+    "clarity": {
+      "score": 4,
+      "reason": "Defines stampede and coalescing by behavior, requiring no unexplained coordination protocol.",
+      "evidence": [
+        {
+          "slide": 7,
+          "quote": "Many requests miss the same product together and repeat its database lookup. Coalescing requests lets concurrent readers share one in-progress lookup."
+        }
+      ]
+    }
+  },
+  "outcomes": [
+    {
+      "id": "card-7-ferry-departures",
+      "score": 2,
+      "reason": "All criteria met: concurrent misses duplicate work; readers share one lookup; 6000 versus 300 is excessive; total fallback admitted at most 300 with errors for excess; no dependence on unreachable cached data. Cross-instance implementation is correctly identified as unspecified and is not required by this behavioral question."
+    }
+  ],
+  "hardFailures": [],
+  "sourceChecks": [
+    {
+      "slide": 1,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
+      "claim": "Cached copies reduce repeated work.",
+      "verified": true
+    },
+    {
+      "slide": 2,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
+      "claim": "Misses use source reads.",
+      "verified": true
+    },
+    {
+      "slide": 3,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
+      "claim": "Application owns cache-aside reads/fills.",
+      "verified": true
+    },
+    {
+      "slide": 4,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
+      "claim": "Separate invalidation does not ensure consistency.",
+      "verified": true
+    },
+    {
+      "slide": 5,
+      "url": "https://redis.io/docs/latest/develop/reference/eviction/",
+      "claim": "Expiration and capacity eviction remove entries.",
+      "verified": true
+    },
+    {
+      "slide": 6,
+      "url": "https://aws.amazon.com/builders-library/caching-challenges-and-strategies/",
+      "claim": "External cache shares entries but adds operations and failure risks.",
+      "verified": true
+    },
+    {
+      "slide": 7,
+      "url": "https://aws.amazon.com/builders-library/caching-challenges-and-strategies/",
+      "claim": "AWS describes simultaneous-miss overload, request coalescing, fallback caps or shedding, and tests with caching disabled.",
+      "verified": true
+    }
+  ]
+}

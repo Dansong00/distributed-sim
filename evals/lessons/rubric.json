@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "dimensions": [
+    "accuracy",
+    "mechanisms",
+    "coherence",
+    "decisions",
+    "clarity"
+  ],
+  "minDimension": 3,
+  "minTotal": 18,
+  "maxScore": 4,
+  "anchors": {
+    "0": "Absent, unrelated, or fundamentally wrong.",
+    "1": "Relevant terms or assertions without usable explanation, or a major misconception.",
+    "2": "Partly useful but leaves an important reasoning step or prerequisite unexplained.",
+    "3": "Correct and sufficient for the stated learner to explain and apply the concept.",
+    "4": "Precise, connected explanation that supports transfer, exposes limits, and avoids unnecessary detail."
+  },
+  "dimensionGuidance": {
+    "accuracy": "Primary-source-supported claims; no false guarantees or material omissions. Check the actual sources, not only URLs.",
+    "mechanisms": "Names actors, state changes and cause/effect. Could the reader trace an operation and a failure?",
+    "coherence": "Prerequisites appear before use; a concrete scenario connects the cards instead of unrelated facts.",
+    "decisions": "Explains benefits AND costs, failure responses, and when not to use the component.",
+    "clarity": "Plain English; unfamiliar terms explained at first use; useful detail without repetition or unexplained jargon."
+  },
+  "outcomes": {
+    "0": "Unsupported, wrong, or contradicts a critical criterion.",
+    "1": "Partially supported but misses a material criterion or depends on knowledge the deck did not teach.",
+    "2": "All criteria satisfied, with slide evidence supporting the reasoning; equivalent explanations accepted."
+  },
+  "hardFailures": [
+    "Material factual error or false safety/freshness guarantee",
+    "Missing prerequisite needed for a stated learning objective",
+    "Unsupported critical claim or misleading diagram",
+    "Fails to teach a required objective"
+  ],
+  "limits": "Judgment scores are content readiness signals, not proof of human learning. The gate validates evidence structure, not reviewer honesty or semantic entailment."
+}

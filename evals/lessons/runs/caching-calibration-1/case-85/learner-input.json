@@ -1,0 +1,124 @@
+{
+  "lessonId": "caching",
+  "lessonHash": "d01ae33c85d93d55ef259b11d3e1897978841140d9360730560fc66fe90488a1",
+  "rubricHash": "18d3ab6d55c604ebde5c150e5827ebccc1a63fa0ad4d3c6ef5afde5b41d9a85d",
+  "audience": "Engineers who know APIs and databases and need practical system-design reasoning about caches. Answers should explain what happens, who does the work, and what can go wrong in plain English.",
+  "prerequisites": [
+    "An API handler can read and write records in a database.",
+    "Several application instances can handle requests at the same time.",
+    "Latency is the time a request takes; a system has limited processing capacity.",
+    "A database commit makes a completed write available to subsequent database reads in these scenarios."
+  ],
+  "lesson": {
+    "title": "Caching Fundamentals",
+    "reviewed": "2026-10-29",
+    "slides": [
+      {
+        "section": "Why Cache?",
+        "title": "Stop repeating the same product lookup",
+        "paragraphs": [
+          "Use read-through locality amortization, keyspace canonicalization, singleflight, TTL jitter, LRU, coherence fencing and bounded origin concurrency.",
+          "Optimize p99 under cache coherence, stale-while-revalidate, CAS, and invalidation topology."
+        ],
+        "remember": "Choose the correct coherence strategy and admission policy.",
+        "source": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching"
+      },
+      {
+        "section": "Follow a Read",
+        "title": "The same request can take two paths",
+        "paragraphs": [
+          "Use read-through locality amortization, keyspace canonicalization, singleflight, TTL jitter, LRU, coherence fencing and bounded origin concurrency.",
+          "Optimize p99 under cache coherence, stale-while-revalidate, CAS, and invalidation topology."
+        ],
+        "remember": "Choose the correct coherence strategy and admission policy.",
+        "source": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside"
+      },
+      {
+        "section": "Cache-Aside",
+        "title": "The application manages the cached copy",
+        "paragraphs": [
+          "Use read-through locality amortization, keyspace canonicalization, singleflight, TTL jitter, LRU, coherence fencing and bounded origin concurrency.",
+          "Optimize p99 under cache coherence, stale-while-revalidate, CAS, and invalidation topology."
+        ],
+        "remember": "Choose the correct coherence strategy and admission policy.",
+        "source": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching"
+      },
+      {
+        "section": "Data Changes",
+        "title": "The price changed. What does the next reader see?",
+        "paragraphs": [
+          "Use read-through locality amortization, keyspace canonicalization, singleflight, TTL jitter, LRU, coherence fencing and bounded origin concurrency.",
+          "Optimize p99 under cache coherence, stale-while-revalidate, CAS, and invalidation topology."
+        ],
+        "remember": "Choose the correct coherence strategy and admission policy.",
+        "source": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside"
+      },
+      {
+        "section": "Expiration and Eviction",
+        "title": "An entry can disappear for different reasons",
+        "paragraphs": [
+          "Use read-through locality amortization, keyspace canonicalization, singleflight, TTL jitter, LRU, coherence fencing and bounded origin concurrency.",
+          "Optimize p99 under cache coherence, stale-while-revalidate, CAS, and invalidation topology."
+        ],
+        "remember": "Choose the correct coherence strategy and admission policy.",
+        "source": "https://redis.io/docs/latest/develop/reference/eviction/"
+      },
+      {
+        "section": "Local Versus Shared",
+        "title": "Two API servers can hold different prices",
+        "paragraphs": [
+          "Use read-through locality amortization, keyspace canonicalization, singleflight, TTL jitter, LRU, coherence fencing and bounded origin concurrency.",
+          "Optimize p99 under cache coherence, stale-while-revalidate, CAS, and invalidation topology."
+        ],
+        "remember": "Choose the correct coherence strategy and admission policy.",
+        "source": "https://aws.amazon.com/builders-library/caching-challenges-and-strategies/"
+      },
+      {
+        "section": "Failure Under Load",
+        "title": "A missing popular product can flood the database",
+        "paragraphs": [
+          "Use read-through locality amortization, keyspace canonicalization, singleflight, TTL jitter, LRU, coherence fencing and bounded origin concurrency.",
+          "Optimize p99 under cache coherence, stale-while-revalidate, CAS, and invalidation topology."
+        ],
+        "remember": "Choose the correct coherence strategy and admission policy.",
+        "source": "https://aws.amazon.com/builders-library/caching-challenges-and-strategies/"
+      },
+      {
+        "section": "Make the Decision",
+        "title": "Explain what you would cache and why",
+        "paragraphs": [
+          "Use read-through locality amortization, keyspace canonicalization, singleflight, TTL jitter, LRU, coherence fencing and bounded origin concurrency.",
+          "Optimize p99 under cache coherence, stale-while-revalidate, CAS, and invalidation topology."
+        ],
+        "remember": "Choose the correct coherence strategy and admission policy.",
+        "source": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching"
+      }
+    ]
+  },
+  "questions": [
+    {
+      "id": "q1-station-guides",
+      "question": "A travel API returns a station guide for a station ID and a requested language. English and Spanish guides differ. The database takes 80 ms to build a guide; a cache lookup takes 2 ms. The same few station-language pairs account for most reads, and guides change only weekly. The application uses cache-aside, and the database remains the source of truth. Explain why caching could help, propose a cache key, and walk through both a hit and a miss. Identify who reads the database and who stores the cached result. You do not need to calculate an average latency."
+    },
+    {
+      "id": "q2-opening-hours-race",
+      "question": "A library API caches opening hours under one key. Its cache-aside reader fetches a database value on a miss and later stores that fetched value. Its writer commits new database hours and then deletes the cache key. Consider this exact order, with no other operations: 1. Reader A misses the cache and reads the old hours from the database, then pauses before filling the cache. 2. Writer B commits the new hours. 3. Writer B deletes the cache key. 4. Reader A resumes and stores the old hours it already fetched. 5. Reader C looks up the key before it expires. Which hours does C receive, why did deletion fail to prevent that, and can the team claim that every read after B finishes sees the new hours? If this endpoint must always show the latest committed hours, name a simple way to avoid serving this stale cached copy; you do not need to design a concurrency protocol."
+    },
+    {
+      "id": "q3-weather-expiration",
+      "question": "A weather API stores the current forecast at 12:00 with a TTL of ten minutes. There is no background refresh, no write-triggered invalidation, and no serving expired entries. The source forecast changes at 12:02. In case A, the entry stays in memory until it expires; requests arrive at 12:03 and 12:11. In case B, the cache removes the entry at 12:04 to free memory, and the next request arrives at 12:05. For each request, explain whether it can use the original cached forecast or must fetch the source. Explain what the ten-minute TTL promises, what it does not promise, and why the memory removal is a different event."
+    },
+    {
+      "id": "q4-event-room-map",
+      "question": "An event API runs on four application instances. Each currently has its own in-memory cache of the same room map. Any instance can handle the next request. When an organizer changes the map, the database updates and only the instance handling that write deletes its local copy. The team wants one cache deletion to remove the cached map used by every instance. It can accept a 2 ms network lookup. Compare keeping these independent local caches with moving the map to one shared cache. Choose the simpler fit for this specific goal, explain what happens to requests sent to the other instances today, and name one cost or failure consequence of your choice. Assume a single shared cache entry and no concurrent cache fills for this question."
+    },
+    {
+      "id": "q5-tournament-burst",
+      "question": "A tournament schedule endpoint receives 10,000 requests per second, mostly for the same schedule. The database can safely handle only 500 schedule reads per second. The cache normally absorbs almost all reads. First, the popular key expires while many requests arrive together. Second, consider a separate incident where the entire cache is unreachable for a minute. The product permits returning the last known schedule for up to 60 seconds, and it permits a temporary error if necessary to protect the database. Explain how each incident threatens the database. Propose one concrete way to reduce duplicate database reads after the single-key expiration, and describe an outage response that does not send every request straight to the database. Explain how your response reduces work; naming a technique alone is insufficient."
+    },
+    {
+      "id": "q6-single-use-results",
+      "question": "An internal inspection service stores a result for each newly completed inspection. Every result has a unique ID, and each result is retrieved exactly once before archival. A database read takes 2 ms. The endpoint has a 100 ms latency budget and receives ten reads per second; the database can comfortably handle 1,000 reads per second. There is no other reader of these results. A teammate proposes filling a cache after every database read so future requests can reuse the result. Should the team add this cache now? Explain the expected benefit and costs, and name a change in the workload that would make you reconsider."
+    }
+  ]
+}

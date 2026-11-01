@@ -1,0 +1,29 @@
+{
+  "lessonHash": "2a41e406cf5d722c53c8a3b02f9f93cf87656ca3ee0018a9c198347b62c65d74",
+  "rubricHash": "027dc2bb7271166af9ed394e047f00607c873885bb2662fa8fe5454db4151c95",
+  "respondent": "/root/r4_c7",
+  "answers": [
+    {
+      "id": "card-7-ferry-departures",
+      "answer": "When the popular board expires, many requests can miss together and each API handler can repeat the same database read. That can push reads beyond the safe 300 per second. While refilling, let concurrent readers share one in-progress board lookup: one lookup reads the database, the API fills the cache, and the waiting readers reuse the returned board instead of each starting another read. This reduces duplicate work for that board. When the entire cache is unreachable, most or all of the 6,000 requests per second could become database reads, overwhelming its 300-read-per-second capacity. Put a limit on the fallback reads actually sent to the database so they stay within its safe capacity, at most 300 board reads per second in the stated scenario, and return temporary errors for excess requests. This bounds database work even though incoming traffic remains 6,000 per second. Sharing a lookup addresses concurrent duplicates; the fallback limit protects the database during the outage. The lesson does not specify an implementation for coordinating in-progress lookups across API instances or enforcing the fallback limit; its taught response is sharing concurrent lookup work and limiting fallback work with rejection of excess requests.",
+      "evidence": [
+        {
+          "slide": 7,
+          "quote": "Many requests miss the same product together and repeat its database lookup. Coalescing requests lets concurrent readers share one in-progress lookup."
+        },
+        {
+          "slide": 7,
+          "quote": "A cache outage can turn most reads into database traffic. Limit fallback work to what the database can handle; reject excess requests or serve older data only where the product rules permit it."
+        },
+        {
+          "slide": 2,
+          "quote": "The entry is absent. The API reads the database, stores a copy in the cache, and returns the details."
+        },
+        {
+          "slide": 6,
+          "quote": "If the shared cache is unreachable, every API server using it loses access to those cached entries."
+        }
+      ]
+    }
+  ]
+}

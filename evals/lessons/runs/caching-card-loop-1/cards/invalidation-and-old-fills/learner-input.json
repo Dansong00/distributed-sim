@@ -1,0 +1,87 @@
+{
+  "lessonId": "caching",
+  "lessonHash": "d6f3ad54a8263e8ba76adaa402b30f5c429ef272408e3ed52ff082052c0e8b03",
+  "rubricHash": "e238e52cc46806dd53ef0756824e29cb165729072f4dda207533ac7c8f7a0290",
+  "cardId": "invalidation-and-old-fills",
+  "audience": "Engineers who know APIs and databases and need practical system-design reasoning about caches. Answers should explain what happens, who does the work, and what can go wrong in plain English.",
+  "prerequisites": [
+    "An API handler can read and write records in a database.",
+    "Several application instances can handle requests at the same time.",
+    "Latency is the time a request takes; a system has limited processing capacity.",
+    "A database commit makes a completed write available to subsequent database reads in these scenarios."
+  ],
+  "lesson": {
+    "title": "Caching Fundamentals",
+    "reviewed": "2026-10-29",
+    "slides": [
+      {
+        "section": "Why Cache?",
+        "title": "Stop repeating the same product lookup",
+        "paragraphs": [
+          "A popular product page keeps asking the API for the same name, description, and price. Each request repeats a database lookup.",
+          {
+            "label": "Cache",
+            "text": "Keeps a reusable copy of a result. Reading that copy can save database work and shorten the wait for the page."
+          },
+          "In this example, the database owns the product record. Losing the cached copy must not lose the product."
+        ],
+        "remember": "First identify repeated work that is worth avoiding. A cache adds another copy to manage.",
+        "source": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching"
+      },
+      {
+        "section": "Follow a Read",
+        "title": "The same request can take two paths",
+        "paragraphs": [
+          {
+            "label": "Cache hit",
+            "text": "The API finds product:42 in the cache and returns its stored details."
+          },
+          {
+            "label": "Cache miss",
+            "text": "The entry is absent. The API reads the database, stores a copy in the cache, and returns the details."
+          },
+          "A hit can still return an old price. Finding a value does not prove it matches the database."
+        ],
+        "remember": "A hit avoids this database lookup. A miss still needs the database.",
+        "source": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside"
+      },
+      {
+        "section": "Cache-Aside",
+        "title": "The application manages the cached copy",
+        "paragraphs": [
+          {
+            "label": "Cache-aside",
+            "text": "The API checks and fills the cache explicitly. The cache does not fetch the product from the database on its own."
+          },
+          {
+            "label": "Cache key",
+            "text": "Identifies the result to reuse. product:42 works for shared product details; prices in different currencies need distinct keys, such as product:42:USD."
+          },
+          "Include the inputs that change the answer. Reusing one person's private result for another person is a data leak."
+        ],
+        "remember": "Define what the key identifies, who fills it, and where the authoritative data lives.",
+        "source": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching"
+      },
+      {
+        "section": "Data Changes",
+        "title": "The price changed. What does the next reader see?",
+        "paragraphs": [
+          "A seller changes the price from $20 to $25. The cached $20 is now stale.",
+          {
+            "label": "Invalidation",
+            "text": "Remove the cached entry after saving the new price in the database. A later miss reloads it."
+          },
+          "These steps are not atomic. Removal can fail, or an overlapping read can put an older value back after removal."
+        ],
+        "remember": "Invalidation alone does not guarantee freshness. For checkout, validate the price against the authoritative data as part of accepting the order.",
+        "source": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside"
+      }
+    ]
+  },
+  "questions": [
+    {
+      "id": "card-4-dispatch-contact",
+      "question": "An API caches the dispatch contact for a delivery depot. Its writer commits a new contact to the database and then deletes the cached contact. Follow this exact order: reader R misses the cache, reads the old contact, and pauses; writer W commits the new contact and deletes the key; R resumes and caches the old contact it already read; reader S checks that key. No other operations occur. What contact does S receive? Explain why deleting the key did not ensure freshness. If this endpoint must always read the latest committed contact, name a simple way to avoid serving this stale cached copy; no concurrency protocol is needed."
+    }
+  ]
+}

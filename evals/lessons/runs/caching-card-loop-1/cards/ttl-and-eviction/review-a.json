@@ -1,0 +1,86 @@
+{
+  "lessonHash": "c37f58a7f53e9dc9a2bb102d9b0945bc16967cbe96d2bd6bb9ae21839f2a338d",
+  "rubricHash": "680744bc4eaf285a23a7008f22d4a7e22d2d2949531887731248342678b9843b",
+  "learnerHash": "140894e6b064226c670d7f7238c42ef8143d92eb2a586c3220cab3af9ea4bf21",
+  "reviewer": "/root/card_judge_a",
+  "dimensions": {
+    "accuracy": {
+      "score": 4,
+      "reason": "Separates time, space, and source age without refresh or freshness promises.",
+      "evidence": [
+        {
+          "slide": 5,
+          "quote": "TTL limits an entry's lifetime, not the age of the source data used to fill it."
+        }
+      ]
+    },
+    "mechanisms": {
+      "score": 4,
+      "reason": "Expiry leads to a later reader's load, while capacity removal can happen earlier.",
+      "evidence": [
+        {
+          "slide": 5,
+          "quote": "Sets how long an entry may remain before it expires. A 60-second TTL does not refresh the product every minute; a later miss must load it again."
+        }
+      ]
+    },
+    "coherence": {
+      "score": 4,
+      "reason": "Connects removal to previously taught misses and fills, preserving source ownership.",
+      "evidence": [
+        {
+          "slide": 5,
+          "quote": "A product can be evicted before its TTL ends. Some configurations reject new entries when full instead of evicting existing ones."
+        }
+      ]
+    },
+    "decisions": {
+      "score": 3,
+      "reason": "Sufficient distinctions to reason about retention and capacity behavior, though TTL duration tradeoffs are not developed here.",
+      "evidence": [
+        {
+          "slide": 5,
+          "quote": "Removes entries to make room. A least-recently-used policy favors removing entries that have not been read recently."
+        }
+      ]
+    },
+    "clarity": {
+      "score": 4,
+      "reason": "TTL and eviction have compact definitions with an explicit everyday timing example.",
+      "evidence": [
+        {
+          "slide": 5,
+          "quote": "Sets how long an entry may remain before it expires. A 60-second TTL does not refresh the product every minute; a later miss must load it again."
+        }
+      ]
+    }
+  },
+  "outcomes": [
+    {
+      "id": "card-5-parking-display",
+      "score": 2,
+      "reason": "Correct stale 09:02 hit, 09:06 expiry miss, 09:04 eviction miss, time versus capacity distinction, no freshness/retention guarantee, and application-driven later replacement; all entailed by prefix."
+    }
+  ],
+  "hardFailures": [],
+  "sourceChecks": [
+    {
+      "slide": 1,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
+      "claim": "Expiry requires later source retrieval; copies can become stale.",
+      "verified": true
+    },
+    {
+      "slide": 2,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
+      "claim": "Misses trigger application fetch and fill.",
+      "verified": true
+    },
+    {
+      "slide": 5,
+      "url": "https://redis.io/docs/latest/develop/reference/eviction/",
+      "claim": "Capacity policies include LRU, TTL-bearing key eviction, and noeviction errors.",
+      "verified": true
+    }
+  ]
+}

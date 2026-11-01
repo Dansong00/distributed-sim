@@ -1,0 +1,86 @@
+{
+  "lessonHash": "3c8185f323ca9020d1af1718bca19aab76ac71589ae43b2d4d28a9668f969c92",
+  "rubricHash": "6edd058d71d6ca8d42977b4bb46ad0f8071f7e6dd103f654413a52e79d8befbc",
+  "learnerHash": "5bad14ef5df07b5430953330e880c1417554f51b1f16a48382904e4ac8c2a53f",
+  "reviewer": "/root/r2_judge_b",
+  "dimensions": {
+    "accuracy": {
+      "score": 4,
+      "reason": "Key distinction follows source key-value identity guidance; cache-aside ownership is correctly explicit.",
+      "evidence": [
+        {
+          "slide": 3,
+          "quote": "The API checks and fills the cache explicitly. The cache does not fetch the product from the database on its own."
+        }
+      ]
+    },
+    "mechanisms": {
+      "score": 4,
+      "reason": "Separates who coordinates the operations from which result the cache identifies.",
+      "evidence": [
+        {
+          "slide": 3,
+          "quote": "Identifies the result to reuse. product:42 works for shared product details; prices in different currencies need distinct keys, such as product:42:USD."
+        }
+      ]
+    },
+    "coherence": {
+      "score": 4,
+      "reason": "Names the previous read flow after teaching it and extends the same product example.",
+      "evidence": [
+        {
+          "slide": 3,
+          "quote": "Define what the key identifies, who fills it, and where the authoritative data lives."
+        }
+      ]
+    },
+    "decisions": {
+      "score": 4,
+      "reason": "A concrete differing-output example and privacy consequence support choosing keys beyond rote naming.",
+      "evidence": [
+        {
+          "slide": 3,
+          "quote": "Include the inputs that change the answer. Reusing one person's private result for another person is a data leak."
+        }
+      ]
+    },
+    "clarity": {
+      "score": 4,
+      "reason": "Both new terms are explained directly with concrete operations and sample keys.",
+      "evidence": [
+        {
+          "slide": 3,
+          "quote": "The API checks and fills the cache explicitly. The cache does not fetch the product from the database on its own."
+        }
+      ]
+    }
+  },
+  "outcomes": [
+    {
+      "id": "card-3-ticket-currency",
+      "score": 2,
+      "reason": "All criteria met: event plus currency key, wrong-currency reuse explained, application owns read and fill, database authoritative. Exact evidence entails the key choice and operational assignment; authority is supported by slide 1 and question premises."
+    }
+  ],
+  "hardFailures": [],
+  "sourceChecks": [
+    {
+      "slide": 1,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
+      "claim": "Cached data is a reusable copy; authoritative records remain in the source.",
+      "verified": true
+    },
+    {
+      "slide": 2,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
+      "claim": "A miss requires application fetch and fill.",
+      "verified": true
+    },
+    {
+      "slide": 3,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
+      "claim": "Meaningful distinct keys distinguish cached values, and application code implements cache-aside reads and writes.",
+      "verified": true
+    }
+  ]
+}

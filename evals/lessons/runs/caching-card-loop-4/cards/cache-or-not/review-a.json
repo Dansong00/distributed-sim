@@ -1,0 +1,104 @@
+{
+  "lessonHash": "5f47c237e6228d440ce4504e6e8e24922affc0eedf7d721d759225043253cb47",
+  "rubricHash": "16837d370ac3fe5478b8bd5f773fd872c63b2309605cf73dfba1d47fbf0bca8d",
+  "learnerHash": "0c4b922659f13647b17171d3202863def82a52a890850be179f6a79e1e784095",
+  "reviewer": "/root/r4_judge_a",
+  "dimensions": {
+    "accuracy": {
+      "score": 4,
+      "reason": "Correctly makes value contingent on reuse and acceptable freshness; supported by primary guidance on usage patterns and synchronization costs. The prefix rules out treating hits, TTL, or invalidation as freshness proof.",
+      "evidence": [
+        {
+          "slide": 8,
+          "quote": "If requests rarely reuse results, or freshness is too hard to maintain, the cache may cost more than it saves."
+        },
+        {
+          "slide": 2,
+          "quote": "A hit can still return an old price. Finding a value does not prove it matches the database."
+        }
+      ]
+    },
+    "mechanisms": {
+      "score": 4,
+      "reason": "The prefix explains the initial source read and added write/storage, making lack of later reuse a direct causal reason to reject caching. Freshness limits are explained with the old-fill interleaving rather than asserted.",
+      "evidence": [
+        {
+          "slide": 1,
+          "quote": "Before a copy exists, the API still does the database lookup. Storing that copy uses memory and adds a cache write."
+        },
+        {
+          "slide": 4,
+          "quote": "Saving the price and removing the copy are separate steps. A reader can fetch $20 before the update, pause, then refill $20 after removal. The next cache hit still returns $20. Removal can also fail."
+        }
+      ]
+    },
+    "coherence": {
+      "score": 4,
+      "reason": "The concluding choice draws together repeated product reads, database authority, staleness, capacity, and failure behavior. The learner can transfer that sequence to unique receipts without a new technical prerequisite.",
+      "evidence": [
+        {
+          "slide": 8,
+          "quote": "For our product page, propose caching frequently read descriptions that tolerate a brief delay after edits. Keep checkout price validation tied to the order's authoritative data."
+        }
+      ]
+    },
+    "decisions": {
+      "score": 4,
+      "reason": "Provides a conditional proposal, explicit reasons to decline caching, and measurements to test actual value. Source latency and capacity are supplied by the question and can be compared using stated prerequisites; no undeclared technique is needed.",
+      "evidence": [
+        {
+          "slide": 8,
+          "quote": "Compare response time and database load before and after caching. Track the fraction of lookups that hit, and what happens during misses."
+        },
+        {
+          "slide": 8,
+          "quote": "Name the cached result, its key, acceptable staleness, update policy, and failure behavior."
+        }
+      ]
+    },
+    "clarity": {
+      "score": 4,
+      "reason": "Uses observable questions and plain-English costs rather than making the decision depend on unexplained terminology. The description/checkout distinction gives a concrete freshness example.",
+      "evidence": [
+        {
+          "slide": 8,
+          "quote": "If requests rarely reuse results, or freshness is too hard to maintain, the cache may cost more than it saves."
+        }
+      ]
+    }
+  },
+  "outcomes": [
+    {
+      "id": "card-8-export-receipts",
+      "score": 2,
+      "reason": "All five criteria are met. The learner rejects a copy with no subsequent reader, applies both 4 ms versus 150 ms and 15 versus 800 reads/s headroom, names cache writes and memory costs, proposes repeated reads together with latency/load pressure and empirical validation as reconsideration conditions, and rejects unverified cached responses when latest committed values are mandatory. Its source-read fallback and freshness cautions are supported by the prefix; an advanced coherence mechanism is not required."
+    }
+  ],
+  "hardFailures": [],
+  "sourceChecks": [
+    {
+      "slide": 8,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
+      "claim": "Usage patterns, data volatility, and performance analysis should determine caching choices; synchronization overhead can reduce effectiveness.",
+      "verified": true
+    },
+    {
+      "slide": 2,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
+      "claim": "Cache-aside performs source reads and fills on misses and does not guarantee consistency with the source.",
+      "verified": true
+    },
+    {
+      "slide": 5,
+      "url": "https://redis.io/docs/latest/develop/reference/eviction/",
+      "claim": "Entries may be removed under capacity eviction policies; noeviction can instead reject new data.",
+      "verified": true
+    },
+    {
+      "slide": 7,
+      "url": "https://aws.amazon.com/builders-library/caching-challenges-and-strategies/",
+      "claim": "Cache unavailability can surge source load; capped fallback and load shedding protect the dependency.",
+      "verified": true
+    }
+  ]
+}

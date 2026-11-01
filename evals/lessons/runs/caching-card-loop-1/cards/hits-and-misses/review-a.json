@@ -1,0 +1,80 @@
+{
+  "lessonHash": "a27cad09a8fab448977d4f759165f5d58c08541015b2f643cd23875291947360",
+  "rubricHash": "11df8ed4e12b90ccd0d095ffad59d6bb468e07c26a8acf8daa39f352ce9c4318",
+  "learnerHash": "d0e0d0ed8fd93517bbf1645be852352bf2e7cedf66664d5de7741cb9ba805cb7",
+  "reviewer": "/root/card_judge_a",
+  "dimensions": {
+    "accuracy": {
+      "score": 4,
+      "reason": "Correct read paths and explicit warning that a hit need not be current.",
+      "evidence": [
+        {
+          "slide": 2,
+          "quote": "A hit can still return an old price. Finding a value does not prove it matches the database."
+        }
+      ]
+    },
+    "mechanisms": {
+      "score": 4,
+      "reason": "Names API actor and complete miss state transition; completed fill supports the later hit.",
+      "evidence": [
+        {
+          "slide": 2,
+          "quote": "The entry is absent. The API reads the database, stores a copy in the cache, and returns the details."
+        }
+      ]
+    },
+    "coherence": {
+      "score": 4,
+      "reason": "Continues the product example into two traceable paths, directly extending reusable-copy concept.",
+      "evidence": [
+        {
+          "slide": 2,
+          "quote": "The API finds product:42 in the cache and returns its stored details."
+        }
+      ]
+    },
+    "decisions": {
+      "score": 3,
+      "reason": "For this tracing objective, explains source work saved and remaining need on misses, plus freshness limitation; wider cache selection is outside target.",
+      "evidence": [
+        {
+          "slide": 2,
+          "quote": "A hit avoids this database lookup. A miss still needs the database."
+        }
+      ]
+    },
+    "clarity": {
+      "score": 4,
+      "reason": "Hit and miss are defined with short concrete operations.",
+      "evidence": [
+        {
+          "slide": 2,
+          "quote": "The entry is absent. The API reads the database, stores a copy in the cache, and returns the details."
+        }
+      ]
+    }
+  },
+  "outcomes": [
+    {
+      "id": "card-2-restaurant-menu",
+      "score": 2,
+      "reason": "Learner traces A hit, first B miss/read/fill/return, second B hit, and only one database read; every transition is entailed by card 2."
+    }
+  ],
+  "hardFailures": [],
+  "sourceChecks": [
+    {
+      "slide": 1,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
+      "claim": "Reusable copies reduce repeated source work.",
+      "verified": true
+    },
+    {
+      "slide": 2,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
+      "claim": "Application checks, reads source on miss, fills and returns; consistency is not guaranteed.",
+      "verified": true
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "dimensions": {
+    "accuracy": {
+      "score": 4,
+      "reason": "Correct commit-then-delete ordering with explicit removal-failure and overlapping-fill limits; checkout advice makes no cache freshness promise.",
+      "evidence": [
+        {
+          "slide": 4,
+          "quote": "These steps are not atomic. Removal can fail, or an overlapping read can put an older value back after removal."
+        }
+      ]
+    },
+    "mechanisms": {
+      "score": 3,
+      "reason": "Together with the prior read/fill sequence, the older-value reinsertion statement supports tracing the supplied interleaving. A worked interleaving on the card would make the cause clearer.",
+      "evidence": [
+        {
+          "slide": 4,
+          "quote": "These steps are not atomic. Removal can fail, or an overlapping read can put an older value back after removal."
+        }
+      ]
+    },
+    "coherence": {
+      "score": 4,
+      "reason": "The same price example now changes, and the taught miss behavior explains reload after deletion.",
+      "evidence": [
+        {
+          "slide": 4,
+          "quote": "Remove the cached entry after saving the new price in the database. A later miss reloads it."
+        }
+      ]
+    },
+    "decisions": {
+      "score": 3,
+      "reason": "Offers authoritative validation for a freshness-sensitive operation, sufficient to infer avoiding this cached response, but gives little rationale for choosing validation versus bypass.",
+      "evidence": [
+        {
+          "slide": 4,
+          "quote": "Invalidation alone does not guarantee freshness. For checkout, validate the price against the authoritative data as part of accepting the order."
+        }
+      ]
+    },
+    "clarity": {
+      "score": 3,
+      "reason": "Stale and invalidation are explained concretely. Atomic is not defined directly, though the following failures provide useful context.",
+      "evidence": [
+        {
+          "slide": 4,
+          "quote": "A seller changes the price from $20 to $25. The cached $20 is now stale."
+        }
+      ]
+    }
+  },
+  "outcomes": [
+    {
+      "id": "card-4-dispatch-contact",
+      "score": 2,
+      "reason": "All criteria are supported by the prefix plus declared commit prerequisite: S uses R old fill, the already fetched value survives DB commit and deletion, deletion permits later refill, commit-delete is not a freshness guarantee, and authoritative reads avoid this stale copy. The learner explains every step rather than only naming a race."
+    }
+  ],
+  "hardFailures": [],
+  "sourceChecks": [
+    {
+      "slide": 1,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
+      "claim": "Cache copies can diverge from authoritative source data; concurrent cache changes require coordination.",
+      "verified": true
+    },
+    {
+      "slide": 4,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
+      "claim": "Write the data store before deleting its cache entry; cache-aside does not ensure consistency. The old-fill interleaving follows from separate application read and cache-add operations.",
+      "verified": true
+    }
+  ],
+  "lessonHash": "d6f3ad54a8263e8ba76adaa402b30f5c429ef272408e3ed52ff082052c0e8b03",
+  "rubricHash": "e238e52cc46806dd53ef0756824e29cb165729072f4dda207533ac7c8f7a0290",
+  "learnerHash": "ef40763c0abd5f301486fc5d15efead124cff73f7df2576729d8f139ab664fa7",
+  "reviewer": "/root/card_judge_b"
+}

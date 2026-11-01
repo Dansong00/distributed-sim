@@ -1,0 +1,33 @@
+{
+  "lessonHash": "0066fa5c48bbf8df4ec87ea0bc8e92087b3d4cdffcd5149ad93687710fd6c5a9",
+  "rubricHash": "b45f34590160de52ff2320d67cfb457ebafe8dfefcd0b8428c78e1adea1d96e7",
+  "respondent": "/root/r2_c7",
+  "answers": [
+    {
+      "id": "card-7-ferry-departures",
+      "answer": "When the popular entry expires, many API requests can all miss together and each repeat the same database board read. This can exceed the database's safe 300 board reads per second. The API should let concurrent requests for that board share one in-progress database lookup: one reader loads the board, fills the cache, and the other concurrent readers reuse that lookup's result instead of each starting their own read. The cache does not refill itself. During a whole-cache outage, most reads may lose their cached path, so letting all 6,000 requests per second fall through would demand 20 times the safe database read rate. Limit the API's fallback board reads to the database's safe capacity, at most 300 per second in these facts, and return temporary errors for excess requests. This prevents the rejected requests from creating database work; errors are allowed by the product. Test with an empty and unavailable cache to verify the database is protected. The lesson does not specify a concrete coordination mechanism for sharing an in-progress lookup across application instances or an implementation for enforcing a shared fallback limit; it teaches the behavior and capacity limit, which must hold across the API instances rather than granting each instance its own full database capacity.",
+      "evidence": [
+        {
+          "slide": 5,
+          "quote": "Sets how long an entry may remain before it expires. A 60-second TTL does not refresh the product every minute; a later miss must load it again."
+        },
+        {
+          "slide": 3,
+          "quote": "The API checks and fills the cache explicitly. The cache does not fetch the product from the database on its own."
+        },
+        {
+          "slide": 7,
+          "quote": "Many requests miss the same product together and repeat its database lookup. Coalescing requests lets concurrent readers share one in-progress lookup."
+        },
+        {
+          "slide": 7,
+          "quote": "A cache outage can turn most reads into database traffic. Limit fallback work to what the database can handle; reject excess requests or serve older data only where the product rules permit it."
+        },
+        {
+          "slide": 7,
+          "quote": "Test with an empty or unavailable cache. A warm cache can hide insufficient database capacity."
+        }
+      ]
+    }
+  ]
+}

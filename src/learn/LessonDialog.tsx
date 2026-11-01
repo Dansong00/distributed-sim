@@ -11,6 +11,8 @@ import { MySQLDiagram } from "./MySQLDiagram";
 import { CAPDiagram } from "./CAPDiagram";
 import { ReplicationDiagram } from "./ReplicationDiagram";
 
+import { CachingDiagram } from "./CachingDiagram";
+
 const diagrams = {
   "client-server": LessonDiagram,
   "api-server": ApiServerDiagram,
@@ -20,6 +22,7 @@ const diagrams = {
   mysql: MySQLDiagram,
   cap: CAPDiagram,
   replication: ReplicationDiagram,
+  caching: CachingDiagram,
 } satisfies Record<LessonId, typeof LessonDiagram>;
 
 export function LessonDialog({ lessonId, onClose }: { lessonId: LessonId; onClose: () => void }) {
