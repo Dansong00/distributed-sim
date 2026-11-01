@@ -1,0 +1,123 @@
+{
+  "lessonHash": "c5e87e440525cb254f97f5223ffa7650a1f3b4a5ea25bc7a0f7ce59741a441e9",
+  "rubricHash": "44d7618464f45edc85a2166f658ddda4b1c946a16381f1d8d5d9f901c78ff549",
+  "learnerHash": "6c22f3826aff1e6a2a493237ef72755e6d0ba70968179e97589b06bf33d00ed0",
+  "reviewer": "/root/r2_judge_a",
+  "dimensions": {
+    "accuracy": {
+      "score": 4,
+      "reason": "Source-backed claims retain ownership and distinguish presence, freshness, lifetime, and capacity without false guarantees.",
+      "evidence": [
+        {
+          "slide": 5,
+          "quote": "TTL limits an entry's lifetime, not the age of the source data used to fill it."
+        }
+      ]
+    },
+    "mechanisms": {
+      "score": 4,
+      "reason": "Explicit actors and state transitions cover reads, stale refills, expiration, and duplicate-work control.",
+      "evidence": [
+        {
+          "slide": 4,
+          "quote": "Saving the price and removing the copy are separate steps. A reader can fetch $20 before the update, pause, then refill $20 after removal. The next cache hit still returns $20. Removal can also fail."
+        }
+      ]
+    },
+    "coherence": {
+      "score": 4,
+      "reason": "The recurring product example connects motivation, read paths, writes, copies, load, and the final choice. Full-stack failure teaching on slide 7 supports the local/shared objective, although it arrives too late for card 6 alone.",
+      "evidence": [
+        {
+          "slide": 7,
+          "quote": "A cache outage can turn most reads into database traffic. Limit fallback work to what the database can handle; reject excess requests or serve older data only where the product rules permit it."
+        }
+      ]
+    },
+    "decisions": {
+      "score": 4,
+      "reason": "The full stack supports candidate selection, strict-freshness source validation, no-reuse rejection, operational costs and bounded fallback.",
+      "evidence": [
+        {
+          "slide": 8,
+          "quote": "If requests rarely reuse results, or freshness is too hard to maintain, the cache may cost more than it saves."
+        }
+      ]
+    },
+    "clarity": {
+      "score": 4,
+      "reason": "Definitions are paired with concrete actions and the final checklist integrates them without requiring advanced protocols.",
+      "evidence": [
+        {
+          "slide": 8,
+          "quote": "Name the cached result, its key, acceptable staleness, update policy, and failure behavior."
+        }
+      ]
+    }
+  },
+  "outcomes": [
+    {
+      "id": "q1-station-guides",
+      "score": 1,
+      "reason": "Criteria 1–4 are satisfied: reuse benefit, station-plus-language key, hit path, miss path, and application ownership are explained. The final criterion is incomplete: the response traces source work on a miss but never identifies cache operations or storage as an added cost. Its cited passages do not establish that recognition. Slide 1 teaches this cost, so this is a learner-response gap rather than absent lesson content."
+    },
+    {
+      "id": "q2-opening-hours-race",
+      "score": 2,
+      "reason": "Correct old-hours result, delayed-refill explanation, rejection of guaranteed freshness, and authoritative bypass under the supplied commit prerequisite. Both exact slide-4 quotes support the causal reasoning; bypass is a valid transfer of authoritative validation."
+    },
+    {
+      "id": "q3-weather-expiration",
+      "score": 2,
+      "reason": "Correct stale hit at 12:03, expiration miss at 12:11, and eviction miss at 12:05. Explains lifetime rather than guaranteed residence or freshness, distinguishes time versus memory removal, and attributes reload to a later miss."
+    },
+    {
+      "id": "q4-event-room-map",
+      "score": 2,
+      "reason": "Explains independent copies and stale results on other instances, selects one shared entry under no-concurrent-fill assumptions, contrasts local/network access, and states network/operating cost plus outage traffic without automatic synchronization. Slide 7 supports the outage statement even though not included among this answer’s citations."
+    },
+    {
+      "id": "q5-tournament-burst",
+      "score": 2,
+      "reason": "Explains simultaneous duplicate reads, one shared pending lookup, 10000 versus 500 outage overload, aggregate admitted-work cap with errors, and no reliance on an unreachable stale copy. The cited behavior supports these responses; no limiter implementation is required."
+    },
+    {
+      "id": "q6-single-use-results",
+      "score": 2,
+      "reason": "Rejects single-use caching with no future reuse, uses source cost and headroom, names memory and extra write cost, and conditions reconsideration on repeated reads creating meaningful work plus measured benefit. All cited passages entail the reasoning."
+    }
+  ],
+  "hardFailures": [],
+  "sourceChecks": [
+    {
+      "slide": 1,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
+      "claim": "Repeated reads can benefit from cached copies while important data remains authoritative in the original store.",
+      "verified": true
+    },
+    {
+      "slide": 2,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
+      "claim": "Cache-aside is application-managed cache lookup, source retrieval and fill; consistency is not guaranteed.",
+      "verified": true
+    },
+    {
+      "slide": 5,
+      "url": "https://redis.io/docs/latest/develop/reference/eviction/",
+      "claim": "Redis offers memory-triggered eviction, approximate LRU and noeviction write errors.",
+      "verified": true
+    },
+    {
+      "slide": 6,
+      "url": "https://aws.amazon.com/builders-library/caching-challenges-and-strategies/",
+      "claim": "Independent local caches can disagree; external caches share values and add operating complexity.",
+      "verified": true
+    },
+    {
+      "slide": 7,
+      "url": "https://aws.amazon.com/builders-library/caching-challenges-and-strategies/",
+      "claim": "Simultaneous misses cause duplicate downstream work; coalescing and capped fallback/load shedding reduce this risk.",
+      "verified": true
+    }
+  ]
+}

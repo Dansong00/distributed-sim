@@ -1,0 +1,80 @@
+{
+  "lessonHash": "8a60d901cb8d51a6a7840ff2556d60c3a6bd0f1e9353db19e1988f0ed661b2ba",
+  "rubricHash": "6edd058d71d6ca8d42977b4bb46ad0f8071f7e6dd103f654413a52e79d8befbc",
+  "learnerHash": "1ab0957c8a45135e0502ec83b585c18f535f8449ec41eddeda86653d1c90d2b8",
+  "reviewer": "/root/card_judge_a",
+  "dimensions": {
+    "accuracy": {
+      "score": 4,
+      "reason": "Correct application ownership of cache-aside and correct separation of response-changing inputs.",
+      "evidence": [
+        {
+          "slide": 3,
+          "quote": "The API checks and fills the cache explicitly. The cache does not fetch the product from the database on its own."
+        }
+      ]
+    },
+    "mechanisms": {
+      "score": 4,
+      "reason": "Explicit actor plus currency-specific keys explains both fills and incorrect reuse.",
+      "evidence": [
+        {
+          "slide": 3,
+          "quote": "Identifies the result to reuse. product:42 works for shared product details; prices in different currencies need distinct keys, such as product:42:USD."
+        }
+      ]
+    },
+    "coherence": {
+      "score": 4,
+      "reason": "Product key continues previous hit/miss flow and source ownership.",
+      "evidence": [
+        {
+          "slide": 3,
+          "quote": "Define what the key identifies, who fills it, and where the authoritative data lives."
+        }
+      ]
+    },
+    "decisions": {
+      "score": 4,
+      "reason": "Teaches transferable key rule and concrete consequences for currency or private-result collisions.",
+      "evidence": [
+        {
+          "slide": 3,
+          "quote": "Include the inputs that change the answer. Reusing one person's private result for another person is a data leak."
+        }
+      ]
+    },
+    "clarity": {
+      "score": 4,
+      "reason": "Names and defines cache-aside and key with concrete examples.",
+      "evidence": [
+        {
+          "slide": 3,
+          "quote": "The API checks and fills the cache explicitly. The cache does not fetch the product from the database on its own."
+        }
+      ]
+    }
+  },
+  "outcomes": [
+    {
+      "id": "card-3-ticket-currency",
+      "score": 2,
+      "reason": "Event plus currency key, USD-to-EUR wrong reuse, API-owned database read/fill, and authoritative database are all correct and supported by prefix."
+    }
+  ],
+  "hardFailures": [],
+  "sourceChecks": [
+    {
+      "slide": 3,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
+      "claim": "Structured keys identify distinct cached results; important records retain an authoritative store.",
+      "verified": true
+    },
+    {
+      "slide": 2,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
+      "claim": "Application coordinates miss reads and cache fills.",
+      "verified": true
+    }
+  ]
+}

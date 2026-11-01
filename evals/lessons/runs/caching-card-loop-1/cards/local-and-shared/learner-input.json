@@ -1,0 +1,120 @@
+{
+  "lessonId": "caching",
+  "lessonHash": "59a4b9385c2037b4e443da6f8a6661e22f976f2ccc27231b92cb7806a946007c",
+  "rubricHash": "09a65e71be17c41fb36a6de6d094ee932b7b309f2d047b738290b149338d9cc1",
+  "cardId": "local-and-shared",
+  "audience": "Engineers who know APIs and databases and need practical system-design reasoning about caches. Answers should explain what happens, who does the work, and what can go wrong in plain English.",
+  "prerequisites": [
+    "An API handler can read and write records in a database.",
+    "Several application instances can handle requests at the same time.",
+    "Latency is the time a request takes; a system has limited processing capacity.",
+    "A database commit makes a completed write available to subsequent database reads in these scenarios."
+  ],
+  "lesson": {
+    "title": "Caching Fundamentals",
+    "reviewed": "2026-10-29",
+    "slides": [
+      {
+        "section": "Why Cache?",
+        "title": "Stop repeating the same product lookup",
+        "paragraphs": [
+          "A popular product page keeps asking the API for the same name, description, and price. Each request repeats a database lookup.",
+          {
+            "label": "Cache",
+            "text": "Keeps a reusable copy of a result. Reading that copy can save database work and shorten the wait for the page."
+          },
+          "In this example, the database owns the product record. Losing the cached copy must not lose the product."
+        ],
+        "remember": "First identify repeated work that is worth avoiding. A cache adds another copy to manage.",
+        "source": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching"
+      },
+      {
+        "section": "Follow a Read",
+        "title": "The same request can take two paths",
+        "paragraphs": [
+          {
+            "label": "Cache hit",
+            "text": "The API finds product:42 in the cache and returns its stored details."
+          },
+          {
+            "label": "Cache miss",
+            "text": "The entry is absent. The API reads the database, stores a copy in the cache, and returns the details."
+          },
+          "A hit can still return an old price. Finding a value does not prove it matches the database."
+        ],
+        "remember": "A hit avoids this database lookup. A miss still needs the database.",
+        "source": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside"
+      },
+      {
+        "section": "Cache-Aside",
+        "title": "The application manages the cached copy",
+        "paragraphs": [
+          {
+            "label": "Cache-aside",
+            "text": "The API checks and fills the cache explicitly. The cache does not fetch the product from the database on its own."
+          },
+          {
+            "label": "Cache key",
+            "text": "Identifies the result to reuse. product:42 works for shared product details; prices in different currencies need distinct keys, such as product:42:USD."
+          },
+          "Include the inputs that change the answer. Reusing one person's private result for another person is a data leak."
+        ],
+        "remember": "Define what the key identifies, who fills it, and where the authoritative data lives.",
+        "source": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching"
+      },
+      {
+        "section": "Data Changes",
+        "title": "The price changed. What does the next reader see?",
+        "paragraphs": [
+          "A seller changes the price from $20 to $25. The cached $20 is now stale.",
+          {
+            "label": "Invalidation",
+            "text": "Remove the cached entry after saving the new price in the database. A later miss reloads it."
+          },
+          "These steps are not atomic. Removal can fail, or an overlapping read can put an older value back after removal."
+        ],
+        "remember": "Invalidation alone does not guarantee freshness. For checkout, validate the price against the authoritative data as part of accepting the order.",
+        "source": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside"
+      },
+      {
+        "section": "Expiration and Eviction",
+        "title": "An entry can disappear for different reasons",
+        "paragraphs": [
+          {
+            "label": "Time to live, or TTL",
+            "text": "Sets how long an entry may remain before it expires. A 60-second TTL does not refresh the product every minute; a later miss must load it again."
+          },
+          {
+            "label": "Eviction",
+            "text": "Removes entries to make room. A least-recently-used policy favors removing entries that have not been read recently."
+          },
+          "A product can be evicted before its TTL ends. Some configurations reject new entries when full instead of evicting existing ones."
+        ],
+        "remember": "TTL limits an entry's lifetime, not the age of the source data used to fill it.",
+        "source": "https://redis.io/docs/latest/develop/reference/eviction/"
+      },
+      {
+        "section": "Local Versus Shared",
+        "title": "Two API servers can hold different prices",
+        "paragraphs": [
+          {
+            "label": "Local cache",
+            "text": "Lives inside each API process. Reads avoid a network call, but each process fills and updates its own copy. One can hold $20 while another holds $25."
+          },
+          {
+            "label": "Shared cache",
+            "text": "Several API servers use a separate cache service, such as Redis or Memcached. They can reuse entries, but each lookup adds a network call and the service needs operating."
+          }
+        ],
+        "remember": "Sharing reduces separate copies. It does not automatically keep the cache current with the database.",
+        "source": "https://aws.amazon.com/builders-library/caching-challenges-and-strategies/"
+      }
+    ]
+  },
+  "questions": [
+    {
+      "id": "card-6-museum-audio",
+      "question": "Three application instances serve a museum audio guide. Each keeps its own local cached guide, and requests can reach any instance. A guide edit commits to the database, and instance A deletes only its local copy. The team wants one cache deletion to remove the cached copy used by all three instances and can accept a small network lookup cost. Assume there are no concurrent fills. Explain what a request sent to instance B can receive today. Choose between these independent local caches and one shared cache for the team's goal, and explain one cost or failure consequence of that choice."
+    }
+  ]
+}

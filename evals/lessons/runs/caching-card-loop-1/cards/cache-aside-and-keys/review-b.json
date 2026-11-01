@@ -1,0 +1,80 @@
+{
+  "dimensions": {
+    "accuracy": {
+      "score": 4,
+      "reason": "Cache-aside responsibility, result-specific keys, and privacy consequence are correct and limited to the stated pattern.",
+      "evidence": [
+        {
+          "slide": 3,
+          "quote": "The API checks and fills the cache explicitly. The cache does not fetch the product from the database on its own."
+        }
+      ]
+    },
+    "mechanisms": {
+      "score": 3,
+      "reason": "The prefix teaches fill responsibility and enough key semantics to derive a collision, though it does not walk through two conflicting fills.",
+      "evidence": [
+        {
+          "slide": 3,
+          "quote": "Identifies the result to reuse. product:42 works for shared product details; prices in different currencies need distinct keys, such as product:42:USD."
+        }
+      ]
+    },
+    "coherence": {
+      "score": 4,
+      "reason": "Builds directly on product hit/miss behavior and extends the existing product key with a changing input.",
+      "evidence": [
+        {
+          "slide": 3,
+          "quote": "Identifies the result to reuse. product:42 works for shared product details; prices in different currencies need distinct keys, such as product:42:USD."
+        }
+      ]
+    },
+    "decisions": {
+      "score": 4,
+      "reason": "Gives a transferable input-selection rule and concrete wrong-result and privacy stakes.",
+      "evidence": [
+        {
+          "slide": 3,
+          "quote": "Include the inputs that change the answer. Reusing one person's private result for another person is a data leak."
+        }
+      ]
+    },
+    "clarity": {
+      "score": 4,
+      "reason": "Defines key and cache-aside through plain actor behavior and one example.",
+      "evidence": [
+        {
+          "slide": 3,
+          "quote": "Define what the key identifies, who fills it, and where the authoritative data lives."
+        }
+      ]
+    }
+  },
+  "outcomes": [
+    {
+      "id": "card-3-ticket-currency",
+      "score": 2,
+      "reason": "Event+currency key, wrong-currency reuse, API database read and fill, and authoritative database/copy distinction are all supported by slides 1-3. No outside knowledge is needed."
+    }
+  ],
+  "hardFailures": [],
+  "sourceChecks": [
+    {
+      "slide": 3,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
+      "claim": "Applications implement caching logic; meaningful distinct keys identify cached results, and cached private data requires protection.",
+      "verified": true
+    },
+    {
+      "slide": 2,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
+      "claim": "Application checks cache and retrieves and adds missing source data.",
+      "verified": true
+    }
+  ],
+  "lessonHash": "8a60d901cb8d51a6a7840ff2556d60c3a6bd0f1e9353db19e1988f0ed661b2ba",
+  "rubricHash": "6edd058d71d6ca8d42977b4bb46ad0f8071f7e6dd103f654413a52e79d8befbc",
+  "learnerHash": "1ab0957c8a45135e0502ec83b585c18f535f8449ec41eddeda86653d1c90d2b8",
+  "reviewer": "/root/card_judge_b"
+}

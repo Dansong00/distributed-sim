@@ -1,0 +1,94 @@
+{
+  "lessonHash": "4cd92ecc9873230b28aa4980442c7b8cbd1aec209d33b9ff3e89c8026e48c948",
+  "rubricHash": "09a65e71be17c41fb36a6de6d094ee932b7b309f2d047b738290b149338d9cc1",
+  "learnerHash": "df2b2b710c28534bf74d9f878a288b5780431114e11b54bc39a838a122285771",
+  "reviewer": "/root/r2_judge_a",
+  "dimensions": {
+    "accuracy": {
+      "score": 4,
+      "reason": "Local independence, shared visibility, network cost, and lack of automatic database synchronization are correct.",
+      "evidence": [
+        {
+          "slide": 6,
+          "quote": "Sharing reduces separate copies. It does not automatically keep the cache current with the database."
+        }
+      ]
+    },
+    "mechanisms": {
+      "score": 3,
+      "reason": "Copy visibility and read access are traceable; the prefix does not trace what happens when the shared cache service fails.",
+      "evidence": [
+        {
+          "slide": 6,
+          "quote": "Lives inside each API process. Reads avoid a network call, but each process fills and updates its own copy. One can hold $20 while another holds $25."
+        }
+      ]
+    },
+    "coherence": {
+      "score": 4,
+      "reason": "Extends the same differing-price problem to multiple API instances.",
+      "evidence": [
+        {
+          "slide": 6,
+          "quote": "Lives inside each API process. Reads avoid a network call, but each process fills and updates its own copy. One can hold $20 while another holds $25."
+        }
+      ]
+    },
+    "decisions": {
+      "score": 2,
+      "reason": "The target explicitly includes failure consequences, but the prefix only names network and operating costs. It never teaches that losing the shared service affects all instances or contrasts that with losing one local cache.",
+      "evidence": [
+        {
+          "slide": 6,
+          "quote": "Several API servers use a separate cache service, such as Redis or Memcached. They can reuse entries, but each lookup adds a network call and the service needs operating."
+        }
+      ]
+    },
+    "clarity": {
+      "score": 4,
+      "reason": "Both deployment choices are explained concisely in familiar actors and copies.",
+      "evidence": [
+        {
+          "slide": 6,
+          "quote": "Several API servers use a separate cache service, such as Redis or Memcached. They can reuse entries, but each lookup adds a network call and the service needs operating."
+        }
+      ]
+    }
+  },
+  "outcomes": [
+    {
+      "id": "card-6-museum-audio",
+      "score": 2,
+      "reason": "All question criteria are met: B retains its independent old copy, shared storage fits one deletion under the no-fill assumption, the quoted local/shared evidence establishes network differences, and answer states a concrete operating/network cost while denying automatic synchronization. However the question allows cost instead of failure and therefore does not test the full failure-consequence objective."
+    }
+  ],
+  "hardFailures": [
+    "Fails to teach a required objective: local-and-shared explicitly requires failure consequences, but the available prefix does not explain shared-cache unavailability affecting all instances or contrast local-cache failure scope. Add a concrete failure consequence to this card, or narrow the objective; the transfer question currently permits avoiding this requirement by naming a cost."
+  ],
+  "sourceChecks": [
+    {
+      "slide": 1,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
+      "claim": "Cache copies remain distinct from authoritative stored data.",
+      "verified": true
+    },
+    {
+      "slide": 2,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
+      "claim": "Misses cause application retrieval and fill.",
+      "verified": true
+    },
+    {
+      "slide": 5,
+      "url": "https://redis.io/docs/latest/develop/reference/eviction/",
+      "claim": "Memory limits can cause cached entries to be removed.",
+      "verified": true
+    },
+    {
+      "slide": 6,
+      "url": "https://aws.amazon.com/builders-library/caching-challenges-and-strategies/",
+      "claim": "Local copies can disagree; an external cache shares values and adds operating complexity.",
+      "verified": true
+    }
+  ]
+}

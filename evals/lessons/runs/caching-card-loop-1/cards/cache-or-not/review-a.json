@@ -1,0 +1,92 @@
+{
+  "lessonHash": "dbbca9251a24a25c021f27e3618539f63e432600ccd8957da67ed6f73081406b",
+  "rubricHash": "a9eb17599a22bbdb64daab015dd474d0c67b793ee1c6ac45154a4ed04e8c6dc4",
+  "learnerHash": "fd88c2b17cbfb078c6cac14635f9b663d849b6db435e26b154d73303adbc3d63",
+  "reviewer": "/root/card_judge_a",
+  "dimensions": {
+    "accuracy": {
+      "score": 4,
+      "reason": "Conditional benefits and freshness costs are correct, supported by previous explicit limitations.",
+      "evidence": [
+        {
+          "slide": 8,
+          "quote": "If requests rarely reuse results, or freshness is too hard to maintain, the cache may cost more than it saves."
+        }
+      ]
+    },
+    "mechanisms": {
+      "score": 3,
+      "reason": "Prior read/fill and failure explanations enable application of decision rule; current card gives evaluation steps rather than a worked quantitative comparison.",
+      "evidence": [
+        {
+          "slide": 8,
+          "quote": "Compare response time and database load before and after caching. Track the fraction of lookups that hit, and what happens during misses."
+        }
+      ]
+    },
+    "coherence": {
+      "score": 4,
+      "reason": "Returns to original product page and synthesizes selection, freshness, and authoritative checkout validation.",
+      "evidence": [
+        {
+          "slide": 8,
+          "quote": "For our product page, propose caching frequently read descriptions that tolerate a brief delay after edits. Keep checkout price validation tied to the order's authoritative data."
+        }
+      ]
+    },
+    "decisions": {
+      "score": 4,
+      "reason": "Provides measurable benefit tests, rejection conditions, and separate handling of correctness-sensitive reads.",
+      "evidence": [
+        {
+          "slide": 8,
+          "quote": "Name the cached result, its key, acceptable staleness, update policy, and failure behavior."
+        }
+      ]
+    },
+    "clarity": {
+      "score": 4,
+      "reason": "Concrete recommendation and compact plain-language measurement instructions.",
+      "evidence": [
+        {
+          "slide": 8,
+          "quote": "Compare response time and database load before and after caching. Track the fraction of lookups that hit, and what happens during misses."
+        }
+      ]
+    }
+  },
+  "outcomes": [
+    {
+      "id": "card-8-export-receipts",
+      "score": 2,
+      "reason": "Learner rejects one-read copies, uses 4/150 ms and 15/800 load headroom, identifies added write/storage work, conditions reconsideration on repeated reuse with measured benefit, and routes strict freshness to authoritative data unless proven policy exists. Prefix supports every criterion."
+    }
+  ],
+  "hardFailures": [],
+  "sourceChecks": [
+    {
+      "slide": 8,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
+      "claim": "Caching suitability depends on reuse, source cost, freshness, and measured performance.",
+      "verified": true
+    },
+    {
+      "slide": 2,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
+      "claim": "Low hit rates can make lookup/fill overhead exceed benefit.",
+      "verified": true
+    },
+    {
+      "slide": 5,
+      "url": "https://redis.io/docs/latest/develop/reference/eviction/",
+      "claim": "Eviction and rejected writes are capacity consequences.",
+      "verified": true
+    },
+    {
+      "slide": 7,
+      "url": "https://aws.amazon.com/builders-library/caching-challenges-and-strategies/",
+      "claim": "Validate benefits and test behavior without cache availability.",
+      "verified": true
+    }
+  ]
+}

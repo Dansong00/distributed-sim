@@ -1,0 +1,98 @@
+{
+  "lessonHash": "30c8f88726679273d8190d60f4b99a2d7165b8fd91e31755cc75b89381d04688",
+  "rubricHash": "680744bc4eaf285a23a7008f22d4a7e22d2d2949531887731248342678b9843b",
+  "learnerHash": "c4e0d152894c5a1c2fdad9677bb4523fcef4e73ca37384b66d028209787af028",
+  "reviewer": "/root/r2_judge_b",
+  "dimensions": {
+    "accuracy": {
+      "score": 4,
+      "reason": "Correctly limits TTL claims and allows early eviction or configured refusal; official sources support these distinctions.",
+      "evidence": [
+        {
+          "slide": 5,
+          "quote": "TTL limits an entry's lifetime, not the age of the source data used to fill it."
+        }
+      ]
+    },
+    "mechanisms": {
+      "score": 4,
+      "reason": "Explains time-based removal, capacity-based removal, and which later operation obtains a replacement.",
+      "evidence": [
+        {
+          "slide": 5,
+          "quote": "Sets how long an entry may remain before it expires. A 60-second TTL does not refresh the product every minute; a later miss must load it again."
+        }
+      ]
+    },
+    "coherence": {
+      "score": 4,
+      "reason": "Prior miss/fill and stale-copy lessons supply the causal prerequisites for expiration.",
+      "evidence": [
+        {
+          "slide": 5,
+          "quote": "A product can be evicted before its TTL ends. Some configurations reject new entries when full instead of evicting existing ones."
+        }
+      ]
+    },
+    "decisions": {
+      "score": 3,
+      "reason": "Sufficient to reject TTL freshness and residency guarantees; gives limited guidance for choosing a lifetime or eviction policy, outside this narrow objective.",
+      "evidence": [
+        {
+          "slide": 5,
+          "quote": "TTL limits an entry's lifetime, not the age of the source data used to fill it."
+        }
+      ]
+    },
+    "clarity": {
+      "score": 4,
+      "reason": "Plain definitions distinguish two commonly conflated removal causes.",
+      "evidence": [
+        {
+          "slide": 5,
+          "quote": "Removes entries to make room. A least-recently-used policy favors removing entries that have not been read recently."
+        }
+      ]
+    }
+  },
+  "outcomes": [
+    {
+      "id": "card-5-parking-display",
+      "score": 2,
+      "reason": "All five criteria supported: 09:02 stale hit, 09:06 expired miss, 09:04 eviction miss, time versus capacity distinction, no freshness/residency promise, and subsequent API read rather than autonomous refresh. Evidence directly entails these operations."
+    }
+  ],
+  "hardFailures": [],
+  "sourceChecks": [
+    {
+      "slide": 1,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
+      "claim": "Caching stores reusable copies.",
+      "verified": true
+    },
+    {
+      "slide": 2,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
+      "claim": "Miss handling fetches and fills on demand.",
+      "verified": true
+    },
+    {
+      "slide": 3,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
+      "claim": "Application explicitly owns cache-aside fetching.",
+      "verified": true
+    },
+    {
+      "slide": 4,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
+      "claim": "Cache-aside does not ensure consistency after writes.",
+      "verified": true
+    },
+    {
+      "slide": 5,
+      "url": "https://redis.io/docs/latest/develop/reference/eviction/",
+      "claim": "Redis supports capacity eviction including keys with remaining TTL, LRU selection, and noeviction write rejection; expiration and eviction are distinct.",
+      "verified": true
+    }
+  ]
+}

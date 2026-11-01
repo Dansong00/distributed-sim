@@ -1,0 +1,282 @@
+{
+  "scope": "archived-packet-only",
+  "pass": false,
+  "results": [
+    {
+      "directory": "cards/why-cache",
+      "pass": false,
+      "failures": [
+        "Review 1, mechanisms: dimension score below 3",
+        "Review 1, decisions: dimension score below 3",
+        "Review 1: total score below 18 or invalid",
+        "Review 1, outcome card-1-campus-summary: requires score 2 and reason",
+        "Review 1: hard failure veto or missing hardFailures list",
+        "Review 2, mechanisms: dimension score below 3",
+        "Review 2, decisions: dimension score below 3",
+        "Review 2: total score below 18 or invalid",
+        "Review 2, outcome card-1-campus-summary: requires score 2 and reason",
+        "Review 2: hard failure veto or missing hardFailures list"
+      ],
+      "scores": [
+        {
+          "reviewer": "/root/card_judge_a",
+          "total": 16,
+          "dimensions": {
+            "accuracy": 4,
+            "mechanisms": 2,
+            "coherence": 4,
+            "decisions": 2,
+            "clarity": 4
+          }
+        },
+        {
+          "reviewer": "/root/card_judge_b",
+          "total": 14,
+          "dimensions": {
+            "accuracy": 3,
+            "mechanisms": 2,
+            "coherence": 3,
+            "decisions": 2,
+            "clarity": 4
+          }
+        }
+      ]
+    },
+    {
+      "directory": "cards/hits-and-misses",
+      "pass": true,
+      "failures": [],
+      "scores": [
+        {
+          "reviewer": "/root/card_judge_a",
+          "total": 19,
+          "dimensions": {
+            "accuracy": 4,
+            "mechanisms": 4,
+            "coherence": 4,
+            "decisions": 3,
+            "clarity": 4
+          }
+        },
+        {
+          "reviewer": "/root/card_judge_b",
+          "total": 19,
+          "dimensions": {
+            "accuracy": 4,
+            "mechanisms": 4,
+            "coherence": 4,
+            "decisions": 3,
+            "clarity": 4
+          }
+        }
+      ]
+    },
+    {
+      "directory": "cards/cache-aside-and-keys",
+      "pass": true,
+      "failures": [],
+      "scores": [
+        {
+          "reviewer": "/root/card_judge_a",
+          "total": 20,
+          "dimensions": {
+            "accuracy": 4,
+            "mechanisms": 4,
+            "coherence": 4,
+            "decisions": 4,
+            "clarity": 4
+          }
+        },
+        {
+          "reviewer": "/root/card_judge_b",
+          "total": 19,
+          "dimensions": {
+            "accuracy": 4,
+            "mechanisms": 3,
+            "coherence": 4,
+            "decisions": 4,
+            "clarity": 4
+          }
+        }
+      ]
+    },
+    {
+      "directory": "cards/invalidation-and-old-fills",
+      "pass": false,
+      "failures": [
+        "Review 2: total score below 18 or invalid"
+      ],
+      "scores": [
+        {
+          "reviewer": "/root/card_judge_a",
+          "total": 18,
+          "dimensions": {
+            "accuracy": 4,
+            "mechanisms": 3,
+            "coherence": 4,
+            "decisions": 4,
+            "clarity": 3
+          }
+        },
+        {
+          "reviewer": "/root/card_judge_b",
+          "total": 17,
+          "dimensions": {
+            "accuracy": 4,
+            "mechanisms": 3,
+            "coherence": 4,
+            "decisions": 3,
+            "clarity": 3
+          }
+        }
+      ]
+    },
+    {
+      "directory": "cards/ttl-and-eviction",
+      "pass": true,
+      "failures": [],
+      "scores": [
+        {
+          "reviewer": "/root/card_judge_a",
+          "total": 19,
+          "dimensions": {
+            "accuracy": 4,
+            "mechanisms": 4,
+            "coherence": 4,
+            "decisions": 3,
+            "clarity": 4
+          }
+        },
+        {
+          "reviewer": "/root/card_judge_b",
+          "total": 19,
+          "dimensions": {
+            "accuracy": 4,
+            "mechanisms": 4,
+            "coherence": 4,
+            "decisions": 3,
+            "clarity": 4
+          }
+        }
+      ]
+    },
+    {
+      "directory": "cards/local-and-shared",
+      "pass": true,
+      "failures": [],
+      "scores": [
+        {
+          "reviewer": "/root/card_judge_a",
+          "total": 19,
+          "dimensions": {
+            "accuracy": 4,
+            "mechanisms": 3,
+            "coherence": 4,
+            "decisions": 4,
+            "clarity": 4
+          }
+        },
+        {
+          "reviewer": "/root/card_judge_b",
+          "total": 18,
+          "dimensions": {
+            "accuracy": 4,
+            "mechanisms": 3,
+            "coherence": 4,
+            "decisions": 3,
+            "clarity": 4
+          }
+        }
+      ]
+    },
+    {
+      "directory": "cards/stampede-and-outage",
+      "pass": true,
+      "failures": [],
+      "scores": [
+        {
+          "reviewer": "/root/card_judge_a",
+          "total": 19,
+          "dimensions": {
+            "accuracy": 4,
+            "mechanisms": 4,
+            "coherence": 4,
+            "decisions": 4,
+            "clarity": 3
+          }
+        },
+        {
+          "reviewer": "/root/card_judge_b",
+          "total": 19,
+          "dimensions": {
+            "accuracy": 4,
+            "mechanisms": 3,
+            "coherence": 4,
+            "decisions": 4,
+            "clarity": 4
+          }
+        }
+      ]
+    },
+    {
+      "directory": "cards/cache-or-not",
+      "pass": true,
+      "failures": [],
+      "scores": [
+        {
+          "reviewer": "/root/card_judge_a",
+          "total": 19,
+          "dimensions": {
+            "accuracy": 4,
+            "mechanisms": 3,
+            "coherence": 4,
+            "decisions": 4,
+            "clarity": 4
+          }
+        },
+        {
+          "reviewer": "/root/card_judge_b",
+          "total": 19,
+          "dimensions": {
+            "accuracy": 4,
+            "mechanisms": 3,
+            "coherence": 4,
+            "decisions": 4,
+            "clarity": 4
+          }
+        }
+      ]
+    },
+    {
+      "directory": "stack",
+      "pass": false,
+      "failures": [
+        "Review 2, outcome q1-station-guides: requires score 2 and reason"
+      ],
+      "scores": [
+        {
+          "reviewer": "/root/card_judge_a",
+          "total": 18,
+          "dimensions": {
+            "accuracy": 4,
+            "mechanisms": 3,
+            "coherence": 4,
+            "decisions": 4,
+            "clarity": 3
+          }
+        },
+        {
+          "reviewer": "/root/card_judge_b",
+          "total": 18,
+          "dimensions": {
+            "accuracy": 4,
+            "mechanisms": 3,
+            "coherence": 4,
+            "decisions": 4,
+            "clarity": 3
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,92 @@
+{
+  "lessonHash": "b8476888d327d06c7a025bbb5b664b12a8ede6a2efe1234e3f69855dc3c3d40d",
+  "rubricHash": "d0dd6615a952f648e1a9b6fa9ab2def4bd742f7217274b6c5a91c76b93bf6bb0",
+  "learnerHash": "e68e55325ff3023c43d182017d0b539ca8a66735f6756a1fa512279b194571c4",
+  "reviewer": "/root/r4_judge_b",
+  "dimensions": {
+    "accuracy": {
+      "score": 4,
+      "reason": "The local/shared distinction is precise and avoids conflating shared visibility with database freshness or cache loss with request failure.",
+      "evidence": [
+        {
+          "slide": 6,
+          "quote": "Sharing reduces separate copies. It does not automatically keep the cache current with the database."
+        }
+      ]
+    },
+    "mechanisms": {
+      "score": 4,
+      "reason": "Locates copies and names the independent versus common access failures; deletion and refilling follow from the prior cache-aside cards.",
+      "evidence": [
+        {
+          "slide": 6,
+          "quote": "Restarting one API process discards its local cache; other processes keep their copies. If the shared cache is unreachable, every API server using it loses access to those cached entries."
+        }
+      ]
+    },
+    "coherence": {
+      "score": 4,
+      "reason": "The same changing product price connects stale entries to per-instance visibility and shared storage, with reads and invalidation already introduced.",
+      "evidence": [
+        {
+          "slide": 6,
+          "quote": "Lives inside each API process. Reads avoid a network call, but each process fills and updates its own copy. One can hold $20 while another holds $25."
+        }
+      ]
+    },
+    "decisions": {
+      "score": 4,
+      "reason": "Shared reuse is weighed against network and operating cost and a common failure consequence; the learner applies this to the one-deletion requirement without an automatic-freshness claim.",
+      "evidence": [
+        {
+          "slide": 6,
+          "quote": "Several API servers use a separate cache service, such as Redis or Memcached. They can reuse entries, but each lookup adds a network call and the service needs operating."
+        }
+      ]
+    },
+    "clarity": {
+      "score": 4,
+      "reason": "Concrete locations and prices make the copy distinction and its limits understandable without unexplained distributed-system machinery.",
+      "evidence": [
+        {
+          "slide": 6,
+          "quote": "Lives inside each API process. Reads avoid a network call, but each process fills and updates its own copy. One can hold $20 while another holds $25."
+        }
+      ]
+    }
+  },
+  "outcomes": [
+    {
+      "id": "card-6-museum-audio",
+      "score": 2,
+      "reason": "All six criteria are supported: B retains its old independent copy; shared storage fits one deletion with no overlapping fills; local and network locations are correct; service/network costs are named; automatic synchronization is rejected; local loss affects one instance while shared unreachability affects all cache users. The answer does not assert application request failure. Exact quotes from slides 2, 4 and 6 entail the reasoning."
+    }
+  ],
+  "hardFailures": [],
+  "sourceChecks": [
+    {
+      "slide": 1,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
+      "claim": "Microsoft explains reuse of frequently accessed copies to reduce latency and source contention.",
+      "verified": true
+    },
+    {
+      "slide": 2,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
+      "claim": "Microsoft assigns cache lookup, miss retrieval, fill and return to the application.",
+      "verified": true
+    },
+    {
+      "slide": 5,
+      "url": "https://redis.io/docs/latest/develop/reference/eviction/",
+      "claim": "Redis documents capacity eviction, LRU and rejection of new cache writes with noeviction.",
+      "verified": true
+    },
+    {
+      "slide": 6,
+      "url": "https://aws.amazon.com/builders-library/caching-challenges-and-strategies/",
+      "claim": "AWS describes independent in-process copies, an external cache shared across servers, operational burden and cache-unavailability handling.",
+      "verified": true
+    }
+  ]
+}

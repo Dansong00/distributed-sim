@@ -1,0 +1,104 @@
+{
+  "lessonHash": "2a41e406cf5d722c53c8a3b02f9f93cf87656ca3ee0018a9c198347b62c65d74",
+  "rubricHash": "027dc2bb7271166af9ed394e047f00607c873885bb2662fa8fe5454db4151c95",
+  "learnerHash": "bcdeac625321fe035dcb12d607ae067734256e4bdac4a29fe9b2cfe11f4735f6",
+  "reviewer": "/root/r4_judge_b",
+  "dimensions": {
+    "accuracy": {
+      "score": 4,
+      "reason": "Source-supported distinction between simultaneous misses and outage-driven load; no claim that fallback is harmless or that unreachable cache data remains readable.",
+      "evidence": [
+        {
+          "slide": 7,
+          "quote": "A cache outage can turn most reads into database traffic. Limit fallback work to what the database can handle; reject excess requests or serve older data only where the product rules permit it."
+        }
+      ]
+    },
+    "mechanisms": {
+      "score": 4,
+      "reason": "Concurrent duplicate reads, sharing one ongoing lookup, and admitting only safe fallback work provide traceable mechanisms within the contract. Coordination internals are not prerequisites.",
+      "evidence": [
+        {
+          "slide": 7,
+          "quote": "Many requests miss the same product together and repeat its database lookup. Coalescing requests lets concurrent readers share one in-progress lookup."
+        },
+        {
+          "slide": 7,
+          "quote": "A cache outage can turn most reads into database traffic. Limit fallback work to what the database can handle; reject excess requests or serve older data only where the product rules permit it."
+        }
+      ]
+    },
+    "coherence": {
+      "score": 4,
+      "reason": "The popular product introduced earlier now drives simultaneous misses, after cache-aside, expiration and shared-cache unreachability have been taught.",
+      "evidence": [
+        {
+          "slide": 7,
+          "quote": "Many requests miss the same product together and repeat its database lookup. Coalescing requests lets concurrent readers share one in-progress lookup."
+        },
+        {
+          "slide": 6,
+          "quote": "Restarting one API process discards its local cache; other processes keep their copies. If the shared cache is unreachable, every API server using it loses access to those cached entries."
+        }
+      ]
+    },
+    "decisions": {
+      "score": 4,
+      "reason": "Explains the source-protection versus temporary-error tradeoff and conditions stale serving on product rules. Empty-cache testing makes the capacity limit actionable.",
+      "evidence": [
+        {
+          "slide": 7,
+          "quote": "A cache outage can turn most reads into database traffic. Limit fallback work to what the database can handle; reject excess requests or serve older data only where the product rules permit it."
+        },
+        {
+          "slide": 7,
+          "quote": "Test with an empty or unavailable cache. A warm cache can hide insufficient database capacity."
+        }
+      ]
+    },
+    "clarity": {
+      "score": 4,
+      "reason": "Stampede and coalescing are defined in the same plain-language example; concise instructions connect workload, limit and rejection.",
+      "evidence": [
+        {
+          "slide": 7,
+          "quote": "Many requests miss the same product together and repeat its database lookup. Coalescing requests lets concurrent readers share one in-progress lookup."
+        }
+      ]
+    }
+  },
+  "outcomes": [
+    {
+      "id": "card-7-ferry-departures",
+      "score": 2,
+      "reason": "All five criteria met: simultaneous misses duplicate reads; waiting readers share the refill result; 6000 fallback reads exceed 300 capacity; admitted fallback reads are capped at the safe bound and excess gets errors; no inaccessible stale copy is used. Quotes support each mechanism. The learner correctly identifies omitted implementation details without treating them as required teaching."
+    }
+  ],
+  "hardFailures": [],
+  "sourceChecks": [
+    {
+      "slide": 1,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
+      "claim": "Microsoft describes caching repeated results to reduce latency and source work.",
+      "verified": true
+    },
+    {
+      "slide": 2,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
+      "claim": "Microsoft describes application lookup, miss retrieval, fill and return.",
+      "verified": true
+    },
+    {
+      "slide": 5,
+      "url": "https://redis.io/docs/latest/develop/reference/eviction/",
+      "claim": "Redis documents memory-driven eviction, LRU and noeviction write rejection.",
+      "verified": true
+    },
+    {
+      "slide": 7,
+      "url": "https://aws.amazon.com/builders-library/caching-challenges-and-strategies/",
+      "claim": "AWS explicitly describes same-resource simultaneous misses, one pending request through coalescing, fallback rate caps, load shedding and cache-disabled testing.",
+      "verified": true
+    }
+  ]
+}

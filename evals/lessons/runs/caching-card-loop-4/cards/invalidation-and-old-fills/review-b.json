@@ -1,0 +1,92 @@
+{
+  "lessonHash": "ca1ef5cda355f2fa1bf32f1b3eff841932f1d427f5789c25f42630df7f44bd07",
+  "rubricHash": "e238e52cc46806dd53ef0756824e29cb165729072f4dda207533ac7c8f7a0290",
+  "learnerHash": "c1b688db97a5968e130534f7e6a08be89b3fef230f97ce77369f8bc4dafd84bb",
+  "reviewer": "/root/r2_judge_b",
+  "dimensions": {
+    "accuracy": {
+      "score": 4,
+      "reason": "Source confirms separate source-write and invalidation operations and no consistency guarantee; the stated overlap trace follows those operations without a false guarantee.",
+      "evidence": [
+        {
+          "slide": 4,
+          "quote": "Saving the price and removing the copy are separate steps. A reader can fetch $20 before the update, pause, then refill $20 after removal. The next cache hit still returns $20. Removal can also fail."
+        }
+      ]
+    },
+    "mechanisms": {
+      "score": 4,
+      "reason": "A fully specified paused-reader sequence demonstrates why deletion cannot stop a previously obtained value being refilled.",
+      "evidence": [
+        {
+          "slide": 4,
+          "quote": "Saving the price and removing the copy are separate steps. A reader can fetch $20 before the update, pause, then refill $20 after removal. The next cache hit still returns $20. Removal can also fail."
+        }
+      ]
+    },
+    "coherence": {
+      "score": 4,
+      "reason": "Extends the existing product and miss/fill path to an update without new prerequisites.",
+      "evidence": [
+        {
+          "slide": 4,
+          "quote": "A seller changes the price from $20 to $25. The cached $20 is now stale."
+        }
+      ]
+    },
+    "decisions": {
+      "score": 3,
+      "reason": "Authoritative validation gives a usable freshness-sensitive response. Explicitly relating this to a read endpoint bypassing cache would improve transfer, but the supplied database-read prerequisite and validation rule suffice.",
+      "evidence": [
+        {
+          "slide": 4,
+          "quote": "Invalidation alone does not guarantee freshness. To avoid charging an old price at checkout, validate the price against the authoritative data as part of accepting the order."
+        }
+      ]
+    },
+    "clarity": {
+      "score": 4,
+      "reason": "Defines invalidation and tells a concrete failure sequence with familiar operations.",
+      "evidence": [
+        {
+          "slide": 4,
+          "quote": "Remove the cached entry after saving the new price in the database. A later miss reloads it."
+        }
+      ]
+    }
+  },
+  "outcomes": [
+    {
+      "id": "card-4-dispatch-contact",
+      "score": 2,
+      "reason": "All criteria met: S gets R's old contact; fetched value survives commit; deletion only removes present entry and does not block later fill; no freshness guarantee; bypass reads the authoritative database. Bypass is a justified transfer from authoritative validation plus the stated commit prerequisite, not an unsupported concurrency protocol."
+    }
+  ],
+  "hardFailures": [],
+  "sourceChecks": [
+    {
+      "slide": 1,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
+      "claim": "Cache is a reusable copy and source remains authoritative.",
+      "verified": true
+    },
+    {
+      "slide": 2,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
+      "claim": "Application miss handling reads source and fills cache.",
+      "verified": true
+    },
+    {
+      "slide": 3,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
+      "claim": "Application coordinates cache operations and keys identify distinct results.",
+      "verified": true
+    },
+    {
+      "slide": 4,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
+      "claim": "Source update precedes invalidation, and cache-aside does not guarantee source/cache consistency; race is an operational inference from the documented separate steps.",
+      "verified": true
+    }
+  ]
+}

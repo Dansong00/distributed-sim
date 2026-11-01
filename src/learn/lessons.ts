@@ -8,11 +8,14 @@ import { mysqlLesson } from "./mysql";
 import { capLesson } from "./cap";
 import { replicationLesson } from "./replication";
 
-export const lessons = { "client-server": clientServerLesson, "api-server": apiServerLesson, databases: databasesLesson, cap: capLesson, replication: replicationLesson, postgresql: postgresqlLesson, sqlite: sqliteLesson, mysql: mysqlLesson };
+import { cachingLesson } from "./caching";
+
+export const lessons = { "client-server": clientServerLesson, "api-server": apiServerLesson, databases: databasesLesson, cap: capLesson, replication: replicationLesson, caching: cachingLesson, postgresql: postgresqlLesson, sqlite: sqliteLesson, mysql: mysqlLesson };
 export type LessonId = keyof typeof lessons;
 
 export function lessonsFor(node: DiagramNode): LessonId[] {
   if (node.kind !== "component") return [];
+  if (node.category === "Caches" || node.componentType === "cache") return ["caching"];
   const technology = node.technology?.trim().toLowerCase();
   if (node.category === "Databases" || node.componentType === "database") {
     if (technology === "postgresql") return ["databases", "cap", "replication", "postgresql"];

@@ -1,0 +1,121 @@
+{
+  "lessonHash": "4791f040833ccc589a19251e2d4ce8ab06c16a9743809a8848e96e2b90a2eb68",
+  "rubricHash": "18d3ab6d55c604ebde5c150e5827ebccc1a63fa0ad4d3c6ef5afde5b41d9a85d",
+  "learnerHash": "93d9817972cb5f00cff546712abc1946c63d3a49992109237b5492578fa5f3cb",
+  "reviewer": "judge_b",
+  "dimensions": {
+    "accuracy": {
+      "score": 0,
+      "reason": "The prose makes general design assertions unrelated to caching objectives. The accurate packet diagrams supply only basic read and stale-copy meaning; required factual explanations remain absent.",
+      "evidence": [
+        {
+          "slide": 1,
+          "quote": "Reliable software starts with clear ownership and thoughtful planning. Teams should communicate goals, measure outcomes, and focus on user needs."
+        }
+      ]
+    },
+    "mechanisms": {
+      "score": 1,
+      "reason": "No cache operation is explained in the body. Packet diagrams show read paths and a stale copy, but the prose never develops them into keys, expiration, concurrency or load handling.",
+      "evidence": [
+        {
+          "slide": 2,
+          "quote": "Reliable software starts with clear ownership and thoughtful planning. Teams should communicate goals, measure outcomes, and focus on user needs."
+        }
+      ]
+    },
+    "coherence": {
+      "score": 1,
+      "reason": "Relevant headings and two diagrams do not turn eight repeated paragraphs into a connected lesson. There is no progression from prerequisites to a worked decision.",
+      "evidence": [
+        {
+          "slide": 4,
+          "quote": "Reliable software starts with clear ownership and thoughtful planning. Teams should communicate goals, measure outcomes, and focus on user needs."
+        }
+      ]
+    },
+    "decisions": {
+      "score": 0,
+      "reason": "General encouragement about simplicity does not teach any cache benefit, cost, placement choice, failure response or workload decision.",
+      "evidence": [
+        {
+          "slide": 8,
+          "quote": "Choose clarity and thoughtful design."
+        }
+      ]
+    },
+    "clarity": {
+      "score": 1,
+      "reason": "Sentences are plain English, but repetition and generic advice provide no useful technical detail or definitions for the requested audience.",
+      "evidence": [
+        {
+          "slide": 1,
+          "quote": "Reliable software starts with clear ownership and thoughtful planning. Teams should communicate goals, measure outcomes, and focus on user needs."
+        }
+      ]
+    }
+  },
+  "outcomes": [
+    {
+      "id": "q1-station-guides",
+      "score": 0,
+      "reason": "C1-C2: no taught reuse benefit or key-selection rule. C3-C5: the learner cannot walk the hit/miss and fill operations or their costs, quoting only a broad ownership title. Although packet diagrams show a basic path, the answer does not apply it. The central requested walkthrough remains unsupported."
+    },
+    {
+      "id": "q2-opening-hours-race",
+      "score": 0,
+      "reason": "C1-C3: correct conditional deductions come from the explicit question order; the learner says hit return and overlapping refill are untaught. C4 comes from the supplied database prerequisite. No cited slide supports the race or a freshness-sensitive choice, so question-derived reasoning does not establish taught transfer."
+    },
+    {
+      "id": "q3-weather-expiration",
+      "score": 0,
+      "reason": "C1-C2: gives only partial deductions from the stated times/removal. C3-C4: explicitly cannot explain TTL semantics, lifetime versus freshness, expiration versus memory eviction, or next-reader source loading. There is no supporting slide evidence."
+    },
+    {
+      "id": "q4-event-room-map",
+      "score": 0,
+      "reason": "C1-C2: derives a shared-entry choice from the question assumptions. C3-C4: repeats the given network cost without taught local/shared mechanics or freshness/failure limits. Empty evidence and the stated gap show the lesson did not support the required comparison."
+    },
+    {
+      "id": "q5-tournament-burst",
+      "score": 0,
+      "reason": "C1: lacks a taught expiration-to-duplicate-work explanation. C2: explicitly cannot supply a duplicate-read mitigation. C3-C4: overload arithmetic and rejection follow from supplied capacity and permission facts, not this lesson. C5 is not required because no stale copy is relied on. The missing refill mechanism alone prevents success."
+    },
+    {
+      "id": "q6-single-use-results",
+      "score": 0,
+      "reason": "C1-C4: no-cache recommendation, zero reuse, budget headroom and extra operation follow directly from question facts, with no lesson evidence. C5 proposes repeated requests without taught benefit/cost reassessment. The learner explicitly reports absent cache economics teaching."
+    }
+  ],
+  "hardFailures": [
+    "Fails to teach required reuse-benefit and cache-key reasoning; a generic ownership heading and diagrams are insufficient.",
+    "Fails to teach invalidation races, TTL/eviction semantics, and local/shared trade-offs.",
+    "Fails to teach stampede mitigation, bounded-outage mechanisms, and workload-based cache decisions."
+  ],
+  "sourceChecks": [
+    {
+      "slide": 1,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
+      "claim": "The guidance does not substantiate these broad planning assertions as a caching explanation; no cache claim is actually taught.",
+      "verified": false
+    },
+    {
+      "slide": 2,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
+      "claim": "The source supports the read diagram; generic prose about thoughtful planning does not explain or substantiate the cache-aside algorithm.",
+      "verified": false
+    },
+    {
+      "slide": 5,
+      "url": "https://redis.io/docs/latest/develop/reference/eviction/",
+      "claim": "Redis explains memory eviction policies; the repeated generic software advice supplies no corresponding expiration or eviction claim.",
+      "verified": false
+    },
+    {
+      "slide": 7,
+      "url": "https://aws.amazon.com/builders-library/caching-challenges-and-strategies/",
+      "claim": "AWS explains concrete caching failures and responses; general clarity advice is not a supported substitute for those mechanisms.",
+      "verified": false
+    }
+  ]
+}

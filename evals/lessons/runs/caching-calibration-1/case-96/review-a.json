@@ -1,0 +1,120 @@
+{
+  "lessonHash": "4791f040833ccc589a19251e2d4ce8ab06c16a9743809a8848e96e2b90a2eb68",
+  "rubricHash": "18d3ab6d55c604ebde5c150e5827ebccc1a63fa0ad4d3c6ef5afde5b41d9a85d",
+  "reviewer": "judge_a",
+  "dimensions": {
+    "accuracy": {
+      "score": 1,
+      "reason": "Generic engineering advice supplies no assessable cache claims for most objectives. The embedded hit/miss and stale-copy diagrams are correct, but source links do not make the unrelated body text teach caching or establish its promises.",
+      "evidence": [
+        {
+          "slide": 1,
+          "quote": "Reliable software starts with clear ownership and thoughtful planning. Teams should communicate goals, measure outcomes, and focus on user needs."
+        }
+      ]
+    },
+    "mechanisms": {
+      "score": 1,
+      "reason": "The diagrams show one basic read path and stale snapshot. Repeated prose adds no actor/state transitions for keys, invalidation races, TTL, placement or overload. The learner cannot derive those mechanisms.",
+      "evidence": [
+        {
+          "slide": 2,
+          "quote": "Reliable software starts with clear ownership and thoughtful planning. Teams should communicate goals, measure outcomes, and focus on user needs."
+        }
+      ]
+    },
+    "coherence": {
+      "score": 0,
+      "reason": "Eight different titles contain identical unrelated paragraphs. A title mentioning a price or miss never develops into a connected product example or dependency-aware explanation.",
+      "evidence": [
+        {
+          "slide": 4,
+          "quote": "Reliable software starts with clear ownership and thoughtful planning. Teams should communicate goals, measure outcomes, and focus on user needs."
+        }
+      ]
+    },
+    "decisions": {
+      "score": 0,
+      "reason": "Thoughtful planning and confident decisions do not specify caching benefits, costs, constraints, failure actions or when to decline a cache.",
+      "evidence": [
+        {
+          "slide": 8,
+          "quote": "Simple systems help engineers make confident decisions and adapt as requirements change."
+        }
+      ]
+    },
+    "clarity": {
+      "score": 1,
+      "reason": "The sentences are readable, but repeated generic prose and undefined caching terms in headings contain almost no useful detail. Plain wording alone cannot meet the technical clarity objective.",
+      "evidence": [
+        {
+          "slide": 5,
+          "quote": "Simple systems help engineers make confident decisions and adapt as requirements change."
+        }
+      ]
+    }
+  },
+  "outcomes": [
+    {
+      "id": "q1-station-guides",
+      "score": 0,
+      "reason": "Unsupported/incomplete: the learner cannot explain reuse, keys, hit/miss flow or read/fill actors. The ownership heading is the only quote. Diagrams partly teach flow, but no supported complete answer addresses the five criteria."
+    },
+    {
+      "id": "q2-opening-hours-race",
+      "score": 0,
+      "reason": "Unsupported by lesson: the learner uses supplied event order and commit prerequisite for old hours, failed guarantee and direct-source bypass; hit-return behavior remains conditional and evidence is empty. The prose teaches none of the four causal criteria."
+    },
+    {
+      "id": "q3-weather-expiration",
+      "score": 0,
+      "reason": "Unsupported/incomplete: original-data and removal facts come from the question; the response cannot justify TTL timing, source reload, residency/freshness limitations or eviction versus expiration. All four criteria lack sufficient teaching evidence."
+    },
+    {
+      "id": "q4-event-room-map",
+      "score": 0,
+      "reason": "Unsupported by lesson: one-entry selection and retained local copies follow the prompt. No evidence explains local/shared access, costs beyond the given latency, update consistency or responses to present/absent values. The four criteria cannot earn full teaching credit."
+    },
+    {
+      "id": "q5-tournament-burst",
+      "score": 0,
+      "reason": "Unsupported/incomplete: capacity arithmetic and error permission come from the question. The learner cannot explain expiration-to-duplicate-reads or a concrete coalesced refill. No lesson evidence supports criteria 1-4; criterion 5 is inapplicable because no stale-copy response is relied on."
+    },
+    {
+      "id": "q6-single-use-results",
+      "score": 0,
+      "reason": "Unsupported by lesson: no reuse, adequate headroom and the additional write come from the prompt. No cache cost/benefit reasoning supports the reconsideration rule; the response has no evidence for the five criteria."
+    }
+  ],
+  "hardFailures": [
+    "Fails to teach the required objectives beyond partial read-flow and stale-copy diagrams: reuse/key reasoning, invalidation race and freshness response, TTL/eviction, cache placement, overload control and cache adoption decisions.",
+    "Repeated generic engineering prose is unrelated to the source-linked caching concepts; learner answers derived from question facts cannot repair absent teaching."
+  ],
+  "sourceChecks": [
+    {
+      "slide": 1,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
+      "claim": "Microsoft explains concrete caching trade-offs; the generic planning advice is not supported as this lesson explanation.",
+      "verified": false
+    },
+    {
+      "slide": 2,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
+      "claim": "Microsoft teaches API/cache/database operations absent from this prose; the source link does not support its generic claims.",
+      "verified": false
+    },
+    {
+      "slide": 5,
+      "url": "https://redis.io/docs/latest/develop/reference/eviction/",
+      "claim": "Redis concerns memory eviction policies, not the repeated general advice on confident engineering decisions.",
+      "verified": false
+    },
+    {
+      "slide": 7,
+      "url": "https://aws.amazon.com/builders-library/caching-challenges-and-strategies/",
+      "claim": "AWS teaches cache failure mechanisms; it does not substantiate the generic body text as caching instruction.",
+      "verified": false
+    }
+  ],
+  "learnerHash": "93d9817972cb5f00cff546712abc1946c63d3a49992109237b5492578fa5f3cb"
+}

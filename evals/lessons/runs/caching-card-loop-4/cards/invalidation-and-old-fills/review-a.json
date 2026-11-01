@@ -1,0 +1,86 @@
+{
+  "lessonHash": "ca1ef5cda355f2fa1bf32f1b3eff841932f1d427f5789c25f42630df7f44bd07",
+  "rubricHash": "e238e52cc46806dd53ef0756824e29cb165729072f4dda207533ac7c8f7a0290",
+  "learnerHash": "c1b688db97a5968e130534f7e6a08be89b3fef230f97ce77369f8bc4dafd84bb",
+  "reviewer": "/root/r2_judge_a",
+  "dimensions": {
+    "accuracy": {
+      "score": 4,
+      "reason": "Correctly states commit-then-delete and explicitly rejects freshness guarantees under overlapping fills.",
+      "evidence": [
+        {
+          "slide": 4,
+          "quote": "Saving the price and removing the copy are separate steps. A reader can fetch $20 before the update, pause, then refill $20 after removal. The next cache hit still returns $20. Removal can also fail."
+        }
+      ]
+    },
+    "mechanisms": {
+      "score": 4,
+      "reason": "The pause/resume sequence makes the stale value retained by a reader and its later refill traceable.",
+      "evidence": [
+        {
+          "slide": 4,
+          "quote": "Saving the price and removing the copy are separate steps. A reader can fetch $20 before the update, pause, then refill $20 after removal. The next cache hit still returns $20. Removal can also fail."
+        }
+      ]
+    },
+    "coherence": {
+      "score": 4,
+      "reason": "The product price example extends the earlier hit and fill flow with a write.",
+      "evidence": [
+        {
+          "slide": 4,
+          "quote": "A seller changes the price from $20 to $25. The cached $20 is now stale."
+        }
+      ]
+    },
+    "decisions": {
+      "score": 3,
+      "reason": "Authoritative validation is sufficient to derive the requested simple safe response, though directly naming bypass for freshness-sensitive reads would make transfer more explicit.",
+      "evidence": [
+        {
+          "slide": 4,
+          "quote": "Invalidation alone does not guarantee freshness. To avoid charging an old price at checkout, validate the price against the authoritative data as part of accepting the order."
+        }
+      ]
+    },
+    "clarity": {
+      "score": 4,
+      "reason": "Defines invalidation and describes the overlap in ordinary language.",
+      "evidence": [
+        {
+          "slide": 4,
+          "quote": "Remove the cached entry after saving the new price in the database. A later miss reloads it."
+        }
+      ]
+    }
+  },
+  "outcomes": [
+    {
+      "id": "card-4-dispatch-contact",
+      "score": 2,
+      "reason": "S gets the old contact; the answer explains retained reader state, refill after deletion, and the lack of a freshness guarantee. Bypass is a valid inference from taught authoritative validation plus the explicitly supplied commit prerequisite, without importing a concurrency protocol. The learner appropriately identifies that bypass is not named verbatim."
+    }
+  ],
+  "hardFailures": [],
+  "sourceChecks": [
+    {
+      "slide": 1,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
+      "claim": "The original store remains authoritative for important data.",
+      "verified": true
+    },
+    {
+      "slide": 2,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
+      "claim": "Application-controlled miss fills can populate the cache.",
+      "verified": true
+    },
+    {
+      "slide": 4,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
+      "claim": "Writes update the data store before cache deletion; cache-aside does not guarantee cache/source consistency.",
+      "verified": true
+    }
+  ]
+}

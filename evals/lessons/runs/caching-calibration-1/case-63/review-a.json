@@ -1,0 +1,152 @@
+{
+  "lessonHash": "3cd1e0d1d64bb29f805e50f85b49fdb683f12440a97fbd4b5c5a3729c3433922",
+  "rubricHash": "18d3ab6d55c604ebde5c150e5827ebccc1a63fa0ad4d3c6ef5afde5b41d9a85d",
+  "reviewer": "judge_a",
+  "dimensions": {
+    "accuracy": {
+      "score": 2,
+      "reason": "Several glossary fragments are correct but omit material limits and distinctions. Local means per-process ownership here, not merely nearby. The correct embedded hit/miss and stale-copy diagrams do not cover the omitted key, concurrency, TTL or outage claims.",
+      "evidence": [
+        {
+          "slide": 6,
+          "quote": "Local: nearby. Shared: used by many."
+        },
+        {
+          "slide": 5,
+          "quote": "TTL: time to live. Eviction: removal."
+        }
+      ]
+    },
+    "mechanisms": {
+      "score": 1,
+      "reason": "The embedded diagram traces the API read/fill flow and a stale copy, but the text reduces mechanisms to labels. It supplies no temporal invalidation race, expiration semantics, duplicate-read suppression or bounded fallback reasoning.",
+      "evidence": [
+        {
+          "slide": 3,
+          "quote": "Cache-aside: a caching pattern."
+        },
+        {
+          "slide": 4,
+          "quote": "Invalidation: removing data."
+        },
+        {
+          "slide": 7,
+          "quote": "Stampede: many misses."
+        }
+      ]
+    },
+    "coherence": {
+      "score": 1,
+      "reason": "Product-themed titles preserve a rough order, but isolated glossary fragments do not connect the product state, read path, write path and consequences. The learner explicitly reports the missing connections.",
+      "evidence": [
+        {
+          "slide": 3,
+          "quote": "Cache-aside: a caching pattern."
+        },
+        {
+          "slide": 8,
+          "quote": "Trade-off: a benefit and a cost."
+        }
+      ]
+    },
+    "decisions": {
+      "score": 1,
+      "reason": "The term trade-off is named without teaching caching benefits/costs, placement selection, failure responses or rejection of a low-reuse cache. Scenario facts let the learner guess useful choices; the lesson does not teach them.",
+      "evidence": [
+        {
+          "slide": 8,
+          "quote": "Trade-off: a benefit and a cost."
+        }
+      ]
+    },
+    "clarity": {
+      "score": 1,
+      "reason": "Short wording is readable but vague and repeated verbatim as takeaways. Expanding TTL does not explain lifetime; nearby does not explain local ownership; the learner cannot use these definitions precisely.",
+      "evidence": [
+        {
+          "slide": 5,
+          "quote": "TTL: time to live. Eviction: removal."
+        },
+        {
+          "slide": 6,
+          "quote": "Local: nearby. Shared: used by many."
+        }
+      ]
+    }
+  },
+  "outcomes": [
+    {
+      "id": "q1-station-guides",
+      "score": 1,
+      "reason": "Partial: the learner infers reuse and a two-input key from the question and stored-copy definition, but explicitly cannot identify read/fill actors or trace hit/miss return sequences. Thus criteria 3-5 lack an answered supported flow. Embedded diagram supplies some flow teaching, but it is absent from the learner evidence; key and cost teaching remain missing."
+    },
+    {
+      "id": "q2-opening-hours-race",
+      "score": 1,
+      "reason": "Partial: ordering from the question permits old-value reinsertion and rejection of freshness; the commit prerequisite permits a direct-source read. The hit/removal fragments do not teach hit return behavior, overlapping refills or freshness-sensitive bypass. The learner labels its hit reasoning conditional and explicitly reports those gaps; all four criteria are not taught by the cited material."
+    },
+    {
+      "id": "q3-weather-expiration",
+      "score": 1,
+      "reason": "Partial: question facts support original data at 12:03 and removal before 12:05. The learner cannot fully justify 12:11 expiration/reload, lifetime versus residency/freshness, or removal without refresh. Slides 1, 2 and 5 only label stored copies, presence and TTL/eviction; criteria 1-4 remain incomplete."
+    },
+    {
+      "id": "q4-event-room-map",
+      "score": 1,
+      "reason": "Partial: the learner chooses sharing and describes retained local copies using the question assumptions, and notes the provided network cost. Slide 6 does not teach in-process versus service access or update visibility. Criteria 1-4 have substantial scenario-derived answers but insufficient lesson support, and miss/reload operation remains unestablished in the response."
+    },
+    {
+      "id": "q5-tournament-burst",
+      "score": 1,
+      "reason": "Partial: the learner detects 10,000 versus 500 overload and proposes capped fallback using the question. Slide 7 only names many misses; it does not explain duplicate database fetches or a method sharing one refill. Criteria 1-2 are untaught/incomplete; criteria 3-4 lack lesson mechanism support. Criterion 5 is inapplicable because the response does not rely on stale serving."
+    },
+    {
+      "id": "q6-single-use-results",
+      "score": 1,
+      "reason": "Partial: no-cache, one use, latency/capacity headroom and extra fill are inferred from the supplied workload. A repeated-read trigger is given, but slides 1 and 8 do not teach how benefit depends on reuse plus source cost or the management trade-off. The learner acknowledges limited cost teaching; all five criteria are not grounded in the deck."
+    }
+  ],
+  "hardFailures": [
+    "Fails to teach ownership/key selection beyond a heading, the invalidation concurrency limit, TTL versus eviction, local/shared behavior, and concrete stampede/outage responses required by the contract.",
+    "Fails to teach cache benefit/cost reasoning and when not to cache; a generic trade-off definition is insufficient."
+  ],
+  "sourceChecks": [
+    {
+      "slide": 1,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
+      "claim": "Microsoft supports a stored reusable copy; this definition omits why and when reuse helps.",
+      "verified": true
+    },
+    {
+      "slide": 2,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
+      "claim": "Microsoft supports presence/miss terminology and the embedded API flow; labels omit the application actions.",
+      "verified": true
+    },
+    {
+      "slide": 4,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
+      "claim": "Microsoft supports cache-entry invalidation, not an undifferentiated removal of authoritative data; the wording lacks necessary scope.",
+      "verified": true
+    },
+    {
+      "slide": 5,
+      "url": "https://redis.io/docs/latest/develop/reference/eviction/",
+      "claim": "Redis supports TTL terminology and eviction as removal, but the lesson omits time-versus-memory behavior.",
+      "verified": true
+    },
+    {
+      "slide": 6,
+      "url": "https://aws.amazon.com/builders-library/caching-challenges-and-strategies/",
+      "claim": "AWS defines local caches by per-process ownership; nearby alone does not establish that claim.",
+      "verified": false
+    },
+    {
+      "slide": 7,
+      "url": "https://aws.amazon.com/builders-library/caching-challenges-and-strategies/",
+      "claim": "AWS supports simultaneous misses as a herd, but teaches source duplication and coalescing missing here.",
+      "verified": true
+    }
+  ],
+  "learnerHash": "1131924afc966dafd378407b351cb77ac6ceaa20e8bfc204786c79de0ba8073e"
+}

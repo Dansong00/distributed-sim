@@ -1,0 +1,91 @@
+{
+  "lessonHash": "3cd1e0d1d64bb29f805e50f85b49fdb683f12440a97fbd4b5c5a3729c3433922",
+  "rubricHash": "18d3ab6d55c604ebde5c150e5827ebccc1a63fa0ad4d3c6ef5afde5b41d9a85d",
+  "respondent": "cold_reader",
+  "answers": [
+    {
+      "id": "q1-station-guides",
+      "answer": "A stored copy could be reused for recurring guides; the supplied 2 ms versus 80 ms times suggest a benefit if lookup replaces rebuilding. A proposed station-guide:{stationId}:{language} distinguishes the two inputs that the question says change the result. A hit means present and a miss absent. Missing teaching: cache-aside is only called a pattern. The deck does not explain whether the API or cache reads the database and fills the entry, or the actual return/fill sequence. I cannot derive that flow.",
+      "evidence": [
+        {
+          "slide": 1,
+          "quote": "Cache: a stored copy."
+        },
+        {
+          "slide": 2,
+          "quote": "Hit: data is present. Miss: data is absent."
+        },
+        {
+          "slide": 3,
+          "quote": "Cache-aside: a caching pattern."
+        }
+      ]
+    },
+    {
+      "id": "q2-opening-hours-race",
+      "answer": "The question says A stores old hours after B deletes the key, so old hours are present when C looks it up: a hit. If C returns that stored value, it gets old hours; this cannot support guaranteed fresh cached reads. Deletion at step 3 cannot undo the explicitly later store at step 4. Read the database directly to avoid this copy; the supplied prerequisite says a subsequent database read sees B's commit. Missing teaching: the deck never explains returning a hit or concurrent refill after invalidation.",
+      "evidence": [
+        {
+          "slide": 2,
+          "quote": "Hit: data is present. Miss: data is absent."
+        },
+        {
+          "slide": 4,
+          "quote": "Invalidation: removing data."
+        }
+      ]
+    },
+    {
+      "id": "q3-weather-expiration",
+      "answer": "From the question, the original stored forecast is unchanged at 12:03, and removal at 12:04 leaves no original entry for B's 12:05 request. A at 12:11 cannot use the original if ten-minute TTL means expiration at 12:10, since expired entries cannot be served. Missing teaching: the deck expands TTL to time to live but does not explain its timing rules, guarantees, refresh behavior, or how a miss reloads the source. It calls eviction removal without distinguishing a memory policy from a lifetime rule. Those mechanisms are insufficiently taught for a complete answer.",
+      "evidence": [
+        {
+          "slide": 1,
+          "quote": "Cache: a stored copy."
+        },
+        {
+          "slide": 2,
+          "quote": "Hit: data is present. Miss: data is absent."
+        },
+        {
+          "slide": 5,
+          "quote": "TTL: time to live. Eviction: removal."
+        }
+      ]
+    },
+    {
+      "id": "q4-event-room-map",
+      "answer": "Choose the stipulated single shared entry: all four use one item, so deleting that item meets the goal. With the current independent copies, the other three retain the old map because the question says only the writer deletes its copy. The question permits the 2 ms network lookup, a cost of this choice. Missing teaching: the lesson does not explain shared-service operation, independent-cache updates, or what an instance does on an absent entry. The choice follows mainly from the question's single-entry assumption.",
+      "evidence": [
+        {
+          "slide": 6,
+          "quote": "Local: nearby. Shared: used by many."
+        }
+      ]
+    },
+    {
+      "id": "q5-tournament-burst",
+      "answer": "Many misses are a stampede. If each of the 10,000 requests reads the database during expiration or outage, that exceeds the given 500-read/second capacity. During the outage, permit at most 500 database reads/second and return the allowed error for the rest; rejected requests cause no database work. Missing teaching: the deck provides no mechanism to combine duplicate reads after one-key expiration and no explanation of retaining or accessing an old schedule while the cache is unavailable. I cannot supply a concrete duplicate-read reduction method from this lesson.",
+      "evidence": [
+        {
+          "slide": 7,
+          "quote": "Stampede: many misses."
+        }
+      ]
+    },
+    {
+      "id": "q6-single-use-results",
+      "answer": "Do not add it: every result is retrieved once, so there is no future request to benefit from the proposed fill. The 2 ms read and ten reads/second already fit the stated budget and capacity. Filling is an extra operation and retains a stored copy. Reconsider if results start receiving repeated reads. Missing teaching: the deck supplies only a generic benefit/cost definition, not cache management or freshness cost analysis.",
+      "evidence": [
+        {
+          "slide": 1,
+          "quote": "Cache: a stored copy."
+        },
+        {
+          "slide": 8,
+          "quote": "Trade-off: a benefit and a cost."
+        }
+      ]
+    }
+  ]
+}

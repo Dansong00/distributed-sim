@@ -50,3 +50,15 @@ it("keeps existing five-slide decks and database decks under ten slides", () => 
     expect(lesson.slides.length).toBeLessThan(10);
   }
 });
+
+it.each(["generic-cache", "redis", "memcached"])("offers caching for %s after renaming", preset => {
+  const node = createComponent(preset, { x: 0, y: 0 });
+  node.name = "Product details";
+  expect(lessonsFor(node)).toEqual(["caching"]);
+});
+it("supports uncategorized cache components and excludes cache annotations", () => {
+  const node = createComponent("redis", { x: 0, y: 0 });
+  node.category = undefined;
+  expect(lessonsFor(node)).toEqual(["caching"]);
+  expect(lessonsFor({ ...node, kind: "sticky" })).toEqual([]);
+});

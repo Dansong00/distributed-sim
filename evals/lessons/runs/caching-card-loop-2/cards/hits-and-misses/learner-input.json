@@ -1,0 +1,57 @@
+{
+  "lessonId": "caching",
+  "lessonHash": "0464c35ea50e45af8afe6f01eab0bb5c97028db9bc16e519fb6475a5e54effaf",
+  "rubricHash": "11df8ed4e12b90ccd0d095ffad59d6bb468e07c26a8acf8daa39f352ce9c4318",
+  "cardId": "hits-and-misses",
+  "audience": "Engineers who know APIs and databases and need practical system-design reasoning about caches. Answers should explain what happens, who does the work, and what can go wrong in plain English.",
+  "prerequisites": [
+    "An API handler can read and write records in a database.",
+    "Several application instances can handle requests at the same time.",
+    "Latency is the time a request takes; a system has limited processing capacity.",
+    "A database commit makes a completed write available to subsequent database reads in these scenarios."
+  ],
+  "lesson": {
+    "title": "Caching Fundamentals",
+    "reviewed": "2026-10-29",
+    "slides": [
+      {
+        "section": "Why Cache?",
+        "title": "Stop repeating the same product lookup",
+        "paragraphs": [
+          "A popular product page keeps asking the API for the same name, description, and price. Each request repeats a database lookup.",
+          {
+            "label": "Cache",
+            "text": "Keeps a reusable copy of a result. Reading that copy can save database work and shorten the wait for the page."
+          },
+          "Before a copy exists, the API still does the database lookup. Storing that copy uses memory and adds a cache write.",
+          "In this example, the database owns the product record. Losing the cached copy must not lose the product."
+        ],
+        "remember": "First identify repeated work that is worth avoiding. A cache adds another copy to manage.",
+        "source": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching"
+      },
+      {
+        "section": "Follow a Read",
+        "title": "The same request can take two paths",
+        "paragraphs": [
+          {
+            "label": "Cache hit",
+            "text": "The API finds product:42 in the cache and returns its stored details."
+          },
+          {
+            "label": "Cache miss",
+            "text": "The entry is absent. The API reads the database, stores a copy in the cache, and returns the details."
+          },
+          "A hit can still return an old price. Finding a value does not prove it matches the database."
+        ],
+        "remember": "A hit avoids this database lookup. A miss still needs the database.",
+        "source": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside"
+      }
+    ]
+  },
+  "questions": [
+    {
+      "id": "card-2-restaurant-menu",
+      "question": "A restaurant API first checks its cache for a menu. If a menu is missing, the API handler reads it from the database, stores a copy, and returns it. At the start, the cache holds menu A but no menu B. Trace a request for A, then a request for B, then another request for B. No entries change or disappear during these requests. Which requests read the database, and which are cache hits or misses?"
+    }
+  ]
+}

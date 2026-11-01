@@ -1,0 +1,25 @@
+{
+  "lessonHash": "88d5328490d232ae1c69ffffa988c8892cd310aa659857ac007dd5e98a0c4084",
+  "rubricHash": "0c17a8511afbf9a1cecc32e50c471c9a717ef9b1e14c9bdef4b04a5288d08b64",
+  "respondent": "/root/learn_c1",
+  "answers": [
+    {
+      "id": "card-1-campus-summary",
+      "answer": "The API can keep a completed building summary and reuse it when another caller asks for that summary. For requests with an available copy, reading it takes the stated 3 ms instead of rebuilding it from database records in 90 ms, so callers wait less and the database avoids the repeated reads used to build that summary. Since most requests ask for one of twenty summaries, those copies could be reused often. One cost is that the application has an extra copy to keep and manage; the lesson does not explain a specific management mechanism. The first request might arrive before a reusable copy exists, so the API must still read the database records and do the expensive build before it can store a result for later requests. This follows from the question describing the cheap path as reading a previously stored summary; the lesson itself does not explicitly teach a first-request or cache-miss workflow. The database remains the owner of the underlying records, so losing a cached summary must not mean losing those records.",
+      "evidence": [
+        {
+          "slide": 1,
+          "quote": "Keeps a reusable copy of a result. Reading that copy can save database work and shorten the wait for the page."
+        },
+        {
+          "slide": 1,
+          "quote": "First identify repeated work that is worth avoiding. A cache adds another copy to manage."
+        },
+        {
+          "slide": 1,
+          "quote": "In this example, the database owns the product record. Losing the cached copy must not lose the product."
+        }
+      ]
+    }
+  ]
+}

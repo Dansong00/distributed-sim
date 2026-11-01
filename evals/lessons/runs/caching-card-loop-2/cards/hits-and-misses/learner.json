@@ -1,0 +1,25 @@
+{
+  "lessonHash": "0464c35ea50e45af8afe6f01eab0bb5c97028db9bc16e519fb6475a5e54effaf",
+  "rubricHash": "11df8ed4e12b90ccd0d095ffad59d6bb468e07c26a8acf8daa39f352ce9c4318",
+  "respondent": "/root/r2_c2",
+  "answers": [
+    {
+      "id": "card-2-restaurant-menu",
+      "answer": "The request for A is a cache hit: the API returns the cached menu A and does not read the database. The first request for B is a cache miss: B is absent, so the API handler reads menu B from the database, stores a copy in the cache, and returns it. The next request for B is a cache hit: the copy just stored is still present, so the API returns it without reading the database. Only the first request for B reads the database. No teaching needed to answer this question is missing.",
+      "evidence": [
+        {
+          "slide": 2,
+          "quote": "The API finds product:42 in the cache and returns its stored details."
+        },
+        {
+          "slide": 2,
+          "quote": "The entry is absent. The API reads the database, stores a copy in the cache, and returns the details."
+        },
+        {
+          "slide": 2,
+          "quote": "A hit avoids this database lookup. A miss still needs the database."
+        }
+      ]
+    }
+  ]
+}

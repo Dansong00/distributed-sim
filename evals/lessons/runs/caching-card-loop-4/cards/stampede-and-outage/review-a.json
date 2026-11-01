@@ -1,0 +1,104 @@
+{
+  "lessonHash": "2a41e406cf5d722c53c8a3b02f9f93cf87656ca3ee0018a9c198347b62c65d74",
+  "rubricHash": "027dc2bb7271166af9ed394e047f00607c873885bb2662fa8fe5454db4151c95",
+  "learnerHash": "bcdeac625321fe035dcb12d607ae067734256e4bdac4a29fe9b2cfe11f4735f6",
+  "reviewer": "/root/r4_judge_a",
+  "dimensions": {
+    "accuracy": {
+      "score": 4,
+      "reason": "Concurrent misses and outage fallback are accurately distinguished and supported by AWS. The card limits stale serving to acceptable product rules and does not promise free recovery.",
+      "evidence": [
+        {
+          "slide": 7,
+          "quote": "Falling back to the database is a load decision, not a free recovery path."
+        }
+      ]
+    },
+    "mechanisms": {
+      "score": 4,
+      "reason": "Explains duplicate source work and how one in-progress lookup can serve concurrent readers; separately connects outage to expanded source traffic and explicit rejection above capacity. Given the prerequisites this is sufficient to trace both incidents without requiring a distributed coordination implementation.",
+      "evidence": [
+        {
+          "slide": 7,
+          "quote": "Many requests miss the same product together and repeat its database lookup. Coalescing requests lets concurrent readers share one in-progress lookup."
+        },
+        {
+          "slide": 7,
+          "quote": "A cache outage can turn most reads into database traffic. Limit fallback work to what the database can handle; reject excess requests or serve older data only where the product rules permit it."
+        }
+      ]
+    },
+    "coherence": {
+      "score": 4,
+      "reason": "Uses the same product, building on miss/refill, expiration, and shared-cache unreachability. The target is a connected consequence of preceding operations, rather than unexplained failure terminology.",
+      "evidence": [
+        {
+          "slide": 2,
+          "quote": "The entry is absent. The API reads the database, stores a copy in the cache, and returns the details."
+        },
+        {
+          "slide": 7,
+          "quote": "A missing popular product can flood the database"
+        }
+      ]
+    },
+    "decisions": {
+      "score": 4,
+      "reason": "Teaches two distinct protective responses with their work-reduction rationale and accepts temporary errors as a capacity tradeoff. Testing without cached data exposes when warm-cache success is insufficient.",
+      "evidence": [
+        {
+          "slide": 7,
+          "quote": "A cache outage can turn most reads into database traffic. Limit fallback work to what the database can handle; reject excess requests or serve older data only where the product rules permit it."
+        },
+        {
+          "slide": 7,
+          "quote": "Test with an empty or unavailable cache. A warm cache can hide insufficient database capacity."
+        }
+      ]
+    },
+    "clarity": {
+      "score": 4,
+      "reason": "Stampede and coalescing receive immediate plain-English explanations, and the short failure sequence makes capacity consequences understandable without implementation jargon.",
+      "evidence": [
+        {
+          "slide": 7,
+          "quote": "Many requests miss the same product together and repeat its database lookup. Coalescing requests lets concurrent readers share one in-progress lookup."
+        }
+      ]
+    }
+  },
+  "outcomes": [
+    {
+      "id": "card-7-ferry-departures",
+      "score": 2,
+      "reason": "All five criteria are satisfied. The learner traces concurrent misses to duplicate reads before refill, describes one in-progress lookup with readers sharing its result, compares 6000 requests/s with the 300-read/s capacity, caps admitted fallback reads at that capacity and rejects excess requests, and never relies on the unreachable cache. Its implementation caveat accurately marks detail outside the contract; the operational reasoning is entailed by slides 2, 6, and 7."
+    }
+  ],
+  "hardFailures": [],
+  "sourceChecks": [
+    {
+      "slide": 1,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
+      "claim": "Reusing frequently requested data can reduce response latency and original-store load.",
+      "verified": true
+    },
+    {
+      "slide": 2,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
+      "claim": "The application handles a cache miss by retrieving source data and caching the result.",
+      "verified": true
+    },
+    {
+      "slide": 5,
+      "url": "https://redis.io/docs/latest/develop/reference/eviction/",
+      "claim": "Capacity eviction and noeviction rejection are separate configurable behaviors.",
+      "verified": true
+    },
+    {
+      "slide": 7,
+      "url": "https://aws.amazon.com/builders-library/caching-challenges-and-strategies/",
+      "claim": "Concurrent uncached requests can overload a dependency; coalescing reduces pending duplicate work, and cache-outage fallback can be capped with load shedding.",
+      "verified": true
+    }
+  ]
+}
