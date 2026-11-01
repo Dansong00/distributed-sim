@@ -4,3 +4,9 @@ dist/
 playwright-report/
 test-results/
 *.tsbuildinfo
+
+# Generated evaluation packets, attempts and UI proof stay out of source control.
+/evals/lessons/runs/
+/evals/lessons/**/packet.json
+/evals/lessons/**/learner-input.json
+/.verification-evidence/

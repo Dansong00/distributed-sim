@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cardPacket, releasePackets } from './cards.mjs';
+import { cardPacket, validateCards } from './cards.mjs';
 import { hash } from './gate.mjs';
 
 const fixture = () => ({
@@ -36,11 +36,6 @@ test('earlier content and prerequisite contract changes invalidate later approva
   assert.notEqual(cardPacket(full, 'second').rubricHash, original.rubricHash);
 });
 
-test('release requires every ordered card and the full stack, not one approved prefix', () => {
-  const full = fixture(); const packets = releasePackets(full);
-  assert.deepEqual(packets.map(p => p.directory), ['cards/first', 'cards/second', 'cards/third', 'stack']);
-  assert.deepEqual(packets.at(-1).packet, full);
-});
 
 for (const [label, change] of [
   ['missing cards', p => delete p.contract.cards],
@@ -57,5 +52,5 @@ for (const [label, change] of [
   ['empty questions', p => p.contract.cards[0].questions = []],
   ['empty criteria', p => p.contract.cards[0].questions[0].criteria = []],
   ['duplicate questions', p => p.contract.cards[0].questions.push(p.contract.cards[0].questions[0])],
-]) test(`rejects ${label}`, () => { const p = fixture(); change(p); assert.throws(() => cardPacket(p, 'first')); });
+]) test(`rejects ${label}`, () => { const p = fixture(); change(p); assert.throws(() => validateCards(p)); });
 test('unknown card cannot fall back to a stack evaluation', () => assert.throws(() => cardPacket(fixture(), 'unknown')));

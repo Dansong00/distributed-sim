@@ -26,6 +26,6 @@ Add Redis and Memcached after caching; Kafka, RabbitMQ and SQS after messaging; 
 
 ## Per-topic record
 
-For each topic, keep: frozen contract, exact revision hash, learner output, two independent reviews, gate result, revision attempts, primary sources, unit/build/browser evidence, screenshots, and correctness/complexity review. Store reports under evals/lessons/runs/<topic>-<attempt>/ and update the implementation plan.
+For each topic, keep: frozen contract, exact revision hash, learner output, two independent reviews, gate result, revision attempts, primary sources, unit/build/browser evidence, screenshots, and correctness/complexity review. Keep only the current passing learner and two reviewer reports plus a short summary under evals/lessons/releases/<topic>/. Archive full attempts and UI proof outside Git. Follow the lighter loop in README.md.
 
 Advance only after content and UI gates pass. If three revisions do not resolve a topic, record the specific disagreement or missing evidence and investigate it before continuing. Do not advance to another stack until the current one passes. Never silently reduce the intended learning outcomes or lower thresholds. Publication remains a separate action.

@@ -1,5 +1,7 @@
 # Learning stack evaluation implementation plan
 
+Historical record: the current workflow is in `evals/lessons/README.md`; mandatory per-card sessions were superseded by the user-requested lighter loop. Referenced raw run paths were moved to the external archive documented in `evals/lessons/ARCHIVE.md`.
+
 > **For agentic workers:** Use superpowers:executing-plans for integration and independent read-only review.
 
 **Goal:** Establish and calibrate a reusable evaluation before autonomous lesson expansion.

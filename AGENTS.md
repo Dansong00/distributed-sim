@@ -12,14 +12,12 @@ The same independent reviewer may perform both passes; a second reviewer agent i
 
 # Learning stack quality gate
 
-For any new or substantively revised learning stack, follow [evals/lessons/README.md](evals/lessons/README.md) before declaring it complete or advancing the autonomous backlog. Use [evals/lessons/backlog.md](evals/lessons/backlog.md) for prerequisite order and coverage boundaries.
+For learning stacks, follow [evals/lessons/README.md](evals/lessons/README.md) and [the backlog](evals/lessons/backlog.md).
 
-- Freeze a topic contract before authoring. Use a separate agent to define objectives and transfer questions without inspecting the candidate deck.
-- Use a fresh learner session with only the learner packet, then two independent reviewer sessions. Preserve their actual outputs; the author must not fabricate reviews, waive failures, or lower thresholds to pass.
-- Run the current-source `check` gate. An archived packet pass, missing contract, stale report, or prior code-review pass is not quality approval.
-- Correct material errors and teaching gaps, export a new revision, and rerun the evaluation. After three unsuccessful revisions, investigate whether the lesson or the evaluation is at fault. Do not advance to the next stack until the current stack passes; escalate only an unresolved scope or learning-goal decision.
-- Content quality and UI correctness are separate gates. Run relevant unit/build/browser checks and inspect diagrams and long cards at desktop/mobile widths. Follow the correctness and Ponytail review requirements above.
-- Keep per-attempt evidence under evals/lessons/runs/. Caching calibration is a pilot, not proof of reliability for every topic or of human learning; add topic-specific negative controls as coverage expands.
-
-- Each card also needs a frozen objective, earlier prerequisites and a transfer question. Use `packet-card` and `check-card` with fresh learners and independent reviews; use `check-release` for all cards plus the full-stack current-source gate before publication. Preserve failed attempts and re-evaluate affected prefixes after prerequisite edits.
-- Honor release authorization already given in the active conversation. Preserve coherent public stacks, unrelated local work, required checks, and deployment verification. Archived evidence is not current approval.
+- Freeze an independently authored contract before writing. Check each card's objective, sources and prerequisite order during drafting. Use targeted blind card evaluation only when a specific gap needs diagnosis.
+- Evaluate the complete stack with one fresh learner and two independent reviewer sessions. Preserve their actual outputs. Assess every objective; never fabricate reviews, lower thresholds or relabel stale reports.
+- Run current-source `check-release` before publishing or advancing. It validates card contracts and the full-stack evidence. Archived packet checks are not release approval.
+- Revise identified gaps until the gate passes. After three unsuccessful revisions, investigate lesson versus assessment; escalate only an unresolved learning-goal or scope decision.
+- Keep only current passing learner/reviewer reports and a concise summary under `evals/lessons/releases/`. Store generated packets, failed attempts, calibration history and browser proof outside Git. Preserve and checksum archives before removing tracked copies.
+- Use the existing `verify-system-canvas` skill for affected UI journeys once before release, alongside relevant tests/build and the correctness/Ponytail reviews above. Locate/copy the existing project skill into isolated checkouts when necessary. Repeat affected checks only after changes or failures.
+- Honor release authorization already given in the active conversation. Preserve unrelated work and verify deployment. Evaluations measure content readiness, not human learning.

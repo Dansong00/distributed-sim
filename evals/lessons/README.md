@@ -1,22 +1,27 @@
 # Learning stack evaluation
 
-This is an authoring gate, not an in-app quiz. It evaluates whether a stack supports practical reasoning for an engineer who knows APIs and databases. It does not demonstrate that a person learned the material.
+This authoring gate checks supported technical reasoning, not human learning. It runs locally and in CI without a model API or an external artifact download.
 
-Run `npm run test:lesson-eval` for the executable gate's regression checks. Run `npm run eval:lessons -- inventory` for current component coverage. A lesson's presence never means it passed evaluation.
+## Default loop
 
-## Authoring loop
+1. Freeze a topic contract before authoring. An independent contract author defines the audience, prerequisites, card objectives and transfer questions, plus up to six whole-stack scenarios covering those objectives. Each question must explicitly ask for its grading criteria. Keep score thresholds unchanged.
+2. Draft the connected stack. Check each card's goal, explanation, source and prerequisite order yourself; record only actionable gaps. Do not automatically dispatch a learner and two reviewers for every card.
+3. Export one complete-stack attempt to a fresh directory **outside the repository**: `npm run eval:lessons -- packet <id> <external-attempt-dir>`. Give a fresh learner only `learner-input.json`, then give two independent reviewers the packet and actual learner response. Use the prompts below. Both reviewers must assess every card objective, not just whether the learner answered the scenarios.
+4. Run `npm run eval:lessons -- check-release <id> <external-attempt-dir>`. Both reviews must score at least 18/20, every dimension at least 3/4, every transfer outcome 2/2, with no hard failures. Review disagreement greater than one point fails. Revise only the identified gaps; a changed snapshot requires fresh bound whole-stack evidence. Never edit hashes or reuse stale reviews.
+5. After content passes, run relevant tests/build and the project's `verify-system-canvas` skill once for the affected user journeys. Inspect its screenshots/traces, verify cleanup and archive proof outside Git. If it is not present in an isolated checkout, locate the existing project skill and copy it unchanged. Use its feature map to select checks. Repeat only checks affected by subsequent changes or failures. Complete the independent correctness and separate Ponytail passes required by AGENTS.md.
+6. Copy **only** `learner.json`, `review-a.json`, and `review-b.json` unchanged into `evals/lessons/releases/<id>/`, add a short `REPORT.md`, and rerun `check-release` against that directory. CI rebuilds the lesson packet from source and validates the saved reports. Publish within the user's existing authorization, then verify deployment.
 
-1. Create a topic contract in `evals/lessons/contracts/<id>.json` before writing the stack. A separate agent defines audience, prerequisites, objectives, six or fewer new-scenario questions, grading criteria, and critical misconceptions. Include `diagramFile`, the source of the lesson's diagrams. Match questions to the promised scope; do not require advanced facts absent from the learning objectives.
-2. Freeze the contract and `rubric.json`. Author the cards using primary sources and the existing lesson UI. Do not edit the rubric or criteria to rescue a failed candidate.
-3. Run `npm run eval:lessons -- packet <id> /tmp/<topic>-attempt-1`. The destination must be new; previous evidence is never overwritten. Content, rendering assets, eligible components, contract and rubric are hashed. Each review also binds the exact learner response with learnerHash.
-4. Dispatch a fresh learner with only `learner-input.json` and the learner prompt below. It must not see gold criteria, reviewer reports, control labels, or the author conversation. Save its actual JSON response as `learner.json`.
-5. Dispatch two fresh reviewers independently. Each receives `packet.json`, the same `learner.json`, and the reviewer prompt below, not the other review. Use different agent identities and preserve the real outputs as `review-a.json` and `review-b.json`.
-6. Run `npm run eval:lessons -- check <id> <learner.json> <review-a.json> <review-b.json>`. Nonzero exit means stop: revise the specific teaching gap, generate a new packet, and repeat. Both reviewers must reach at least 18/20, every dimension at least 3/4, every transfer outcome 2/2, and no hard failures. Do not average away a failed reviewer. A disagreement over one point requires resolution.
-7. After a content pass, run unit tests, production build, focused lesson browser tests, and inspect diagrams/long cards at desktop and mobile widths. A content pass is not a UI pass. Complete the repository's independent correctness and Ponytail reviews. Record exact evidence in the implementation plan before advancing to the next stack.
+`check-release` validates every card's contract mapping, objective, prerequisites and question shape, then evaluates the complete stack. Card-level semantic checks during drafting are author checks, not independent prefix certifications. `packet-card` and `check-card` remain available to diagnose a specific missing prerequisite or teaching gap; they are optional and never substitute for the full release gate.
 
-Iterate until the topic passes. After three unsuccessful revisions, investigate whether the lesson or evaluation is at fault and record the unresolved issue; do not advance to the next stack until it passes. Ask the user only when a learning goal, scope, or unresolved judgment genuinely needs their input. Keep the failed attempts. Passing does not itself authorize publication; this chat separately authorizes committing and shipping after the release checks. Unrelated changes remain out of scope.
+## Evidence storage
 
-`check` rebuilds a packet from the current source, so changed lessons, rendering assets, eligibility, contracts or rubrics invalidate old evidence. `check-packet` only reproduces an archived result and is never a release gate.
+Keep contracts, rubric, evaluator code/tests, the three current passing reports and a concise release summary in Git. Keep packet snapshots, learner inputs, failed/superseded attempts, calibration runs, browser screenshots and traces in an external archive. Do not commit them or create duplicate copies of lesson/CSS source in reports. Generated run folders and packet names are ignored as a backstop.
+
+Record an archive location/checksum and original evaluation provenance in the release summary. The archive must be preserved before removing old attempts. CI must work using only tracked current evidence and source; it must not require a personal filesystem, storage credentials or network download. Previous evidence is still recoverable from Git history. See [ARCHIVE.md](ARCHIVE.md) for the migrated caching runs.
+
+The current-source hash binds lesson content, rendering assets and component eligibility; the contract/rubric hash binds assessment requirements. `learnerHash` binds the exact parsed response. Changed content, rendering assets, contracts or rubrics invalidate prior evidence. Moving report files does not change their hashes. `check-packet` reproduces an archived result only; it cannot approve a current release.
+
+After three unsuccessful revisions, investigate the teaching versus the evaluation before continuing. An independent contract-only audit may clarify an unasked requirement or strengthen coverage, but must not remove outcomes or lower the bar. Keep failed attempts externally. Do not advance to another stack until the current one passes.
 
 ## Learner prompt
 
@@ -58,36 +63,8 @@ Output JSON:
 
 Every dimension needs at least one exact quote, even when that quote illustrates the problem. Check each distinct source URL at least once and all suspect or critical claims regardless of URL reuse. A false claim gets `verified: false` and a hard failure. The validator checks the evidence's shape and current revision; it cannot authenticate identities, verify browsing, or prove that quotes entail a claim. The orchestrator must create independent sessions and preserve their actual reports.
 
-## Calibrate before scaling
+## Calibration and limits
 
-Run `npm run eval:lessons -- calibrate caching /tmp/caching-calibration-1` to generate anonymous packets. Keep the separate key from both learner and reviewers. Run the same learner/reviewer workflow on each packet. For each deliberate negative, both reviewers must reject it for a semantic reason, such as a low dimension, unsupported learning outcome, or hard failure. Missing report fields or invalid quotes alone do not count as detecting weak teaching. The unchanged candidate is measured, not declared to be a gold positive in advance.
+Use `npm run eval:lessons -- calibrate caching <external-directory>` to generate the existing blind controls. Keep the label key away from learners/reviewers. Both reviewers must reject weak controls for semantic reasons; a formatting failure alone is not detection. Recalibrate when changing rubric/grading behavior or extending to a substantially different topic, not after every wording edit. Archive the raw runs externally and retain a concise outcome summary.
 
-Record the confusion table and per-reviewer decisions. Review false acceptances and unexplained disagreements before using the gate autonomously. Introduce more topic-specific controls as new component families are added. Calibration on caching alone does not establish reliability for every technical subject. Human learning and grader bias remain limitations; occasional user feedback should update a versioned rubric and require fresh calibration.
-
-The approach combines objective-aligned assessment with multiple grader types: [CMU assessment guidance](https://www.cmu.edu/teaching/designteach/design/assessments.html) and [Anthropic evaluation guidance](https://www.anthropic.com/research/demystifying-evals-for-ai-agents).
-
-## Card loop and release
-
-The contract also has a `cards` array in slide order. Each entry has a stable `id`, 1-based `slide`, one `objective`, earlier-card `prerequisites`, and `questions` with the same grading fields as stack questions. An independent contract author writes these before the cards. For retrofitting an existing stack, keep the contract author blind to that stack and record the retrofit.
-
-For each card, in order:
-
-1. Export `npm run eval:lessons -- packet-card <lesson> <card-id> <new-attempt-directory>`.
-2. Give a fresh learner only `learner-input.json` using the learner prompt above. It sees cards 1 through the target and only the target's questions. Later teaching and gold criteria are withheld.
-3. Give two independent reviewers the packet and actual learner response. Apply the same reviewer prompt and thresholds. Assess the target objective in the context of its prefix. Do not demand objectives taught by later cards, and do not credit an earlier card for a mechanism only explained later. Source/diagram assets are for review, not learner input.
-4. Run `check-card <lesson> <card-id> <learner.json> <review-a.json> <review-b.json>`. Revise the identified card or prerequisite and repeat with fresh sessions. Keep failed attempts. After three failures investigate teaching versus evaluation rather than lowering the bar.
-5. Once content and UI/review checks pass, commit the card and its evidence. The user's standing authorization permits shipping without asking again, subject to the complete-stack gate below.
-
-At release, assemble the latest passing evidence in a fresh directory with `cards/<card-id>/{learner,review-a,review-b}.json` for every card and `stack/{learner,review-a,review-b}.json` for a fresh whole-stack evaluation. Keep exported packets alongside the reports for audit. Run:
-
-```sh
-npm run eval:lessons -- check-release <lesson> <release-directory>
-```
-
-This checks every card and the whole stack against current source. One card passing cannot approve a stack. Changed earlier prose or contracts invalidate dependent approvals; changed render assets invalidate every affected snapshot conservatively. Changes solely to later prose do not invalidate earlier card content hashes. Re-run affected cards before release, then the full-stack evaluation to catch broken transitions and integration. Never relabel an old report by replacing its hashes.
-
-Commit-sized progress can be smaller than a public release. Publish a complete, coherent current stack after release/UI/code checks pass, then verify the deployment. Keep the exact commit, PR, deploy result and unresolved limitations in the run report. These commands validate evidence; agent dispatch, revisions, source verification, and Git operations remain the orchestrator's responsibility, not an unattended background service.
-
-If repeated failures reveal that a question does not ask for one of its grading criteria, request an independent contract-only audit before more attempts. Preserve the original contract in its packets. An audited correction may make an existing requirement explicit or add coverage for an already promised objective; it must not remove an objective, relax a criterion, or lower a threshold to rescue the candidate. Export fresh packets and rerun every affected evaluation. Record the exact changes and why they fix the assessment, as in `runs/caching-card-loop-2/CONTRACT-AUDIT.md`.
-
-A release directory may reuse earlier passing reports only when both hashes still match its current packet exactly. Copy the reports unchanged and record their original attempt; do not substitute new hashes. A new rendering snapshot conservatively invalidates all affected reports, even when the visual change appears minor.
+The original caching pilot rejected all four weak controls in both reviewer tracks. This remains one topic/model family, not proof of general evaluator reliability or human learning. Hashes and identity fields do not prove reviewer honesty or semantic entailment. The orchestrator must preserve actual independent responses and source verification.
