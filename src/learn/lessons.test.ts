@@ -7,9 +7,9 @@ it("orders shared then specific lessons for API servers even after a rename", ()
   api.name = "Notes service";
   expect(lessonsFor(api)).toEqual(["client-server", "api-server"]);
   api.technology = "Worker";
-  expect(lessonsFor(api)).toEqual(["client-server"]);
+  expect(lessonsFor(api)).toEqual(["client-server", "queues"]);
 });
-it.each(["mobile-app", "web-browser", "generic-server", "worker", "serverless-function"])("keeps %s on the shared lesson only", preset => {
+it.each(["mobile-app", "web-browser", "generic-server", "serverless-function"])("keeps %s on the shared lesson only", preset => {
   expect(lessonsFor(createComponent(preset, { x: 0, y: 0 }))).toEqual(["client-server"]);
 });
 it.each(["generic-database", "mongodb", "neo4j", "cassandra", "postgis", "pgvector"])("offers overview, CAP, then Replication for %s", preset => {
@@ -61,4 +61,23 @@ it("supports uncategorized cache components and excludes cache annotations", () 
   node.category = undefined;
   expect(lessonsFor(node)).toEqual(["caching"]);
   expect(lessonsFor({ ...node, kind: "sticky" })).toEqual([]);
+});
+
+it.each(["generic-queue", "kafka", "rabbitmq", "sqs"])("offers queue foundations for %s after renaming", preset => {
+  const node = createComponent(preset, { x: 0, y: 0 });
+  node.name = "Receipt jobs";
+  expect(lessonsFor(node)).toEqual(["queues"]);
+});
+it("adds messaging after the shared client/server lesson for normalized Worker technology", () => {
+  const node = createComponent("worker", { x: 0, y: 0 });
+  node.name = "Receipt processor";
+  node.technology = " Worker ";
+  expect(lessonsFor(node)).toEqual(["client-server", "queues"]);
+  expect(lessonsFor({ ...node, componentType: "client" })).toEqual(["client-server"]);
+});
+it("supports uncategorized queues without offering lessons on annotations", () => {
+  const node = createComponent("generic-queue", { x: 0, y: 0 });
+  node.category = undefined;
+  expect(lessonsFor(node)).toEqual(["queues"]);
+  expect(lessonsFor({ ...node, kind: "sticky", category: "Messaging" })).toEqual([]);
 });

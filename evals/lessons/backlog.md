@@ -1,12 +1,12 @@
 # Autonomous learning stack backlog
 
-Status is local source coverage, not a claim of quality. All stacks require the new eval before being called approved. Existing source currently has Client / Server Model, API Server, Database Overview, CAP, Replication, PostgreSQL, SQLite, MySQL, and Caching Fundamentals. Only Caching Fundamentals is the initial evaluation pilot; prior code-review and browser passes do not retroactively count as learning-quality evaluations.
+Status is local source coverage, not a claim of quality. All stacks require the new eval before being called approved. Existing source currently has Client / Server Model, API Server, Database Overview, CAP, Replication, PostgreSQL, SQLite, MySQL, Caching Fundamentals, and Message Queues and Background Workers. Caching and messaging have current passing evaluation reports; prior code-review and browser passes do not retroactively count as learning-quality evaluations.
 
-Default order is shared foundations first, then named technologies. This was offered to the user as the recommended scope; a later response overrides it. Keep the question pending rather than representing silence as approval.
+Default order is shared foundations first, then named technologies. The user approved messaging after the caching cleanup; future scope corrections override this order.
 
 ## Shared foundations
 
-Start with Message Queues and Background Workers, because it extends the existing API-server synchronous/asynchronous lesson and covers Generic Queue, Kafka, RabbitMQ, SQS, and Worker. Teach the shared ideas without implying that a replayable log and a work queue have identical semantics. Product distinctions come in their own stacks.
+Message Queues and Background Workers is implemented and evaluated for Generic Queue, Kafka, RabbitMQ, SQS, and Worker. It distinguishes competing work distribution from independently consumed retained history. Product distinctions still need their own stacks. See releases/queues/REPORT.md for current content and UI evidence.
 
 Then, in prerequisite order:
 
