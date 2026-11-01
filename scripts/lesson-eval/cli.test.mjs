@@ -64,44 +64,55 @@ test('card export hides later teaching and gold answers; release rejects missing
     assert.equal(run('packet-card', 'caching', 'why-cache', dir).status, 1);
     const missing = run('check-release', 'caching', dir);
     assert.equal(missing.status, 1);
-    assert.match(missing.stdout, /cards\/why-cache/);
+    assert.match(missing.stdout + missing.stderr, /learner.json/);
     assert.equal(run('check-card', 'caching', 'unknown', 'missing', 'missing', 'missing').status, 1);
   } finally { rmSync(dir, { recursive: true }); }
 });
 
-test('release passes only with current evidence for every card and the entire stack', async () => {
-  const { hash, slideText } = await import('./gate.mjs');
-  const { cardPacket } = await import('./cards.mjs');
-  const { mkdirSync } = await import('node:fs');
+test('release works with only unchanged passing stack reports and rejects incomplete or altered evidence', () => {
   const dir = mkdtempSync(join(tmpdir(), 'lesson-release-cli-test-'));
+  const source = fileURLToPath(new URL('../../evals/lessons/releases/caching/', import.meta.url));
   try {
-    assert.equal(run('packet', 'caching', join(dir, 'stack')).status, 0);
-    const full = JSON.parse(readFileSync(join(dir, 'stack', 'packet.json')));
-    // Synthetic gate fixtures, never stored as actual content-review evidence.
-    function reports(packet, subdir) {
-      const path = join(dir, subdir); mkdirSync(path, { recursive: true });
-      const evidence = [{ slide: 1, quote: slideText(packet.lesson.slides[0]) }];
-      const learner = { lessonHash: packet.lessonHash, rubricHash: packet.rubricHash, respondent: 'test-learner',
-        answers: packet.contract.questions.map(q => ({ id: q.id, answer: 'Synthetic test answer', evidence })) };
-      writeFileSync(join(path, 'learner.json'), JSON.stringify(learner));
-      for (const name of ['review-a', 'review-b']) writeFileSync(join(path, `${name}.json`), JSON.stringify({
-        lessonHash: packet.lessonHash, rubricHash: packet.rubricHash, learnerHash: hash(learner), reviewer: `test-${name}`,
-        dimensions: Object.fromEntries(packet.rubric.dimensions.map(d => [d, { score: 4, reason: 'Test fixture', evidence }])),
-        outcomes: packet.contract.questions.map(q => ({ id: q.id, score: 2, reason: 'Test fixture' })), hardFailures: [],
-        sourceChecks: packet.lesson.slides.map((s, i) => ({ slide: i + 1, url: s.source, claim: 'Test fixture', verified: true })),
-      }));
+    for (const name of ['learner.json', 'review-a.json', 'review-b.json']) {
+      writeFileSync(join(dir, name), readFileSync(join(source, name)));
     }
-    reports(full, 'stack');
-    assert.equal(run('check-release', 'caching', dir).status, 1, 'stack pass cannot substitute for cards');
-    for (const card of full.contract.cards) reports(cardPacket(full, card.id), `cards/${card.id}`);
-    const green = run('check-release', 'caching', dir);
-    assert.equal(green.status, 0, green.stdout + green.stderr);
-    assert.equal(JSON.parse(green.stdout).results.length, 9);
-    const learnerPath = join(dir, 'cards', full.contract.cards[0].id, 'learner.json');
-    const learner = JSON.parse(readFileSync(learnerPath)); learner.answers[0].answer = 'Changed after review';
-    writeFileSync(learnerPath, JSON.stringify(learner));
-    const stale = run('check-release', 'caching', dir);
-    assert.equal(stale.status, 1);
-    assert.match(stale.stdout, /learner response changed/);
+    const good = run('check-release', 'caching', dir);
+    assert.equal(good.status, 0, good.stdout + good.stderr);
+    assert.equal(JSON.parse(good.stdout).pass, true);
+    assert.equal(JSON.parse(good.stdout).scope, 'current-release');
+    assert.equal(JSON.parse(good.stdout).scores.length, 2);
+    // The release check needs no packet snapshots, browser artifacts or per-card reports.
+    const path = join(dir, 'learner.json');
+    const original = readFileSync(path);
+    const learner = JSON.parse(original);
+    learner.answers[0].answer += ' Changed after review.';
+    writeFileSync(path, JSON.stringify(learner));
+    const altered = run('check-release', 'caching', dir);
+    assert.equal(altered.status, 1);
+    assert.match(altered.stdout, /learner response changed/);
+    writeFileSync(path, original);
+    rmSync(join(dir, 'review-b.json'));
+    assert.equal(run('check-release', 'caching', dir).status, 1);
+  } finally { rmSync(dir, { recursive: true }); }
+});
+
+test('release rejects stale source hashes, bad source evidence and failed learning outcomes', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'lesson-release-reject-test-'));
+  const source = fileURLToPath(new URL('../../evals/lessons/releases/caching/', import.meta.url));
+  try {
+    const names = ['learner.json', 'review-a.json', 'review-b.json'];
+    const originals = names.map(name => JSON.parse(readFileSync(join(source, name))));
+    for (const mutate of [
+      reports => reports[0].lessonHash = 'old source',
+      reports => reports[1].rubricHash = 'old contract',
+      reports => reports[1].outcomes[0].score = 1,
+      reports => reports[1].sourceChecks[0].verified = false,
+      reports => reports[1].hardFailures = ['False guarantee'],
+      reports => reports[1].dimensions.accuracy.score = 2,
+    ]) {
+      const reports = structuredClone(originals); mutate(reports);
+      names.forEach((name, i) => writeFileSync(join(dir, name), JSON.stringify(reports[i])));
+      assert.equal(run('check-release', 'caching', dir).status, 1);
+    }
   } finally { rmSync(dir, { recursive: true }); }
 });

@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { createServer } from 'vite';
 import { hash, evaluate } from './gate.mjs';
-import { cardPacket, releasePackets } from './cards.mjs';
+import { cardPacket, validateCards } from './cards.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const readJson = async path => JSON.parse(await readFile(path, 'utf8'));
@@ -109,17 +109,14 @@ try {
     await writePacket(packet, resolve(args[2]));
     console.log(json({ directory: resolve(args[2]), lessonHash: packet.lessonHash, rubricHash: packet.rubricHash }));
   } else if (command === 'check-release' && args.length === 2) {
-    const results = [];
-    for (const { directory, packet } of releasePackets(await packetFor(args[0]))) {
-      try {
-        const [learner, ...reviews] = await Promise.all(['learner.json', 'review-a.json', 'review-b.json']
-          .map(name => readJson(resolve(args[1], directory, name))));
-        results.push({ directory, ...evaluate(packet, learner, reviews) });
-      } catch (error) { results.push({ directory, pass: false, failures: [error.message] }); }
-    }
-    const pass = results.every(result => result.pass);
-    console.log(json({ scope: 'current-release', lessonId: args[0], pass, results }));
-    process.exitCode = pass ? 0 : 1;
+    const packet = await packetFor(args[0]);
+    validateCards(packet);
+    const [learner, ...reviews] = await Promise.all(['learner.json', 'review-a.json', 'review-b.json']
+      .map(name => readJson(resolve(args[1], name))));
+    const result = evaluate(packet, learner, reviews);
+    console.log(json({ scope: 'current-release', lessonId: packet.lessonId,
+      lessonHash: packet.lessonHash, rubricHash: packet.rubricHash, ...result }));
+    process.exitCode = result.pass ? 0 : 1;
   } else if (command === 'calibrate' && args.length === 2) {
     console.log(json(await calibrate(args[0], resolve(args[1]))));
   } else if ((['check', 'check-packet'].includes(command) && args.length === 4)
@@ -136,7 +133,7 @@ try {
       lessonId: packet.lessonId, lessonHash: packet.lessonHash, rubricHash: packet.rubricHash, ...result }));
     process.exitCode = result.pass ? 0 : 1;
   } else {
-    throw new Error('Usage: npm run eval:lessons -- inventory | packet <id> <new-dir> | packet-card <id> <card-id> <new-dir> | check-card <id> <card-id> <learner.json> <review-a.json> <review-b.json> | check-release <id> <run-dir> | calibrate caching <new-dir> | check <id> <learner.json> <review-a.json> <review-b.json> | check-packet <packet.json> <learner.json> <review-a.json> <review-b.json>');
+    throw new Error('Usage: npm run eval:lessons -- inventory | packet <id> <new-dir> | packet-card <id> <card-id> <new-dir> | check-card <id> <card-id> <learner.json> <review-a.json> <review-b.json> | check-release <id> <release-dir> | calibrate caching <new-dir> | check <id> <learner.json> <review-a.json> <review-b.json> | check-packet <packet.json> <learner.json> <review-a.json> <review-b.json>');
   }
 } catch (error) {
   console.error(json({ pass: false, error: error.message }));

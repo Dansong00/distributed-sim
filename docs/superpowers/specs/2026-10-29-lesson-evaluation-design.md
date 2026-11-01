@@ -1,5 +1,7 @@
 # Learning stack evaluation design
 
+Historical record: the current workflow is in `evals/lessons/README.md`; mandatory per-card sessions were superseded by the user-requested lighter loop. Referenced raw run paths were moved to the external archive documented in `evals/lessons/ARCHIVE.md`.
+
 The user authorized autonomous completion of the remaining learning stacks, with an evaluation and revision loop established first. Start with a calibrated caching pilot. A report measures content readiness under this rubric, not demonstrated human learning.
 
 ## Choice

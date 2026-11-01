@@ -1,5 +1,7 @@
 # Card evaluation and incremental releases
 
+Historical record: the current workflow is in `evals/lessons/README.md`; mandatory per-card sessions were superseded by the user-requested lighter loop. Referenced raw run paths were moved to the external archive documented in `evals/lessons/ARCHIVE.md`.
+
 Approved in chat: evaluate a card using only its prefix, revise until it passes, test the complete stack, and commit/ship approved cards without asking again.
 
 ## Design
