@@ -11,6 +11,7 @@ import { MySQLDiagram } from "./MySQLDiagram";
 import { CAPDiagram } from "./CAPDiagram";
 import { ReplicationDiagram } from "./ReplicationDiagram";
 
+import { QueueDiagram } from "./QueueDiagram";
 import { CachingDiagram } from "./CachingDiagram";
 
 const diagrams = {
@@ -23,6 +24,7 @@ const diagrams = {
   cap: CAPDiagram,
   replication: ReplicationDiagram,
   caching: CachingDiagram,
+  queues: QueueDiagram,
 } satisfies Record<LessonId, typeof LessonDiagram>;
 
 export function LessonDialog({ lessonId, onClose }: { lessonId: LessonId; onClose: () => void }) {

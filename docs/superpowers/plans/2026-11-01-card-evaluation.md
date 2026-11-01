@@ -17,7 +17,7 @@ Add packet-card and check-card commands. Add check-release to require every card
 - [x] Add independently authored caching card contracts and exercise the loop.
 - [x] Evaluate current caching stack and cards, preserving actual reports.
 - [x] Unit/build/browser/visual verification and independent correctness/Ponytail review.
-- [ ] Commit, push, merge, and verify deployment; proceed to queues/workers.
+- [x] Commit, push, merge, and verify deployment; start the independent queue/worker contract.
 
 ## Review log
 
@@ -40,3 +40,6 @@ Add packet-card and check-card commands. Add check-release to require every card
 - Final card-6 UI verification: all three viewport traversal tests passed; inspected mobile local/shared card. Production build passed again. No further application code changed after this run.
 
 - Current-source check-release passed all eight cards and the stack. Final card scores are 19–20/20 for both reviewers; stack 20/20 from each, every transfer outcome 2/2. The complete report is evals/lessons/runs/caching-card-loop-4/REPORT.md.
+
+- Release shipped in PR #20: https://github.com/Dansong00/distributed-sim/pull/20. Feature commit 7354000b9d0106242bc34e4181756f7b0bbbe004; merge 533a96a6f16662fc049578da103155f3be88ac35. PR CI run 41351369068 and Pages deployment run 41351459510 both succeeded. Public /distributed-sim/ script index-DTxD78b4.js matched the tested local build byte-for-byte and contained the revised teaching.
+- Next-stack preparation: independent contract author produced eight ordered queue/worker objectives and six whole-stack transfer scenarios without inspecting existing lessons. Frozen contract is evals/lessons/contracts/queues.json. No queue lesson or content approval is claimed.

@@ -1,0 +1,355 @@
+{
+  "audience": "Engineers who can build HTTP APIs and use relational databases, learning shared messaging foundations before product-specific Kafka, RabbitMQ or SQS lessons.",
+  "prerequisites": [
+    "Request/response HTTP APIs, including the difference between a response and later client activity.",
+    "Database reads and writes, transactions as atomic changes, and uniqueness constraints.",
+    "Basic rates per second and subtraction; no prior broker, consumer-group or queue-operation knowledge is assumed."
+  ],
+  "objectives": [
+    {
+      "id": "async-boundary",
+      "description": "Decide what moving work off the request path changes: acceptance is separate from completion, and deferred results require a visible completion or failure path."
+    },
+    {
+      "id": "message-flow",
+      "description": "Trace producer, broker and worker responsibilities, distinguishing publication acceptance from worker completion and acknowledgement."
+    },
+    {
+      "id": "redelivery",
+      "description": "Explain how acknowledgement timing and worker crashes produce redelivery, and use an idempotent effect to prevent repeated delivery from repeating the business result."
+    },
+    {
+      "id": "retry-policy",
+      "description": "Bound delayed retries, distinguish potentially transient from persistent failures, and isolate poison messages for inspection and deliberate recovery."
+    },
+    {
+      "id": "ordering",
+      "description": "Distinguish delivery order from completion order under concurrency, and choose a per-entity processing constraint when dependent work must remain ordered."
+    },
+    {
+      "id": "capacity",
+      "description": "Reason from arrival rate, completion rate and backlog age about overload; use bounded concurrency and producer backpressure while respecting downstream capacity."
+    },
+    {
+      "id": "queue-log",
+      "description": "Distinguish competing-worker work distribution from a retained log with independent consumer-group positions, including replay, retention and ordering limits."
+    },
+    {
+      "id": "async-fit",
+      "description": "Choose synchronous or asynchronous execution from the caller's actual completion requirement and explain the user-visible status, operating cost and failure tradeoffs."
+    }
+  ],
+  "questions": [
+    {
+      "id": "stack-request-boundary",
+      "question": "A data-export API can return a downloadable file only after a two-minute render, but its request timeout is five seconds. Users can accept a job ID and check later. Trace a successful asynchronous request through producer, broker and worker; say which event permits a truthful accepted response, which event means the file is ready, and what status the user needs if processing later fails. Then explain why a login decision that must be final before granting access should remain synchronous, and name one operating cost introduced by the export queue.",
+      "criteria": [
+        "Uses the API as producer, a broker to hold pending work and a worker to execute the render outside the request.",
+        "Makes acceptance conditional on a successful handoff under the configured broker acceptance/durability contract; acceptance does not imply the file is ready.",
+        "Distinguishes completion of the render/result from the worker acknowledgement that allows the broker to consider that delivery handled.",
+        "Provides a way to observe pending, completed and failed work, rather than reporting permanent success at enqueue time.",
+        "Keeps the access decision synchronous because the next action requires its completed result; a queue cannot remove that dependency.",
+        "Names a concrete added cost such as status tracking, worker/broker operation, retries or delayed failure handling."
+      ],
+      "criticalMisconceptions": [
+        "An accepted job response proves the requested file exists.",
+        "A broker publication confirmation means the worker completed the business operation.",
+        "Enqueueing a login decision is sufficient to safely grant access."
+      ]
+    },
+    {
+      "id": "stack-duplicate-effect",
+      "question": "A background job credits a customer's database balance. The worker commits the credit, then crashes before acknowledging the message. Explain what the broker may do next and why acknowledging before the credit is unsafe. Describe an idempotent design using a stable operation ID, including how the database credit and duplicate-detection record must relate, and state whether this establishes universal exactly-once message delivery.",
+      "criteria": [
+        "Explains that an unacknowledged delivery can be redelivered and another attempt could otherwise credit twice.",
+        "Explains that acknowledging before the effect can lose the credit if the worker then fails.",
+        "Reuses one stable business-operation ID across retries/redeliveries and makes an already-applied operation a no-op.",
+        "Makes the database effect and durable duplicate-detection decision atomic, such as in one transaction with a unique operation ID, avoiding separate check-then-write races or a crash gap.",
+        "Separates an idempotent business effect from a universal exactly-once delivery guarantee."
+      ],
+      "criticalMisconceptions": [
+        "Acknowledging first guarantees no lost work.",
+        "Acknowledging after processing prevents all duplicate effects.",
+        "An in-memory flag or separate non-atomic check and credit is sufficient durable duplicate protection.",
+        "All queues provide universal exactly-once delivery."
+      ]
+    },
+    {
+      "id": "stack-failed-jobs",
+      "question": "An image worker sees two failing messages: one cannot reach a temporarily unavailable image store; the other always names an unsupported file format. Define a recovery policy for each. Explicitly cover retry delays, an attempt or time budget, what happens after that budget, how other jobs keep moving, and what a person should check before deliberately replaying isolated work.",
+      "criteria": [
+        "Retries potentially transient failures with delay/backoff and an explicit finite attempt or elapsed-time budget.",
+        "Treats a known persistent invalid input differently rather than repeatedly retrying it unchanged.",
+        "Moves terminal or exhausted work into a dead-letter/quarantine path and makes the failed state visible.",
+        "Isolates a poison message so it cannot consume unbounded retries or block healthy work.",
+        "Requires inspection/correction of the cause and checks duplicate-safe effects before deliberate replay; dead-letter storage itself does not repair or execute the job."
+      ],
+      "criticalMisconceptions": [
+        "Retry every failure immediately forever.",
+        "Moving a message to a dead-letter destination fixes its cause or guarantees eventual completion.",
+        "Replay isolated work blindly without considering already-applied effects."
+      ]
+    },
+    {
+      "id": "stack-order",
+      "question": "Two inventory events for the same item are published in order: set quantity to 5, then set quantity to 2. Two workers receive them in that order, but the second write finishes first. Explain the possible wrong final quantity and why ordered delivery alone is insufficient. Propose a per-item execution rule that preserves this dependency while allowing different items to run concurrently, and name the throughput cost for one busy item.",
+      "criteria": [
+        "Traces the second update finishing first and the first finishing last, leaving an incorrect final quantity of 5.",
+        "Distinguishes receive/delivery order from effect/completion order with concurrent processing.",
+        "Keeps dependent work for the same item in one ordered processing lane and prevents a later effect from overtaking an unfinished or retried earlier effect.",
+        "Allows independent items to use different lanes/workers without claiming a global order.",
+        "Identifies serial processing as a throughput/latency limit for a hot item; simply adding workers does not remove that dependency."
+      ],
+      "criticalMisconceptions": [
+        "Ordered delivery automatically guarantees ordered effects across concurrent workers.",
+        "Adding more workers alone preserves per-item order.",
+        "One ordering key guarantees global ordering of unrelated items."
+      ]
+    },
+    {
+      "id": "stack-overload",
+      "question": "A thumbnail queue receives 120 jobs per second, and its workers together finish 80 jobs per second. Its image store is already at its safe concurrency limit. Calculate the approximate backlog growth per second if these rates continue, explain what growing oldest-job age tells you, and propose a response that covers safe worker concurrency, producer backpressure and the limits of queue buffering. Say when more workers would actually help.",
+      "criteria": [
+        "Computes approximately 40 additional pending jobs per second, assuming the stated rates continue.",
+        "Explains that growing oldest-job age means work is waiting longer and completion objectives may be missed even if requests are quickly accepted.",
+        "Keeps in-flight worker calls bounded to protect the saturated image store instead of blindly adding parallelism.",
+        "Uses a concrete producer control such as rejecting/throttling new jobs, deferring admission or applying a bounded pending-work limit, with a visible response to the caller.",
+        "Explains that buffering absorbs finite bursts but cannot solve sustained arrivals above completion capacity and has finite storage/retention constraints.",
+        "Adds workers only when processing is the bottleneck and downstream capacity or another safe throughput improvement permits a higher completion rate."
+      ],
+      "criticalMisconceptions": [
+        "A queue makes sustained overload disappear.",
+        "More workers always increase throughput despite a saturated downstream dependency.",
+        "Fast acceptance proves acceptable completion latency."
+      ]
+    },
+    {
+      "id": "stack-log-choice",
+      "question": "Every purchase event must independently feed billing and analytics. Analytics must be able to replay the last day after fixing a bug. Compare one work queue with competing workers against a retained log with a billing group and an analytics group: who receives or processes the events, what each group tracks, and what happens to retained records after progress is recorded? State the retention condition for the one-day replay and why adding log partitions or consumers does not create universal global ordering or exactly-once external effects.",
+      "criteria": [
+        "Explains that competing workers on one work queue divide logical jobs; this arrangement does not independently deliver every event to both applications, and retries may redeliver a job.",
+        "Explains that separate log consumer groups independently consume the stream, while consumers within one group share partition assignments/work.",
+        "Identifies a per-group recorded position/offset rather than one global completion position shared by billing and analytics.",
+        "Explains that recording consumption progress does not immediately delete the log record; retention policy controls availability.",
+        "Conditions one-day replay on the required data still being retained and accessible; an offset cannot restore expired data.",
+        "Limits order to the configured ordered scope, typically a partition, and distinguishes log progress from idempotency of external effects; neither grouping nor partitions grants universal global order or exactly-once effects."
+      ],
+      "criticalMisconceptions": [
+        "Competing workers on one work queue each receive every logical job.",
+        "Advancing one group's offset advances every other group or immediately deletes the records.",
+        "A retained log guarantees unlimited replay regardless of retention.",
+        "Kafka, partitions or consumer groups universally guarantee globally ordered exactly-once external effects."
+      ]
+    }
+  ],
+  "diagramFile": "src/learn/QueueDiagram.tsx",
+  "cards": [
+    {
+      "id": "acceptance-and-completion",
+      "slide": 1,
+      "objective": "Decide what moving work off the request path changes: acceptance is separate from completion, and deferred results require a visible completion or failure path.",
+      "prerequisites": [],
+      "questions": [
+        {
+          "id": "card-async-boundary",
+          "question": "A report takes 30 seconds to build, while an HTTP request times out after three seconds. The user is willing to come back later. Explain what the API may promise when it accepts deferred work, what it cannot promise yet, and how the user should learn whether the report eventually succeeds or fails. Name one benefit and one cost of this choice.",
+          "criteria": [
+            "Separates acceptance of future work from successful report completion.",
+            "Moves the long work off the request path so the response can arrive before the report is finished.",
+            "Provides a job/status or notification path for pending, ready and failed outcomes.",
+            "Names faster request response as a benefit and delayed results/status or failure tracking as a cost."
+          ],
+          "criticalMisconceptions": [
+            "An accepted asynchronous request proves successful completion.",
+            "Moving work off the request path eliminates the processing time or all failure handling."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "producer-broker-worker",
+      "slide": 2,
+      "objective": "Trace producer, broker and worker responsibilities, distinguishing publication acceptance from worker completion and acknowledgement.",
+      "prerequisites": [
+        "acceptance-and-completion"
+      ],
+      "questions": [
+        {
+          "id": "card-message-flow",
+          "question": "An API accepts a request to resize a photo. Identify the producer, broker and worker; trace publication, an accepted API response, execution and worker acknowledgement. State what the API must establish before claiming the handoff succeeded, and explain why the broker's publication confirmation and the worker's processing acknowledgement are different events.",
+          "criteria": [
+            "Maps API to producer, pending-message service to broker, and resize executor to worker.",
+            "Traces producer publication, broker acceptance, worker delivery/execution, and processing acknowledgement in a coherent order.",
+            "Requires confirmed handoff under the configured broker acceptance/durability contract before claiming work was accepted, without inventing an unconditional durability guarantee.",
+            "Explains that publication confirmation concerns receipt/acceptance by the broker, whereas worker acknowledgement concerns that delivery being handled; neither label alone proves arbitrary business success."
+          ],
+          "criticalMisconceptions": [
+            "The broker must perform the resize itself.",
+            "Publication confirmation is proof that the photo has been resized.",
+            "Merely attempting to publish proves the job was accepted."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "redelivery-and-idempotency",
+      "slide": 3,
+      "objective": "Explain how acknowledgement timing and worker crashes produce redelivery, and use an idempotent effect to prevent repeated delivery from repeating the business result.",
+      "prerequisites": [
+        "producer-broker-worker"
+      ],
+      "questions": [
+        {
+          "id": "card-redelivery",
+          "question": "A worker inserts a paid membership extension in a database, commits, then crashes before acknowledging its message. Trace a possible retry and its risk. Explain why acknowledging first is unsafe and how a stable operation ID plus an atomic database change can make repeated attempts harmless. Explicitly distinguish duplicate-safe effects from universal exactly-once delivery.",
+          "criteria": [
+            "Traces possible redelivery of unacknowledged work and a duplicate membership extension without protection.",
+            "Explains the loss window if acknowledgement happens before the extension and the worker crashes.",
+            "Uses the same operation ID across attempts and durably recognizes already-applied work.",
+            "Makes the effect and duplicate-detection decision atomic, such as one database transaction with a unique operation ID; a separate check followed by a write is insufficient.",
+            "States that idempotent effects tolerate repeat execution attempts and do not establish universal exactly-once delivery."
+          ],
+          "criticalMisconceptions": [
+            "Acknowledging after the database commit eliminates redelivery.",
+            "Acknowledging before the database commit guarantees the extension.",
+            "A volatile flag or non-atomic check-then-write is enough.",
+            "Idempotency means the broker never delivers a duplicate."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bounded-retries-and-dead-letters",
+      "slide": 4,
+      "objective": "Bound delayed retries, distinguish potentially transient from persistent failures, and isolate poison messages for inspection and deliberate recovery.",
+      "prerequisites": [
+        "redelivery-and-idempotency"
+      ],
+      "questions": [
+        {
+          "id": "card-retry-policy",
+          "question": "A receipt-generation worker encounters a brief storage timeout on one job and a permanently invalid template ID on another. Give each a recovery policy, explicitly covering retry delay, a finite retry budget, terminal handling, continued progress for healthy jobs, and checks before replaying isolated work.",
+          "criteria": [
+            "Retries the plausible temporary timeout with delay/backoff and a finite attempt or time budget.",
+            "Avoids endlessly retrying a known invalid template unchanged.",
+            "Isolates permanent or exhausted failures in a dead-letter/quarantine path and exposes failure for inspection.",
+            "Explains that isolation prevents a poison job from blocking or consuming unlimited resources needed by healthy jobs.",
+            "Checks/corrects the cause and ensures effects are duplicate-safe before deliberate replay; dead-letter handling is not automatic repair."
+          ],
+          "criticalMisconceptions": [
+            "All failed jobs should retry immediately forever.",
+            "Dead-lettering guarantees eventual successful processing.",
+            "An isolated failed job can be replayed without checking prior effects."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ordering-and-concurrency",
+      "slide": 5,
+      "objective": "Distinguish delivery order from completion order under concurrency, and choose a per-entity processing constraint when dependent work must remain ordered.",
+      "prerequisites": [
+        "bounded-retries-and-dead-letters"
+      ],
+      "questions": [
+        {
+          "id": "card-ordering",
+          "question": "For one device, a queue contains set-mode-to-away followed by set-mode-to-home. Two workers receive them in that order but finish home first and away second. Explain the final-state error; propose an execution rule for the same device, including what a retry of the earlier event means for the later event. Explain how different devices can still run concurrently and the cost for one very busy device.",
+          "criteria": [
+            "Explains that the final mode becomes away, despite home being the later intended update.",
+            "Explains why delivery order does not force completion/effect order across concurrent workers.",
+            "Serializes dependent effects for a device so the later event cannot overtake unfinished/retried earlier work.",
+            "Permits separate device keys/lanes to proceed concurrently without claiming global order.",
+            "Names reduced per-device throughput or waiting behind a slow/retried job as a cost."
+          ],
+          "criticalMisconceptions": [
+            "Ordered receipt makes concurrent writes finish in order.",
+            "Retrying an earlier dependent event after a later one can never affect correctness.",
+            "More workers alone fix ordering for one device."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "backlog-and-backpressure",
+      "slide": 6,
+      "objective": "Reason from arrival rate, completion rate and backlog age about overload; use bounded concurrency and producer backpressure while respecting downstream capacity.",
+      "prerequisites": [
+        "ordering-and-concurrency"
+      ],
+      "questions": [
+        {
+          "id": "card-capacity",
+          "question": "A video-processing queue receives 90 jobs per second and completes 60 per second; the downstream storage service is already at its safe concurrency limit. Estimate backlog growth, explain the significance of rising oldest-job age, and describe an overload response that bounds worker concurrency and controls new admissions. State what a queue can absorb, what it cannot sustain indefinitely, and when adding workers would help.",
+          "criteria": [
+            "Computes approximate growth of 30 jobs per second under the stated continuing rates.",
+            "Connects rising oldest-job age to longer waits and late completion, not just slow API responses.",
+            "Bounds concurrent work to avoid overloading the saturated storage service.",
+            "Names concrete admission/backpressure behavior such as throttle, reject or defer new jobs with visible caller handling.",
+            "Distinguishes finite burst buffering from indefinite sustained overload and recognizes finite queue storage/retention.",
+            "Adds workers only if worker capacity limits completion and safe downstream headroom exists."
+          ],
+          "criticalMisconceptions": [
+            "Enqueueing faster fixes a completion-capacity deficit.",
+            "Adding workers always helps even when downstream capacity is exhausted.",
+            "Low enqueue latency proves jobs are completing on time."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "work-queue-and-retained-log",
+      "slide": 7,
+      "objective": "Distinguish competing-worker work distribution from a retained log with independent consumer-group positions, including replay, retention and ordering limits.",
+      "prerequisites": [
+        "backlog-and-backpressure"
+      ],
+      "questions": [
+        {
+          "id": "card-queue-log",
+          "question": "Shipment events must feed a notification service and an audit service independently; the audit service also needs to replay yesterday after a bug fix. Compare a single competing-worker work queue with a retained log using two consumer groups. Explain job distribution, each group's position, record retention after progress, the condition for replay, and the limits on ordering and exactly-once external effects.",
+          "criteria": [
+            "Explains that competing workers divide jobs and one shared work queue does not independently supply every logical event to both services.",
+            "Explains independent consumption in separate log groups and sharing of partition assignments/work within a group.",
+            "Explains that each group records its own position/offset, so one service's progress does not advance the other.",
+            "Explains that position updates do not immediately delete log records and replay requires the needed records to remain retained and accessible.",
+            "Limits ordering to the configured ordered scope, typically a partition, rather than all events across partitions.",
+            "Does not infer exactly-once external effects from log retention/group positions; repeated processing still requires an appropriate duplicate-safe effect."
+          ],
+          "criticalMisconceptions": [
+            "Every competing worker gets every job.",
+            "Consumption by one group deletes the log for all groups.",
+            "Offsets guarantee replay of expired records.",
+            "Kafka or consumer groups automatically provide global order and exactly-once business effects."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "choose-the-request-boundary",
+      "slide": 8,
+      "objective": "Choose synchronous or asynchronous execution from the caller's actual completion requirement and explain the user-visible status, operating cost and failure tradeoffs.",
+      "prerequisites": [
+        "work-queue-and-retained-log"
+      ],
+      "questions": [
+        {
+          "id": "card-fit-decision",
+          "question": "A document service must decide access permission before revealing a private document, but it may produce a large downloadable archive later. Choose synchronous or asynchronous handling for each and explain the dependency that determines your choice. For the archive, define what accepted means and how the caller learns completion or failure; name two added operating responsibilities and explain why a growing queue is not a capacity solution by itself.",
+          "criteria": [
+            "Keeps the authorization decision synchronous because document disclosure requires the completed decision first.",
+            "Chooses asynchronous archive creation because the caller accepts a delayed result.",
+            "Defines accepted as confirmed handoff under the chosen broker contract, not a ready archive, with pending/completed/failed status or notification.",
+            "Names two concrete added responsibilities such as retry/dead-letter operation, duplicate-safe effects, status tracking, monitoring or broker/worker operation.",
+            "Explains that persistent arrivals above completions grow the queue and delay jobs, requiring capacity or admission control rather than buffering alone."
+          ],
+          "criticalMisconceptions": [
+            "Enqueueing authorization is enough to disclose the document.",
+            "Accepted means the archive exists.",
+            "A queue can replace capacity planning under persistent overload."
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -8,14 +8,16 @@ import { mysqlLesson } from "./mysql";
 import { capLesson } from "./cap";
 import { replicationLesson } from "./replication";
 
+import { queuesLesson } from "./queues";
 import { cachingLesson } from "./caching";
 
-export const lessons = { "client-server": clientServerLesson, "api-server": apiServerLesson, databases: databasesLesson, cap: capLesson, replication: replicationLesson, caching: cachingLesson, postgresql: postgresqlLesson, sqlite: sqliteLesson, mysql: mysqlLesson };
+export const lessons = { "client-server": clientServerLesson, "api-server": apiServerLesson, databases: databasesLesson, cap: capLesson, replication: replicationLesson, caching: cachingLesson, queues: queuesLesson, postgresql: postgresqlLesson, sqlite: sqliteLesson, mysql: mysqlLesson };
 export type LessonId = keyof typeof lessons;
 
 export function lessonsFor(node: DiagramNode): LessonId[] {
   if (node.kind !== "component") return [];
   if (node.category === "Caches" || node.componentType === "cache") return ["caching"];
+  if (node.category === "Messaging" || node.componentType === "queue") return ["queues"];
   const technology = node.technology?.trim().toLowerCase();
   if (node.category === "Databases" || node.componentType === "database") {
     if (technology === "postgresql") return ["databases", "cap", "replication", "postgresql"];
@@ -24,6 +26,7 @@ export function lessonsFor(node: DiagramNode): LessonId[] {
     return ["databases", "cap", "replication"];
   }
   if (!["client", "server"].includes(node.componentType ?? "")) return [];
+  if (node.componentType === "server" && technology === "worker") return ["client-server", "queues"];
   return node.componentType === "server" && technology === "api server"
     ? ["client-server", "api-server"] : ["client-server"];
 }
