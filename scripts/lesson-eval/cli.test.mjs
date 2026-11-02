@@ -64,7 +64,8 @@ test('card export hides later teaching and gold answers; release rejects missing
     assert.equal(run('packet-card', 'caching', 'why-cache', dir).status, 1);
     const missing = run('check-release', 'caching', dir);
     assert.equal(missing.status, 1);
-    assert.match(missing.stdout + missing.stderr, /learner.json/);
+    // All three reports are absent; concurrent reads may report any one first.
+    assert.match(missing.stdout + missing.stderr, /ENOENT.*(?:learner|review-[ab])\.json/);
     assert.equal(run('check-card', 'caching', 'unknown', 'missing', 'missing', 'missing').status, 1);
   } finally { rmSync(dir, { recursive: true }); }
 });

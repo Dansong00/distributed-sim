@@ -1,0 +1,169 @@
+{
+  "lessonHash": "02845acc4ca8e95de04ab3fbf8b10a02c8e3f80cc438f48c51dcae38f0100841",
+  "rubricHash": "338513cb85781ad0f087b381e652913b1f1b83dd1ac06313c76936cb82694d09",
+  "reviewer": "/root/lb_review_a",
+  "learnerHash": "72662ee0342011877fd873957f915c44eb1b09a547810108208a12b79c978ab4",
+  "dimensions": {
+    "accuracy": {
+      "score": 4,
+      "reason": "All eight card objectives are correct and qualified: routing unit, policy proxies, sampled readiness, session placement, bounded drain, atomic retry protection, and capacity limits. Source bodies support critical distinctions. Request diagram shows a selected backend and return path; drain diagram separates new from accepted work and warns about interruption. No layout claim is made.",
+      "evidence": [
+        {
+          "slide": 4,
+          "quote": "Once detected and removed from eligible backends, it stops receiving new selections. Requests already underway can still fail; removal does not complete, undo or safely replay them."
+        },
+        {
+          "slide": 7,
+          "quote": "All backends use a shared durable database record of the key and result. In one transaction, insert a key that the database allows only once, create the note and record its result; commit all or none. A repeat returns the recorded result without creating another note. Separate check-then-write steps can race or leave a crash gap."
+        }
+      ]
+    },
+    "mechanisms": {
+      "score": 4,
+      "reason": "The reader can trace request and response, selection, delayed health removal, loss of local state, drain cutoff and deadline, and cross-backend retry. A database-unique key and one transaction explain concurrent repeats and crash gaps, within the declared transaction prerequisite.",
+      "evidence": [
+        {
+          "slide": 1,
+          "quote": "In this reverse-proxy example, the client contacts one service entry point. The balancer forwards the request to a selected backend. That server reads the note from the database and returns a response through the balancer to the client."
+        },
+        {
+          "slide": 7,
+          "quote": "All backends use a shared durable database record of the key and result. In one transaction, insert a key that the database allows only once, create the note and record its result; commit all or none. A repeat returns the recorded result without creating another note. Separate check-then-write steps can race or leave a crash gap."
+        }
+      ]
+    },
+    "coherence": {
+      "score": 4,
+      "reason": "One Notes API scenario connects all eight cards. Connection versus request selection precedes draining; memory-local sessions precede shared durable retry state; selection and failure limits precede headroom. Declared HTTP and transaction prerequisites suffice.",
+      "evidence": [
+        {
+          "slide": 6,
+          "quote": "Stopping new L4 connections does not stop new HTTP requests on existing connections. A drain must also manage those connection lifetimes or stop accepting further requests. L7 request-aware draining must still track already accepted work."
+        },
+        {
+          "slide": 8,
+          "quote": "Balancing distributes existing capacity. More API servers can help when API processing is the bottleneck; they do not remove a saturated shared database bottleneck."
+        }
+      ]
+    },
+    "decisions": {
+      "score": 4,
+      "reason": "Each card supports a choice and its limits: omit unnecessary balancing, choose HTTP-aware routing, condition algorithm on work/capacity, check readiness, weigh affinity against shared state, bound drain and retries, and provide reachable failover plus surviving capacity.",
+      "evidence": [
+        {
+          "slide": 1,
+          "quote": "One adequate server may be enough if the service does not need traffic distribution or redundant serving. A balancer is not automatically useful in front of it."
+        },
+        {
+          "slide": 3,
+          "quote": "For long, uneven work, consider least connections; for unequal server capacity, consider weights. Check actual latency and resource use before deciding: no policy is universally best."
+        },
+        {
+          "slide": 8,
+          "quote": "A lone balancer is itself a possible failure point. If it fails, clients need a reachable alternate entry path, not just another disconnected balancer box. Use an available managed entry or redundant frontends with working failover, and test that path."
+        }
+      ]
+    },
+    "clarity": {
+      "score": 4,
+      "reason": "Backend, L4/L7, TLS termination, readiness, session state, affinity, in-flight work, idempotency, deduplication and headroom are explained where needed. Examples expose limits without requiring hidden implementation knowledge.",
+      "evidence": [
+        {
+          "slide": 5,
+          "quote": "Session state is information kept between a user's requests. If the Notes API keeps a user's session only in A's memory, B cannot read it. Losing A can lose the only copy."
+        },
+        {
+          "slide": 7,
+          "quote": "A stable ID for one logical operation, reused on every attempt. Deduplication means recognizing a repeat. A new key per retry, or a key remembered only in A's memory, cannot reliably protect a retry on B."
+        },
+        {
+          "slide": 8,
+          "quote": "Headroom is spare capacity. After one backend fails, the survivors need enough capacity for the remaining load. Otherwise redirecting traffic can overload them. Limit or reject excess work visibly instead of assuming redistribution solves it."
+        }
+      ]
+    }
+  },
+  "outcomes": [
+    {
+      "id": "http-routing",
+      "score": 2,
+      "reason": "Exact learner quotes support client-proxy-backend-return trace, L7 path visibility and TLS termination, L4 connection reuse, and omission when distribution/redundancy is unnecessary."
+    },
+    {
+      "id": "selection-and-capacity",
+      "score": 2,
+      "reason": "Quotes support turns, active connections and traffic weights with each limitation; conditional choices for long work/unequal capacity; shared database bottleneck; reachable alternate entry and spare survivor capacity. No prior knowledge is needed."
+    },
+    {
+      "id": "readiness-gap",
+      "score": 2,
+      "reason": "Quotes support useful work versus a responding endpoint, intervals/thresholds/coverage, removal only after detection, and inability to complete, undo or safely replay accepted work; all-unhealthy exception is preserved."
+    },
+    {
+      "id": "session-failover",
+      "score": 2,
+      "reason": "Quotes support B lacking A-only memory and losing the only copy, affinity costs and no replication/recovery guarantee, and shared storage access/coordination cost plus dependency availability."
+    },
+    {
+      "id": "deployment-drain",
+      "score": 2,
+      "reason": "Quotes support cutoff before shutdown, accepted work until completion/deadline, possible interruption, additional requests on reused L4 connections, and L7 accepted-work tracking."
+    },
+    {
+      "id": "purchase-retry",
+      "score": 2,
+      "reason": "Quotes support uncertain outcome and duplicate risk; one reused key; durable shared outcome; unique insertion and atomic effect/result transaction; fresh-key/local-memory failures; bounded delayed retry load. Exact evidence was checked against slides."
+    }
+  ],
+  "hardFailures": [],
+  "sourceChecks": [
+    {
+      "slide": 1,
+      "claim": "AWS describes distributing traffic across compute targets and adding/removing them. The reverse-proxy request/response example is consistent with the linked NGINX proxy explanation; it does not claim universal response topology.",
+      "verified": true,
+      "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/what-is-load-balancing.html"
+    },
+    {
+      "slide": 2,
+      "claim": "Azure distinguishes HTTP-aware L7 path routing/TLS offload from L4 TCP/UDP. Its linked Application Gateway overview explicitly routes URL paths and separates TLS termination from backend encryption; linked Load Balancer overview distributes transport flows, consistent with connection reuse.",
+      "verified": true,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/guide/technology-choices/load-balancing-overview"
+    },
+    {
+      "slide": 3,
+      "claim": "NGINX describes round-robin requests, least active connections, longer-request motivation and configured weight shares; these measure counts/shares rather than actual work or guaranteed performance.",
+      "verified": true,
+      "url": "https://nginx.org/en/docs/http/load_balancing.html"
+    },
+    {
+      "slide": 4,
+      "claim": "AWS documents periodic independent checks, consecutive failure thresholds, removal from service and fail-open when every target is unhealthy; these support delay and limited health evidence, not recovery of an accepted request.",
+      "verified": true,
+      "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health-checks.html"
+    },
+    {
+      "slide": 5,
+      "claim": "Microsoft explains missing shared resources across web-farm nodes and session data loss. Its linked session-state page describes memory on one server, sticky routing costs, and distributed cache access, supporting placement versus replication distinction.",
+      "verified": true,
+      "url": "https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/web-farm?view=aspnetcore-10.0"
+    },
+    {
+      "slide": 6,
+      "claim": "AWS deregistration stops new requests, waits for in-flight requests/connections, completes after a delay, and can produce errors if a target terminates early. Together with flow-level L4 routing this supports managing existing connections separately.",
+      "verified": true,
+      "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/edit-target-group-attributes.html"
+    },
+    {
+      "slide": 7,
+      "claim": "AWS body explicitly requires ACID recording of idempotent token together with mutations, explains unknown outcomes and equivalent repeat responses. Its linked backoff article explains retry amplification, delay and attempt limits.",
+      "verified": true,
+      "url": "https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/"
+    },
+    {
+      "slide": 8,
+      "claim": "Google explains that balancing cannot avoid eventual resource overload and capacity must reflect actual resources. Linked Cascading Failures describes survivor overload, load shedding and failure testing; Azure linked guidance identifies regional routing single points of failure, supporting the reachable-entry requirement.",
+      "verified": true,
+      "url": "https://sre.google/sre-book/handling-overload/"
+    }
+  ]
+}

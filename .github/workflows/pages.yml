@@ -31,6 +31,8 @@ jobs:
         run: npm run eval:lessons -- check-release caching evals/lessons/releases/caching
       - name: Verify queue release evidence
         run: npm run eval:lessons -- check-release queues evals/lessons/releases/queues
+      - name: Verify load-balancing release evidence
+        run: npm run eval:lessons -- check-release load-balancing evals/lessons/releases/load-balancing
       - name: Build for the repository URL
         run: npm run build -- --base /distributed-sim/
       - name: Upload site artifact

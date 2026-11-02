@@ -1,68 +1,154 @@
 {
-  "lessonHash": "504e860af38536c9448b9123cd4b8f1495b0405b0fc4f7df3de4223d7dd797ac",
+  "lessonHash": "14ac8995687a671a28877a4faceef9b9d720c673f57591da76ed4dbe309a4af2",
   "rubricHash": "22d141fd62713be0cd6556368577c9a534b1e625946859fdcc569836303dc984",
-  "respondent": "/root/cache_cold_c3",
+  "respondent": "/root/lb_learner_r2",
   "answers": [
     {
       "id": "q1-station-guides",
-      "answer": "Caching could avoid repeatedly spending 80 ms building the same station-language guide because these pairs are frequently reused and change only weekly. Use a key such as station-guide:42:es, including both station ID and language so English and Spanish cannot share the wrong result. On a hit the API reads the stored guide through the 2 ms cache lookup and returns it without building it in the database. On a miss the API performs the lookup, reads/builds the guide in the database, writes the returned guide into the cache, and returns it. The cache does not fetch the guide itself. A miss still pays for the 80 ms database work and also adds the cache lookup and cache write; retaining the copy consumes memory. The database continues to own the authoritative guide, so loss of a cached guide does not lose the source.",
+      "answer": "Caching can avoid repeating the 80 ms database work for the frequently reused station-language pairs, using the 2 ms cache lookup for a hit instead. Weekly changes make reuse attractive, although the team still needs an acceptable staleness and update policy. Use a key such as station-guide:42:es, including both station ID and language because both determine the answer. On a hit the application reads that key and returns its stored guide without a database read; a hit may still be stale. On a miss the application checks the cache, finds nothing, reads/builds the guide from the authoritative database, writes the fetched guide to the cache, and returns it. The cache does not fetch it itself. A miss still incurs the database work, as well as the cache lookup and cache write. The cached copy also consumes memory and needs management.",
       "evidence": [
-        {"slide": 1, "quote": "Keeps a reusable copy of a result. Reading that copy can save database work and shorten the wait for the page."},
-        {"slide": 1, "quote": "Before a copy exists, the API still does the database lookup. Storing that copy uses memory and adds a cache write."},
-        {"slide": 2, "quote": "The API finds product:42 in the cache and returns its stored details."},
-        {"slide": 2, "quote": "The entry is absent. The API reads the database, stores a copy in the cache, and returns the details."},
-        {"slide": 3, "quote": "The API checks and fills the cache explicitly. The cache does not fetch the product from the database on its own."},
-        {"slide": 3, "quote": "Include the inputs that change the answer. Reusing one person's private result for another person is a data leak."}
+        {
+          "slide": 1,
+          "quote": "Keeps a reusable copy of a result. Reading that copy can save database work and shorten the wait for the page."
+        },
+        {
+          "slide": 1,
+          "quote": "Before a copy exists, the API still does the database lookup. Storing that copy uses memory and adds a cache write."
+        },
+        {
+          "slide": 2,
+          "quote": "The entry is absent. The API reads the database, stores a copy in the cache, and returns the details."
+        },
+        {
+          "slide": 2,
+          "quote": "The API finds product:42 in the cache and returns its stored details."
+        },
+        {
+          "slide": 2,
+          "quote": "A hit can still return an old price. Finding a value does not prove it matches the database."
+        },
+        {
+          "slide": 3,
+          "quote": "The API checks and fills the cache explicitly. The cache does not fetch the product from the database on its own."
+        },
+        {
+          "slide": 3,
+          "quote": "Include the inputs that change the answer. Reusing one person's private result for another person is a data leak."
+        }
       ]
     },
     {
       "id": "q2-opening-hours-race",
-      "answer": "C receives the old hours: A fetched them before B's commit, and after B deleted the key A stored that already-fetched old value. C then hits that newly present old copy before expiry. Deletion removes the entry at that moment but does not prevent a paused reader from subsequently refilling it with old data. The team therefore cannot claim that all reads after B finishes see the new hours. For this strict endpoint, read the authoritative database for the response instead of returning the cached hours; using the question's commit rule, a database read after B's commit sees the committed new hours. The lesson supports keeping freshness-sensitive decisions tied to authoritative data, but does not specify a concurrency protocol that would guarantee freshness while serving this cached copy.",
+      "answer": "C receives the old hours: A puts the old value back into the cache after B deletes the key, and C then hits that value. Deleting the key does not cancel A's already fetched value or make the commit and all readers' cache fills one operation. The team cannot claim every read after B finishes sees new hours, because C is exactly a counterexample. A simple way to avoid this stale cached copy is to have this freshness-critical endpoint read the authoritative database instead of returning its cached hours. Given the stated commit prerequisite and this sequence, that database read obtains the new hours. The deck supports using authoritative data for freshness-critical decisions and declining caching when freshness is too hard to maintain; it does not teach a concurrency protocol for making the cache always current.",
       "evidence": [
-        {"slide": 4, "quote": "Saving the price and removing the copy are separate steps. A reader can fetch $20 before the update, pause, then refill $20 after removal. The next cache hit still returns $20. Removal can also fail."},
-        {"slide": 4, "quote": "Invalidation alone does not guarantee freshness. To avoid charging an old price at checkout, validate the price against the authoritative data as part of accepting the order."},
-        {"slide": 8, "quote": "If requests rarely reuse results, or freshness is too hard to maintain, the cache may cost more than it saves."}
+        {
+          "slide": 4,
+          "quote": "Saving the price and removing the copy are separate steps. A reader can fetch $20 before the update, pause, then refill $20 after removal. The next cache hit still returns $20. Removal can also fail."
+        },
+        {
+          "slide": 4,
+          "quote": "Invalidation alone does not guarantee freshness. To avoid charging an old price at checkout, validate the price against the authoritative data as part of accepting the order."
+        },
+        {
+          "slide": 8,
+          "quote": "If requests rarely reuse results, or freshness is too hard to maintain, the cache may cost more than it saves."
+        }
       ]
     },
     {
       "id": "q3-weather-expiration",
-      "answer": "In case A the 12:03 request can use the original 12:00 cached forecast, though it is stale because the source changed at 12:02. The 12:11 request cannot use that original entry: its ten-minute lifetime ended at 12:10, so the miss must fetch the source and can then store a copy. In case B memory pressure removes the original entry at 12:04, so the 12:05 request misses and must fetch the source even though the original TTL would not have ended until 12:10. The TTL sets an expiration lifetime for the entry. It does not refresh the forecast automatically, guarantee agreement with changes to the source during that lifetime, guarantee the age of the source data used to fill it, or ensure the entry remains in memory until expiry. The 12:04 removal is eviction to free memory, a different reason for disappearance from expiration based on elapsed lifetime.",
+      "answer": "In case A the 12:03 request can hit the original forecast. It is now stale because the source changed at 12:02, but its ten-minute lifetime has not ended. At 12:11 the original entry is expired and cannot be served under the question's rules, so a miss must fetch the source and may store a new copy. In case B the 12:05 request must fetch the source because memory eviction removed the original entry at 12:04, even though its TTL would have allowed it to remain until 12:10. The ten-minute TTL limits how long this stored entry may remain before expiring. It does not refresh the source every ten minutes, guarantee that the copy is current for those minutes, or guarantee it stays resident for the full period. Memory eviction is removal to make room rather than expiration due to elapsed lifetime.",
       "evidence": [
-        {"slide": 5, "quote": "Sets how long an entry may remain before it expires. A 60-second TTL does not refresh the product every minute; a later miss must load it again."},
-        {"slide": 5, "quote": "Removes entries to make room. A least-recently-used policy favors removing entries that have not been read recently."},
-        {"slide": 5, "quote": "A product can be evicted before its TTL ends. Some configurations reject new entries when full instead of evicting existing ones."},
-        {"slide": 5, "quote": "TTL limits an entry's lifetime, not the age of the source data used to fill it."},
-        {"slide": 2, "quote": "A hit can still return an old price. Finding a value does not prove it matches the database."}
+        {
+          "slide": 5,
+          "quote": "Sets how long an entry may remain before it expires. A 60-second TTL does not refresh the product every minute; a later miss must load it again."
+        },
+        {
+          "slide": 5,
+          "quote": "Removes entries to make room. A least-recently-used policy favors removing entries that have not been read recently."
+        },
+        {
+          "slide": 5,
+          "quote": "A product can be evicted before its TTL ends. Some configurations reject new entries when full instead of evicting existing ones."
+        },
+        {
+          "slide": 5,
+          "quote": "TTL limits an entry's lifetime, not the age of the source data used to fill it."
+        },
+        {
+          "slide": 2,
+          "quote": "A hit can still return an old price. Finding a value does not prove it matches the database."
+        }
       ]
     },
     {
       "id": "q4-event-room-map",
-      "answer": "A single shared cache entry is the simpler fit for making one deletion affect the map every instance uses, given no concurrent fills and an acceptable 2 ms network call. Today each instance looks inside its own process; deleting the writer's local entry leaves the other three copies intact. Requests routed to those instances can still return their old maps, while a miss on the writer can load the new database map. With the shared cache all four instances look up the same map in a separate cache service over the network, so deleting that one entry makes it unavailable to all four until a later miss reloads it. This adds a network call and service operation cost. Losing one local cache affects only that process's cached copy; the other three retain theirs. An unreachable shared service removes cache access for all four. Sharing alone does not guarantee database freshness, though the question's single-entry/no-concurrent-fill assumptions make the requested deletion behavior straightforward.",
+      "answer": "A single shared cache is the simpler fit for one deletion removing the map used by all four instances. Today each instance looks up its own in-process memory, so deleting only the writer's copy leaves the other three copies available for stale hits; requests to different instances can see different maps. With a shared cache all instances look up the same entry in a separate service over the network. Under the stipulated single-entry and no-concurrent-fills assumptions, deleting that entry leaves every instance missing it, and a later miss reloads from the database. This adds the accepted 2 ms network lookup and a service to operate. Losing one local cache affects that instance's cached copy; the other three retain theirs. If the shared service is unreachable, all four instances lose access to the shared map. Sharing itself still does not ensure freshness without the update policy.",
       "evidence": [
-        {"slide": 6, "quote": "Lives inside each API process. Reads avoid a network call, but each process fills and updates its own copy. One can hold $20 while another holds $25."},
-        {"slide": 6, "quote": "Several API servers use a separate cache service, such as Redis or Memcached. They can reuse entries, but each lookup adds a network call and the service needs operating."},
-        {"slide": 6, "quote": "Restarting one API process discards its local cache; other processes keep their copies. If the shared cache is unreachable, every API server using it loses access to those cached entries."},
-        {"slide": 6, "quote": "Sharing reduces separate copies. It does not automatically keep the cache current with the database."},
-        {"slide": 4, "quote": "Remove the cached entry after saving the new price in the database. A later miss reloads it."}
+        {
+          "slide": 6,
+          "quote": "Lives inside each API process. Reads avoid a network call, but each process fills and updates its own copy. One can hold $20 while another holds $25."
+        },
+        {
+          "slide": 6,
+          "quote": "Several API servers use a separate cache service, such as Redis or Memcached. They can reuse entries, but each lookup adds a network call and the service needs operating."
+        },
+        {
+          "slide": 6,
+          "quote": "Restarting one API process discards its local cache; other processes keep their copies. If the shared cache is unreachable, every API server using it loses access to those cached entries."
+        },
+        {
+          "slide": 6,
+          "quote": "Sharing reduces separate copies. It does not automatically keep the cache current with the database."
+        },
+        {
+          "slide": 4,
+          "quote": "Remove the cached entry after saving the new price in the database. A later miss reloads it."
+        }
       ]
     },
     {
       "id": "q5-tournament-burst",
-      "answer": "When the popular key expires, many simultaneous misses can each repeat the same database read, overwhelming the safe 500 reads per second with demand from 10,000 requests per second. Coalesce those concurrent misses: let one in-progress database lookup supply its result to the other requests waiting for that schedule, then refill the cache. Sharing the lookup eliminates duplicate reads for that concurrent group. During the separate full-cache outage, ordinary fallback could turn nearly all 10,000 requests per second into database reads for a minute, again far above 500. Limit aggregate fallback reads across the application instances to at most the database's safe 500 schedule reads per second and return temporary errors for excess requests. That reduces admitted database work rather than merely moving the overload. If an accessible last-known schedule is available, serving it within the permitted 60 seconds can also answer requests without database reads; reject requests once it is too old or unavailable. The lesson permits serving older data but does not explain how to retain an accessible old copy when the cache itself is unreachable, so the capped-fallback-and-errors response does not depend on that missing detail.",
+      "answer": "Single-key expiration can make many concurrent requests miss the same schedule and independently read the database. At 10,000 requests per second this can exceed the safe 500 reads per second. Coalesce those requests: when the first miss starts the schedule lookup, concurrent requests for that schedule share that in-progress lookup and its result instead of each issuing another read; the application can then fill the cached schedule. A full cache outage removes the protection for most reads for the entire minute, so blindly falling back would again send far more than 500 reads per second. During the outage, cap admitted database fallback reads at no more than its safe 500 reads per second (or lower if other work needs capacity). For excess requests, return an available last-known schedule only while it is within the product's 60-second allowance; otherwise return temporary errors. These responses avoid a database read for excess requests, preserving database capacity. If no usable older copy is available outside the unreachable cache, use the temporary errors rather than assume the copy can still be read. The lesson permits older data but does not specify how such an outage-accessible copy is retained. Verify this behavior with an unavailable cache, since normal warm-cache traffic hides the capacity gap.",
       "evidence": [
-        {"slide": 7, "quote": "Many requests miss the same product together and repeat its database lookup. Coalescing requests lets concurrent readers share one in-progress lookup."},
-        {"slide": 7, "quote": "A cache outage can turn most reads into database traffic. Limit fallback work to what the database can handle; reject excess requests or serve older data only where the product rules permit it."},
-        {"slide": 7, "quote": "Falling back to the database is a load decision, not a free recovery path."}
+        {
+          "slide": 7,
+          "quote": "Many requests miss the same product together and repeat its database lookup. Coalescing requests lets concurrent readers share one in-progress lookup."
+        },
+        {
+          "slide": 7,
+          "quote": "A cache outage can turn most reads into database traffic. Limit fallback work to what the database can handle; reject excess requests or serve older data only where the product rules permit it."
+        },
+        {
+          "slide": 7,
+          "quote": "Test with an empty or unavailable cache. A warm cache can hide insufficient database capacity."
+        },
+        {
+          "slide": 6,
+          "quote": "Restarting one API process discards its local cache; other processes keep their copies. If the shared cache is unreachable, every API server using it loses access to those cached entries."
+        }
       ]
     },
     {
       "id": "q6-single-use-results",
-      "answer": "Do not add this cache now. Each unique result is read exactly once and no other reader exists, so filling it after that read creates a copy that will never be reused. Every retrieval still performs the database read, while the cache adds a write and memory usage (and a lookup if requests check it first). There is no repeated database work to avoid; the current 2 ms reads are comfortably within the 100 ms budget and ten reads per second are comfortably below the stated 1,000-read capacity. Reconsider if results start being read repeatedly, especially if a small popular set accounts for many requests: then cache hits could replace repeated database reads. Compare response time and database load and measure hits/misses to confirm a benefit under that changed workload.",
+      "answer": "Do not add this cache now. Each result is read exactly once, so filling the cache after that read produces a copy that no later request will reuse. The only read still needs its 2 ms database lookup, which is already comfortably inside the 100 ms budget, and ten reads per second is far below the stated database capacity. The cache therefore provides no expected avoided reads in this workload, while adding a write after each database read, memory usage, and another copy to manage; checking it before reads would also add lookups that cannot hit these never-before-read IDs. Reconsider if the same result IDs begin receiving many repeated reads before archival, especially if those reads make database load or response time a problem. Then measure actual response time, database load, and hit/miss behavior to see whether reuse pays for the added work.",
       "evidence": [
-        {"slide": 1, "quote": "First identify repeated work that is worth avoiding. A cache adds another copy to manage."},
-        {"slide": 1, "quote": "Before a copy exists, the API still does the database lookup. Storing that copy uses memory and adds a cache write."},
-        {"slide": 8, "quote": "If requests rarely reuse results, or freshness is too hard to maintain, the cache may cost more than it saves."},
-        {"slide": 8, "quote": "Compare response time and database load before and after caching. Track the fraction of lookups that hit, and what happens during misses."}
+        {
+          "slide": 1,
+          "quote": "First identify repeated work that is worth avoiding. A cache adds another copy to manage."
+        },
+        {
+          "slide": 1,
+          "quote": "Before a copy exists, the API still does the database lookup. Storing that copy uses memory and adds a cache write."
+        },
+        {
+          "slide": 8,
+          "quote": "If requests rarely reuse results, or freshness is too hard to maintain, the cache may cost more than it saves."
+        },
+        {
+          "slide": 8,
+          "quote": "Compare response time and database load before and after caching. Track the fraction of lookups that hit, and what happens during misses."
+        }
       ]
     }
   ]

@@ -81,3 +81,18 @@ it("supports uncategorized queues without offering lessons on annotations", () =
   expect(lessonsFor(node)).toEqual(["queues"]);
   expect(lessonsFor({ ...node, kind: "sticky", category: "Messaging" })).toEqual([]);
 });
+
+it("offers load balancing after renaming and normalizes its technology", () => {
+  const node = createComponent("load-balancer", { x: 0, y: 0 });
+  node.name = "Notes entrance";
+  node.technology = " Load Balancer ";
+  expect(lessonsFor(node)).toEqual(["load-balancing"]);
+  expect(lessonsFor({ ...node, category: undefined })).toEqual(["load-balancing"]);
+  expect(lessonsFor({ ...node, kind: "sticky" })).toEqual([]);
+  expect(lessonsFor({ ...node, componentType: "client" })).toEqual(["client-server"]);
+});
+it.each(["api-gateway", "cdn", "dns"])("does not give %s the load-balancing stack", preset => {
+  const node = createComponent(preset, { x: 0, y: 0 });
+  node.name = "Load Balancer";
+  expect(lessonsFor(node)).toEqual([]);
+});

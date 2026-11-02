@@ -11,6 +11,7 @@ import { MySQLDiagram } from "./MySQLDiagram";
 import { CAPDiagram } from "./CAPDiagram";
 import { ReplicationDiagram } from "./ReplicationDiagram";
 
+import { LoadBalancingDiagram } from "./LoadBalancingDiagram";
 import { QueueDiagram } from "./QueueDiagram";
 import { CachingDiagram } from "./CachingDiagram";
 
@@ -25,6 +26,7 @@ const diagrams = {
   replication: ReplicationDiagram,
   caching: CachingDiagram,
   queues: QueueDiagram,
+  "load-balancing": LoadBalancingDiagram,
 } satisfies Record<LessonId, typeof LessonDiagram>;
 
 export function LessonDialog({ lessonId, onClose }: { lessonId: LessonId; onClose: () => void }) {

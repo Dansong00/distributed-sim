@@ -1,56 +1,44 @@
 {
-  "lessonHash": "a87bbd7b49171388f97e7d0a211fdc880021f843c006601a014426eaab5c6119",
+  "lessonHash": "5bb2c36789f0d5ba964df55d0cdae759a305a4d595e60d933effa913ea4e160c",
   "rubricHash": "ed37f36c145a03c0cb0091704b8051e5da831a7aa097a491b6394b73bb915af4",
-  "reviewer": "/root/queue_review_b",
-  "learnerHash": "03b82f5363f93ad44cc6da7e8af0100f9bfa2bc98fe0c2047dfe9347e0178634",
+  "reviewer": "/root/lb_review_b",
+  "learnerHash": "8bc4e87779c6d8b9a3097c56f761d2fb58344a98bd61fb8ca6681d2837de922d",
   "dimensions": {
     "accuracy": {
       "score": 4,
-      "reason": "All eight card objectives are correct at their stated scope; primary documentation supports acceptance/completion, acknowledgement boundaries, duplicate-safe database effects, bounded recovery, per-entity ordering, finite overload buffering, retained-log semantics and fit decisions. No universal durability or exactly-once claim. Diagram content correctly separates acceptance from completion and shared jobs from independent group consumption; visual layout was not tested.",
+      "reason": "All eight cards meet their objectives without false durability, ordering, capacity or exactly-once guarantees. Publisher acceptance and consumer acknowledgement are explicitly separated; database atomicity is scoped to its own effects. Sources support the substantive claims.",
       "evidence": [
         {
           "slide": 2,
-          "quote": "Holds work for consumers. A publisher confirmation means broker acceptance under the configured durability rules, not a completed receipt."
+          "quote": "These acknowledgements cover different boundaries. Neither makes a broker operation atomic with a database write or proves an arbitrary business effect succeeded."
         },
         {
           "slide": 3,
           "quote": "That transaction protects its database effects. It does not make an external email or payment atomic, or turn delivery into a universal exactly-once guarantee."
-        },
-        {
-          "slide": 7,
-          "quote": "Ordering is per partition, not global across all partitions. Retained history and offsets do not by themselves make external effects exactly once."
         }
       ]
     },
     "mechanisms": {
       "score": 4,
-      "reason": "The producer-broker-worker card traces both acknowledgement directions. Redelivery names the commit/crash window and atomic durable fix; recovery distinguishes transient and persistent causes; ordering gives an observable wrong final state and a serial repair. Capacity computes growth then names controls; the log card explains groups, partitions, positions and retained replay. Every mechanism needed by the card questions is taught.",
+      "reason": "Acceptance/status, producer-broker-worker handoff, acknowledgement crash gaps, atomic deduplication, bounded failure isolation, per-entity ordering, rate/backlog control and group offsets are each traced causally. Both diagrams correctly show the two acknowledgement boundaries and shared jobs versus independently consumed history.",
       "evidence": [
-        {
-          "slide": 2,
-          "quote": "Receives the message, saves the receipt and ready status, then acknowledges processing to the broker. A consumer acknowledgement lets the broker retire that delivery."
-        },
         {
           "slide": 3,
           "quote": "In one database transaction, insert that ID into a durable processed-jobs table with a unique constraint and apply the receipt changes. Commit both or neither. A duplicate ID skips the effect. A separate check followed by a write can race or crash between steps."
         },
         {
-          "slide": 5,
-          "quote": "Serialize effects per receipt ID: keep later updates waiting while an earlier one runs or retries. Different receipts can still run in parallel. A busy receipt becomes a throughput bottleneck."
+          "slide": 7,
+          "quote": "If receipts and analytics each need every purchase event, a retained log such as Kafka supports separate consumer groups. A partition is an ordered slice of the log. Each group tracks its own position, called an offset, for each partition. Workers within a group share the partitions."
         }
       ]
     },
     "coherence": {
       "score": 4,
-      "reason": "The receipt scenario connects all eight cards, beginning with the user-visible boundary, then actor flow, duplicate effects, retries, ordering, overload, group consumption, and the final decision. HTTP/database prerequisites are declared; unfamiliar messaging concepts are introduced before dependent use. Both supplied diagrams reinforce the actual slide meaning rather than adding a conflicting guarantee.",
+      "reason": "The receipt scenario connects all eight cards from request deferral through lifecycle and operational limits to the final synchronous/asynchronous choice. Acknowledgements precede redelivery, idempotency precedes replay, and ordering precedes scaling. Declared database/uniqueness/rate prerequisites suffice; layout was not evaluated.",
       "evidence": [
         {
-          "slide": 1,
-          "quote": "Generating a receipt takes longer than the client can wait for an HTTP response. The API can accept a job, return its ID, and let a background worker finish later."
-        },
-        {
-          "slide": 4,
-          "quote": "Healthy jobs can continue. Before deliberately replaying a failed job, fix its cause and check whether an earlier attempt already applied an effect. Replay still needs duplicate safety."
+          "slide": 5,
+          "quote": "Moving the earlier job to a dead-letter queue does not resolve the dependency. Decide how to repair or cancel it before releasing dependent updates."
         },
         {
           "slide": 8,
@@ -60,29 +48,25 @@
     },
     "decisions": {
       "score": 4,
-      "reason": "All card decisions expose benefits, costs and failure actions: defer only tolerable delayed results; confirm handoff; make effects atomic; bound retries and inspect terminal failures; serialize dependent jobs at hot-key cost; control admission and downstream concurrency; choose independent groups for replay within retention; keep prerequisite access decisions synchronous. Tradeoffs support all transfer criteria.",
+      "reason": "Explains when to defer and when a completed access decision is required; pairs fast acceptance with status/failure cost, transient retries with budgets/isolation, per-entity order with throughput cost, and worker scale with downstream capacity. The queue/log choice includes retention and external-effect limits.",
       "evidence": [
-        {
-          "slide": 6,
-          "quote": "Bound worker concurrency to protect the database. Throttle or reject new requests with a visible busy response, or explicitly defer them within an agreed limit."
-        },
         {
           "slide": 6,
           "quote": "More workers help when workers are the bottleneck and downstream services have spare capacity. If the database is already saturated, more workers increase contention instead."
         },
         {
           "slide": 8,
-          "quote": "The tradeoff includes operating the broker and workers, tracking status, handling duplicates and retries, and watching backlog. A queue does not solve sustained overload."
+          "quote": "Authorization must finish before showing a private receipt. Queueing the decision and granting access immediately would use a result we do not yet have."
         }
       ]
     },
     "clarity": {
       "score": 4,
-      "reason": "Actor labels and concrete receipt examples keep the explanations accessible to the declared HTTP/database audience. Idempotency, partition, offset and backpressure are explained at first use; the DLQ action is explained concretely. Precise limits add useful reasoning without requiring product configuration expertise.",
+      "reason": "Producer, broker, worker, acknowledgement boundaries, idempotency, backpressure, partition and offset receive concrete explanations. Numbers and counterexamples are small and transferable; no required broker knowledge is left unstated.",
       "evidence": [
         {
-          "slide": 3,
-          "quote": "Repeating the same operation has the same effect as doing it once. Reuse a stable business-operation ID across retries, not a new ID per attempt."
+          "slide": 6,
+          "quote": "If 100 receipt jobs arrive each second and 70 finish, unfinished work grows by 30 jobs per second. Watch backlog and oldest-job age: a growing wait can violate the promise to the client."
         },
         {
           "slide": 7,
@@ -95,83 +79,83 @@
     {
       "id": "stack-request-boundary",
       "score": 2,
-      "reason": "All six criteria are supported: API publication and confirmed handoff, broker holding work, worker render/save followed by acknowledgement, pending/ready/failed status, the access-decision dependency, and concrete broker/worker and status costs. Quotes from slides 1, 2 and 8 entail the export transfer without relying on prior messaging knowledge."
+      "reason": "Slides 1, 2 and 8 support API producer/broker/worker flow, confirmed handoff before acceptance, saved result before ready and acknowledgement, pending/ready/failed status, synchronous access dependency and broker/worker operating cost. Learner quotes support all six criteria."
     },
     {
       "id": "stack-duplicate-effect",
       "score": 2,
-      "reason": "All five criteria are supported: lost acknowledgement permits another attempt, early acknowledgement risks loss, one stable operation ID makes duplicates no-ops, unique durable identity and credit commit atomically, and effects are distinguished from delivery guarantees. The credit substitution follows the taught receipt transaction directly."
+      "reason": "Slide 3 supports redelivery after commit-before-ack, early-ack loss, stable operation ID, a unique durable record atomic with the effect, duplicate no-op, and no universal exactly-once guarantee. The learner transfers the transaction to crediting without adding unsupported machinery."
     },
     {
       "id": "stack-failed-jobs",
       "score": 2,
-      "reason": "All five criteria are supported: delayed bounded retries for temporary storage failure, immediate isolation of persistent invalid input, visible terminal failure, continued healthy work, and cause correction plus prior-effect checks before replay. No automatic-repair inference."
+      "reason": "Slide 4 supports delayed finite retries for temporary failure, immediate isolation of invalid input, terminal failure visibility, healthy-job progress, and cause/prior-effect checks before duplicate-safe replay. All criteria are present in the learner's quotations."
     },
     {
       "id": "stack-order",
       "score": 2,
-      "reason": "All five criteria are supported: the learner derives final quantity 5 from the taught late old-write example, separates delivery from effect order, blocks later same-item effects through retries, permits other items to run, and identifies the hot-item serial bottleneck."
+      "reason": "Slide 5 supports final quantity 5 by the older write finishing last, distinguishes delivery/effect order, holds later same-item effects behind running/retried predecessors, permits other items in parallel, and identifies hot-item throughput cost."
     },
     {
       "id": "stack-overload",
       "score": 2,
-      "reason": "All six criteria are supported: 120 minus 80 gives 40 pending jobs/second, oldest age reveals delay, worker calls stay bounded at the saturated store, admissions are visibly throttled/rejected/deferred, buffering has finite time/storage limits, and more workers require actual worker bottleneck plus downstream headroom."
+      "reason": "Slide 6 teaches rate subtraction, oldest-age delay, safe concurrency, explicit producer throttle/reject/bounded deferral, finite storage/retention and burst catch-up, and worker expansion only with downstream headroom. The learner correctly computes 120-80=40."
     },
     {
       "id": "stack-log-choice",
       "score": 2,
-      "reason": "All six criteria are supported: competing workers divide jobs with possible redelivery; separate groups independently consume while members share partitions; offsets belong to each group/partition; committing progress does not delete records; replay requires retained data; partition order and external-effect duplicate safety are distinguished from universal guarantees."
+      "reason": "Slide 7 supports jobs divided among queue workers, separate groups independently consuming events, per-group per-partition positions, retained records after offset commit, one-day replay only if retained, partition-only order and no automatic exactly-once external effects. Learner evidence entails every criterion."
     }
   ],
   "hardFailures": [],
   "sourceChecks": [
     {
       "slide": 1,
-      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/asynchronous-request-reply",
-      "claim": "Acceptance differs from completion; Microsoft describes 202 plus a polling location and pending/completed/failed status. The lesson correctly adds delayed-result responsibility.",
-      "verified": true
+      "claim": "Azure's solution returns accepted and a polling location, distinguishes pending/completed states, persists processing failures, and notes additional notification/status complexity. This supports delayed receipt readiness rather than equating acceptance with completion.",
+      "verified": true,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/asynchronous-request-reply"
     },
     {
       "slide": 2,
-      "url": "https://www.rabbitmq.com/docs/confirms",
-      "claim": "RabbitMQ distinguishes publisher confirms from consumer acknowledgements and conditions persistence on queue/message configuration. Its acknowledgement retires a delivery, not an arbitrary database effect. Confirmed handoff is a policy requirement, not a universal durability promise.",
-      "verified": true
+      "claim": "RabbitMQ explicitly distinguishes publisher confirms from consumer acknowledgements as separate boundaries. Confirms concern broker receipt; consumer acknowledgements permit deletion after processing. Its connection-loss section requires redelivery handling and warns that writing to a socket does not establish accepted publication.",
+      "verified": true,
+      "url": "https://www.rabbitmq.com/docs/confirms"
     },
     {
       "slide": 3,
-      "url": "https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/",
-      "claim": "AWS requires a stable client request identifier and atomic recording of that token with all mutations. RabbitMQ confirms additionally documents requeue of unacknowledged work after process/connection failure. This supports the two crash windows and database-only idempotency boundary.",
-      "verified": true
+      "claim": "AWS's article body requires a stable caller operation identifier and ACID coordination of token storage with mutations, so effect and duplicate record commit together. RabbitMQ's linked acknowledgement guide requeues unacknowledged deliveries after process/connection failure. Together these support the crash window and database-scoped duplicate protection, not universal exactly-once delivery.",
+      "verified": true,
+      "url": "https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/"
     },
     {
       "slide": 4,
-      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/retry",
-      "claim": "Microsoft Retry supports cancelling persistent faults and increasing delays up to a maximum retry count. Linked Competing Consumers/DLQ documentation supports isolation, inspection, correction and deliberate resubmission, rather than automatic repair.",
-      "verified": true
+      "claim": "Azure Retry distinguishes nontransient cancellation from delayed retries for transient connectivity/busy failures and limits attempts. The lesson's Competing Consumers source additionally recommends isolating poison messages rather than returning them indefinitely; its dead-letter guidance supports inspection and resubmission, not automatic repair.",
+      "verified": true,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/retry"
     },
     {
       "slide": 5,
-      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/competing-consumers",
-      "claim": "Competing Consumers warns ordering is not assured and links Service Bus sessions for FIFO. Concurrent writes can finish out of receive order; serial per-entity effects and waiting through retries enforce the dependency at a throughput cost. Dead-lettering does not itself resolve that dependency.",
-      "verified": true
+      "claim": "Azure Competing Consumers warns about ordering and dependent tasks, describes same-consumer message sessions, and separates independent concurrent work. Two conflicting writes finishing in reverse order necessarily leave the older value; serializing dependent effects including retries avoids that race at a throughput cost.",
+      "verified": true,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/competing-consumers"
     },
     {
       "slide": 6,
-      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/queue-based-load-leveling",
-      "claim": "Queue-Based Load Leveling explicitly requires bounded aggregate downstream load, warns producer rates above consumer rates grow latency/backlog, and identifies storage/retention limits and producer shedding. The 100-70=30 example is valid.",
-      "verified": true
+      "claim": "Azure Load Leveling explicitly warns that unchecked consumer autoscaling moves overload downstream, sustained producer excess grows the queue and latency, and producer shedding plus safe consumer limits are needed. It discusses finite size/retention and durability limits. The 100 minus 70 growth calculation is correct.",
+      "verified": true,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/queue-based-load-leveling"
     },
     {
       "slide": 7,
-      "url": "https://kafka.apache.org/41/design/design/",
-      "claim": "Kafka Design specifies independently subscribing groups, one owner per partition within a group, per-partition offsets and rewinding. Retention/compaction controls surviving records independently of progress; external exactly-once effects require destination cooperation.",
-      "verified": true
+      "claim": "Kafka Design's consumer section gives each subscribing group a consumer per ordered partition and a recorded offset that can be rewound; retention independently removes old records by time/size or compaction. Its delivery-semantics section requires external-system coordination for exactly-once effects. These support independent progress, retention-conditioned replay and partition-scoped ordering.",
+      "verified": true,
+      "url": "https://kafka.apache.org/41/design/design/"
     },
     {
       "slide": 8,
-      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/asynchronous-request-reply",
-      "claim": "Asynchronous Request-Reply documents deferred processing, status/error reporting and additional complexity. Requiring a completed access decision before disclosure is the correct dependency-based application of the pattern.",
-      "verified": true
+      "claim": "Azure Async Request-Reply separates request acceptance, background execution and observable result/failure while documenting status storage and complexity. Its example waits for SendMessageAsync before AcceptedResult. The synchronous authorization dependency follows directly from needing a decision before disclosure; the queue cannot supply a result that has not been computed.",
+      "verified": true,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/asynchronous-request-reply"
     }
   ]
 }

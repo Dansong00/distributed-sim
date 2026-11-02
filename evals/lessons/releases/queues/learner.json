@@ -1,11 +1,11 @@
 {
-  "lessonHash": "a87bbd7b49171388f97e7d0a211fdc880021f843c006601a014426eaab5c6119",
+  "lessonHash": "5bb2c36789f0d5ba964df55d0cdae759a305a4d595e60d933effa913ea4e160c",
   "rubricHash": "ed37f36c145a03c0cb0091704b8051e5da831a7aa097a491b6394b73bb915af4",
-  "respondent": "/root/queue_cold_q8",
+  "respondent": "/root/lb_learner_s9",
   "answers": [
     {
       "id": "stack-request-boundary",
-      "answer": "The producer API publishes the export job ID and inputs. Confirmed broker acceptance under its configured durability rules permits a truthful accepted response with the ID, but does not mean the file is ready. A worker receives the job, renders and saves the file and ready status, then acknowledges processing so the broker can retire that delivery. The user checks the ID for pending, ready, or failed; ready requires the saved result, and terminal processing failure must remain visible as failed. Login must remain synchronous because granting access requires a final decision before access, and a queued decision does not yet supply it. Operating broker and workers and tracking status are added operating costs.",
+      "answer": "The producer publishes the export job ID and render inputs. After the broker confirms acceptance under its durability rules, the API can truthfully return accepted with the job ID. The broker holds the job for a worker. The worker renders and saves the file and ready status, then acknowledges processing so that delivery can be retired. The file is ready only after the required result has been saved; broker acceptance alone is not completion. Users check pending, ready or failed status, and must see failed if processing ultimately fails. A login decision must remain synchronous because granting access depends on its final result; an unresolved queued decision cannot authorize access. Operating the broker and workers is an added cost.",
       "evidence": [
         {
           "slide": 2,
@@ -35,7 +35,7 @@
     },
     {
       "id": "stack-duplicate-effect",
-      "answer": "The broker may deliver the job again under at-least-once delivery because the acknowledgement was lost. Acknowledging before crediting risks losing work if the worker crashes before saving. Reuse a stable business-operation ID across attempts. In one database transaction insert the ID in a durable processed-jobs table with a unique constraint and apply the credit: commit both or neither. A duplicate ID skips the credit. A separate check then write can race or crash between steps. This protects those database effects from duplication; it does not create universal exactly-once message delivery or atomic external effects.",
+      "answer": "With at-least-once delivery, the broker may deliver the credit job again because the acknowledgement was not received. Acknowledging before the credit risks retiring the delivery and then crashing before the balance changes, losing the work. Give the business credit operation one stable ID reused on every attempt. In one database transaction, insert that ID into a durable processed-jobs table protected by a unique constraint and apply the balance credit. Commit both or neither. On a duplicate ID skip the credit. A separate duplicate check followed by a credit is unsafe because attempts can race or crash between them. This makes these database effects duplicate-safe; it does not establish universal exactly-once message delivery or atomic external effects.",
       "evidence": [
         {
           "slide": 3,
@@ -57,7 +57,7 @@
     },
     {
       "id": "stack-failed-jobs",
-      "answer": "Retry the temporarily unavailable image store using increasing delays and a finite attempt or time budget; immediate retries can deepen its outage. After the budget is exhausted isolate the job in a dead-letter queue for investigation and expose failed status. An unsupported format will not improve by waiting, so isolate that job rather than endlessly retry it, and expose failed status. Healthy jobs can continue. Before deliberate replay, fix the cause and check whether an earlier attempt already applied an effect. Replay still requires duplicate safety: the dead-letter queue contains failure but does not repair it.",
+      "answer": "Retry the temporarily inaccessible image store with increasing delays and a finite attempt or time budget, since immediate repeated retries can worsen an outage. If that budget is exhausted, isolate the job in a dead-letter queue for investigation and expose failed status. The unsupported format will not recover simply by waiting, so isolate it rather than repeatedly retrying it. Isolating failed jobs lets healthy jobs continue. Before deliberate replay, fix the cause and check whether an earlier attempt already applied an effect; replay must still be duplicate-safe. The dead-letter queue contains the failure but does not repair it.",
       "evidence": [
         {
           "slide": 4,
@@ -70,12 +70,16 @@
         {
           "slide": 4,
           "quote": "Healthy jobs can continue. Before deliberately replaying a failed job, fix its cause and check whether an earlier attempt already applied an effect. Replay still needs duplicate safety."
+        },
+        {
+          "slide": 4,
+          "quote": "A dead-letter queue contains failure; it does not repair the job."
         }
       ]
     },
     {
       "id": "stack-order",
-      "answer": "The final quantity can incorrectly be 5: the second event writes 2 first and the slower first event then overwrites it with 5. Ordered receipt does not guarantee ordered effects. Serialize execution effects per item ID, keeping later updates waiting while the earlier update runs or retries. Different items can still run concurrently, but a busy single item becomes a throughput bottleneck. If the earlier job goes to a dead-letter queue, repair or cancel it before releasing dependent updates.",
+      "answer": "The final quantity could incorrectly be 5: the later event writes 2 first, then the slower earlier event overwrites it with 5. Receiving jobs in order does not guarantee their effects finish in order. Serialize effects by item ID, keeping the later update waiting while the earlier update runs or retries. Different item IDs can execute concurrently. If the earlier update is isolated in a dead-letter queue, repair or cancel that dependency before releasing dependent updates. For a busy item, this serialization creates a throughput bottleneck.",
       "evidence": [
         {
           "slide": 5,
@@ -88,12 +92,16 @@
         {
           "slide": 5,
           "quote": "Moving the earlier job to a dead-letter queue does not resolve the dependency. Decide how to repair or cancel it before releasing dependent updates."
+        },
+        {
+          "slide": 5,
+          "quote": "Ordered delivery alone does not guarantee ordered effects."
         }
       ]
     },
     {
       "id": "stack-overload",
-      "answer": "Backlog grows by approximately 120 - 80 = 40 jobs per second. Growing oldest-job age shows increasing wait, potentially violating the promised delay. Bound worker concurrency to protect the image store and respect its safe limit. Throttle or reject new requests with a visible busy response, or explicitly defer within an agreed limit. Queue storage and retention are finite; buffering only absorbs a burst if capacity later catches up before these limits or allowed delay are exceeded. More workers help when workers are the bottleneck and downstream services have spare capacity. The store here already has no safe concurrency headroom, so additional workers are not the remedy.",
+      "answer": "Backlog grows by approximately 120 minus 80 = 40 jobs per second while those rates persist. Growing oldest-job age signals increasing waiting time and a risk of violating the promised delay. Bound worker concurrency at the image store safe limit; adding concurrency to a saturated dependency risks more contention. Apply producer backpressure by throttling or rejecting new requests with a visible busy response, or explicitly defer only within an agreed limit. Queue storage and retention are finite: buffering absorbs a burst only if capacity subsequently catches up before storage, retention or allowed-delay limits are reached. More workers help when the workers are the bottleneck and the downstream image store has spare capacity, which it currently does not.",
       "evidence": [
         {
           "slide": 6,
@@ -115,7 +123,7 @@
     },
     {
       "id": "stack-log-choice",
-      "answer": "A work queue divides work among competing workers; billing and analytics competing on it would not each independently get every purchase event. Failed deliveries may still repeat. A retained log supports a billing group and an analytics group with independent progress, so each application can process every event. Each group tracks its offset for each partition, and workers within the group share partitions. Committing offsets records progress without deleting events. Analytics can rewind for a one-day replay only while all required events from that day remain under the retention policy. A partition is an ordered slice, so ordering remains per partition rather than global across partitions; adding partitions or consumers does not give universal global ordering. History and offsets do not by themselves make external effects exactly once.",
+      "answer": "One work queue with competing billing and analytics workers distributes jobs between those workers; it does not independently give every event to both applications, and failures can cause repeat deliveries. A retained log can give billing its own consumer group and analytics another, so each application independently processes the purchase events. Each group tracks its own offset for each partition, while workers within that group share the partitions. Committing an offset records progress without deleting retained records. Analytics can rewind its offsets and replay a day only if all required events remain under the retention policy when it replays them. Adding partitions or consumers does not create global ordering, because ordering is per partition. Retention and offsets also do not make external effects exactly once: recording broker progress is not atomic with arbitrary business effects.",
       "evidence": [
         {
           "slide": 7,
@@ -132,6 +140,10 @@
         {
           "slide": 7,
           "quote": "Ordering is per partition, not global across all partitions. Retained history and offsets do not by themselves make external effects exactly once."
+        },
+        {
+          "slide": 2,
+          "quote": "These acknowledgements cover different boundaries. Neither makes a broker operation atomic with a database write or proves an arbitrary business effect succeeded."
         }
       ]
     }
