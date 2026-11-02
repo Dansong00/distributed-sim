@@ -1,16 +1,18 @@
 # Autonomous learning stack backlog
 
-Status is local source coverage, not a claim of quality. All stacks require the new eval before being called approved. Existing source currently has Client / Server Model, API Server, Database Overview, CAP, Replication, PostgreSQL, SQLite, MySQL, Caching Fundamentals, and Message Queues and Background Workers. Caching and messaging have current passing evaluation reports; prior code-review and browser passes do not retroactively count as learning-quality evaluations.
+Status is local source coverage, not a claim of quality. All stacks require the new eval before being called approved. Existing source currently has Client / Server Model, API Server, Database Overview, CAP, Replication, PostgreSQL, SQLite, MySQL, Caching Fundamentals, Message Queues and Background Workers, and Load Balancing. Caching, messaging and load balancing have current passing evaluation reports; prior code-review and browser passes do not retroactively count as learning-quality evaluations.
 
-Default order is shared foundations first, then named technologies. The user approved messaging after the caching cleanup; future scope corrections override this order.
+Default order is shared foundations first, then named technologies. The user approved load balancing after messaging; future scope corrections override this order.
 
 ## Shared foundations
 
 Message Queues and Background Workers is implemented and evaluated for Generic Queue, Kafka, RabbitMQ, SQS, and Worker. It distinguishes competing work distribution from independently consumed retained history. Product distinctions still need their own stacks. See releases/queues/REPORT.md for current content and UI evidence.
 
-Then, in prerequisite order:
+Load Balancing is implemented and evaluated for its component, with connection/request routing, policy limits, readiness, state, draining, retries and availability. See releases/load-balancing/REPORT.md for evidence.
 
-1. Load balancing; API gateways; DNS; CDN and HTTP caching.
+Next, in prerequisite order:
+
+1. API gateways; DNS; CDN and HTTP caching.
 2. Object storage; block storage; shared file storage.
 3. Sharding and partition keys; document databases; key-value data access.
 4. Wide-column, graph, geospatial, time-series, search, analytics, and vector retrieval foundations.
