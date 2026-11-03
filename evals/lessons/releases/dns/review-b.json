@@ -1,177 +1,32 @@
 {
-  "lessonHash": "9014d471e2ada2d2c02888d87d7c979a4fa9156765ba3495c3fd71770e5c887e",
-  "rubricHash": "47e1a50ac83f3568173b11b58fcacdfd420c4d30df6c9ec3574d0527c2e6c0ac",
-  "reviewer": "/root/cdn_review_b",
-  "learnerHash": "cf2d8c8807afb53bf778ce60712dbb675c794fe34e2234859cb5f937bccfa754",
-  "dimensions": {
-    "accuracy": {
-      "score": 4,
-      "reason": "Primary DNS, Route 53 and TLS sources support discovery, record types, age/cached-failure limits and DNSSEC boundaries. Diagrams correctly assign referral work to the recursive resolver and show no push into old cache; no instant failover guarantee.",
-      "evidence": [
-        {
-          "slide": 4,
-          "quote": "Shorter TTLs mean more refresh queries and more frequent dependence on working DNS. Independent caches and connection lifetimes prevent a simultaneous cutover. Some resolvers can even serve expired data when refreshing fails, so TTL is not a hard global recovery deadline."
-        },
-        {
-          "slide": 5,
-          "quote": "SERVFAIL means resolution could not be completed, for example because the resolver could not obtain usable answers. It is not proof that the name does not exist. Resolution failures may also be cached to avoid repeatedly hammering failing DNS servers."
-        },
-        {
-          "slide": 8,
-          "quote": "HTTPS separately authenticates the endpoint through certificate validation and encrypts the HTTP exchange. The client must still verify the certificate for the hostname it requested, api.notes.example, even if DNS followed an alias to edge.notes.example."
-        }
-      ]
-    },
-    "mechanisms": {
-      "score": 4,
-      "reason": "Concrete referral traversal, CNAME-to-address lookup, old-TTL timeline and cached negative response explain state and causes. Failover and diagnosis distinguish DNS answers from existing connections and application execution.",
-      "evidence": [
-        {
-          "slide": 2,
-          "quote": "Assume empty relevant caches in our teaching hierarchy. The recursive resolver asks root, receives a referral to .example, asks that authority, then follows its referral to the notes.example authority. That authority holds the final records for api.notes.example. Root does not hold every host's address."
-        },
-        {
-          "slide": 3,
-          "quote": "A CNAME record is a name alias. If api.notes.example points to edge.notes.example, resolution follows that target name to obtain its A or AAAA data. The needed data may already be cached or returned with the alias; otherwise further lookup is needed."
-        },
-        {
-          "slide": 4,
-          "quote": "A resolver caches the old address at 10:00 with a 300-second TTL. At 10:01 we change the address and lower TTL to 30 seconds. Its existing entry can still be ordinarily usable until 10:05; the edit does not rewrite that entry."
-        }
-      ]
-    },
-    "coherence": {
-      "score": 4,
-      "reason": "One Notes hostname connects discovery, authority, types, changes, absence, failover and trust. All card prerequisites are introduced; illustrative reserved hierarchy avoids implying real public delegation.",
-      "evidence": [
-        {
-          "slide": 1,
-          "quote": "Our client wants https://api.notes.example/notes/42. A hostname, api.notes.example, names a network destination. An IP address is the network address used to reach it. The names and addresses in this lesson are illustrative, not a public deployment."
-        },
-        {
-          "slide": 2,
-          "quote": "The stub resolver is the client's local lookup helper. It asks a recursive resolver to obtain an answer on its behalf. An authoritative server answers from the records it serves for a zone, a managed portion of DNS names."
-        },
-        {
-          "slide": 4,
-          "quote": "Now consider a direct address record for api.notes.example instead of the alias. TTL, or time to live, limits ordinary cache reuse in seconds. Each cache ages the TTL it received; it is not a worldwide update timer."
-        }
-      ]
-    },
-    "decisions": {
-      "score": 4,
-      "reason": "Plans staged TTL change with costs/overlap, requires real fallback capacity and advises layered diagnosis rather than reflexive record edits; retains independent HTTPS and access checks.",
-      "evidence": [
-        {
-          "slide": 4,
-          "quote": "For a planned move, lower TTL first, allow the previous longer TTL to age out, then switch. Keep the old destination usable through the transition while monitoring traffic, errors and existing connections at both destinations. DNS edits do not migrate open connections."
-        },
-        {
-          "slide": 6,
-          "quote": "West must be reachable, healthy and have enough spare capacity for redirected work. A health signal is a sample, not a promise that every request succeeds; DNS changes do not create capacity or guarantee instant recovery."
-        },
-        {
-          "slide": 7,
-          "quote": "Start with the client's recursive resolver: inspect the queried name and type, its answer or error, and remaining TTL. Compare authoritative data and parent delegation when results are wrong or failing. An authoritative new address beside a cached old one suggests a cache-age question, not an automatic need for another edit."
-        }
-      ]
-    },
-    "clarity": {
-      "score": 3,
-      "reason": "Names, statuses and trust terms are defined with concrete examples and sufficient scope. The DNSSEC and failure cards carry several distinctions at once, but exact contrasts and readable diagrams keep them usable for the declared HTTP engineer.",
-      "evidence": [
-        {
-          "slide": 5,
-          "quote": "Negative caching reuses an answer reporting absence. NXDOMAIN says the queried name does not exist. NODATA means the name exists but has no record of the requested type: no AAAA record does not imply no A record or no name."
-        },
-        {
-          "slide": 8,
-          "quote": "DNSSEC adds signatures to DNS data. A validating resolver checks those signatures through a chain of trust: each trusted signing key vouches for the next link, starting at a configured trusted key. Successful validation establishes the signed data's origin and integrity, meaning it has not been altered without detection."
-        }
-      ]
-    }
-  },
-  "outcomes": [
-    {
-      "id": "resolve-notes",
-      "score": 2,
-      "reason": "C1-2: slide 1 separates hostname discovery from later connection/path/HTTPS and health. C3-5: slide 2 and diagram teach stub/recursive/authority/zone, referrals versus final answer and cached shortcuts. C6-8: slide 3 defines families, A/AAAA/CNAME and target dependency/separate cache entries; learner traces alias through address retrieval. Cards 1-3 also explicitly define hostname, IP, record and cache."
-    },
-    {
-      "id": "planned-address-change",
-      "score": 2,
-      "reason": "C1: slide 4 age arithmetic transfers correctly to 11:59+3600=12:59 despite noon TTL edit. C2: lower ahead, wait old lifetime, retain overlap and observe both destinations/connections. C3: query/dependency costs, independent caches, open connections and serve-stale reject a simultaneous cutover guarantee. Learner explains all required limits."
-    },
-    {
-      "id": "new-name-not-visible",
-      "score": 2,
-      "reason": "C1: slide 5 teaches separately cached negative answer lifetime, unaffected by new positive record TTL. C2: NXDOMAIN name absence versus NODATA type absence is explicit. C3: SERVFAIL is incomplete resolution, not absence, and failure caching is acknowledged. Learner distinguishes these investigations with exact support."
-    },
-    {
-      "id": "east-to-west-failover",
-      "score": 2,
-      "reason": "C1: slide 6 requires separate health detection and policy/operator changes. C2: resolver/client reuse breaks lookup-to-request proportionality. C3: cached east answers/open connections persist without migration or instant recovery. C4: reachable healthy spare west capacity required. Learner satisfies steering card and all four criteria."
-    },
-    {
-      "id": "separate-dns-from-service",
-      "score": 2,
-      "reason": "C1: slide 7 separates cached/open sessions from uncached resolution dependence. C2: queried name/type/status/TTL at recursive resolver, then authority/delegation comparison. C3: expected address precedes connection/HTTPS/application diagnosis; 500 is not itself DNS failure. C4: alternate DNS servers cannot repair shared wrong data/delegation or failed API. Learner covers each criterion."
-    },
-    {
-      "id": "validated-dns-and-https",
-      "score": 2,
-      "reason": "C1-2: slide 8 defines signed-data origin/integrity via trust chain while excluding application health and query encryption. C3: independent HTTPS certificate validation uses requested api.notes.example even after CNAME, with transport encryption. Learner faithfully preserves these boundaries and application permission requirements."
-    }
-  ],
-  "hardFailures": [],
-  "sourceChecks": [
-    {
-      "slide": 1,
-      "url": "https://www.cloudflare.com/learning/dns/what-is-dns/",
-      "claim": "Cloudflare explains DNS name-to-address discovery followed by separate browser/server communication.",
-      "verified": true
-    },
-    {
-      "slide": 2,
-      "url": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/welcome-dns-service.html",
-      "claim": "Route 53 documents resolver root/TLD/authority traversal, cache reuse and later web-server request; fictional hierarchy is explicitly labelled illustrative.",
-      "verified": true
-    },
-    {
-      "slide": 3,
-      "url": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/ResourceRecordTypes.html",
-      "claim": "Route 53 defines A as IPv4, AAAA as IPv6 and CNAME as another DNS name; alias needs target address resolution.",
-      "verified": true
-    },
-    {
-      "slide": 4,
-      "url": "https://www.rfc-editor.org/rfc/rfc8767.html",
-      "claim": "RFC 8767 explicitly permits stale DNS reuse when refresh fails, so TTL is not a global hard recovery bound; existing cache age remains independent.",
-      "verified": true
-    },
-    {
-      "slide": 5,
-      "url": "https://www.rfc-editor.org/rfc/rfc9520.html",
-      "claim": "RFC 9520 distinguishes name/type absence from resolution failure and requires caching failures; negative responses have their own cached lifetime.",
-      "verified": true
-    },
-    {
-      "slide": 6,
-      "url": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-failover-configuring.html",
-      "claim": "Route 53 failover requires configured health checks plus DNS response selection; cached clients and capacity remain separate constraints.",
-      "verified": true
-    },
-    {
-      "slide": 7,
-      "url": "https://www.rfc-editor.org/rfc/rfc1034.html",
-      "claim": "RFC 1034 supports cached/stub/recursive operation and delegated authorities; service HTTP errors occur after discovery, not within it.",
-      "verified": true
-    },
-    {
-      "slide": 8,
-      "url": "https://www.rfc-editor.org/rfc/rfc4033.html",
-      "claim": "RFC 4033 supports signed-data origin/integrity without confidentiality or application assurance; RFC 9525 confirms CNAME must not replace requested reference hostname for TLS.",
-      "verified": true
-    }
-  ]
+"lessonHash":"28837619f693ab00a6b85b61cc8e713f7943cbbbd29edcf871862b0715a85980",
+"rubricHash":"a10ccb22542025ceb926bf3c9c541fb6c3943c0131726cccb7b37147f10a5e45",
+"reviewer":"/root/concept_review_recent_b",
+"learnerHash":"7dd6b1eb7d05cfe8a1536717ef7c0a8b159a90575f9e111e4fc3ce99c28efb57",
+"dimensions":{
+"accuracy":{"score":4,"reason":"All eight cards distinguish discovery from service health and trust; TTL and failure-cache limits avoid false cutover guarantees. Illustrative reserved hierarchy is explicitly non-public.","evidence":[{"slide":4,"quote":"Some resolvers can even serve expired data when refreshing fails, so TTL is not a hard global recovery deadline."}]},
+"mechanisms":{"score":4,"reason":"Actors, referral sequence, alias/address dependency, positive/negative cache aging and separate health steering are traceable; diagrams preserve resolver ownership and no-push semantics.","evidence":[{"slide":5,"quote":"The negative answer has its own cache lifetime; the new positive record's TTL does not clear it."}]},
+"coherence":{"score":4,"reason":"Names and records precede resolver hierarchy, aliases, cache changes, negative results, failover, diagnosis and trust. Conceptual boundaries accumulate usefully.","evidence":[{"slide":1,"quote":"Name discovery and serving the HTTP request are separate steps."}]},
+"decisions":{"score":4,"reason":"Planned overlap, TTL query costs, replacement capacity, diagnosis order and certificate checks turn mechanisms into concrete operational choices.","evidence":[{"slide":6,"quote":"West must be reachable, healthy and have enough spare capacity for redirected work."}]},
+"clarity":{"score":4,"reason":"Defines unfamiliar DNS vocabulary before use; examples isolate alias lookup and stale address lifetime, while clear boundaries prevent health and encryption confusion.","evidence":[{"slide":8,"quote":"DNSSEC protects DNS data; HTTPS protects the connection to the requested service identity."}]}
+},
+"outcomes":[
+{"id":"resolve-notes","score":2,"reason":"Cards 1-3 support hostname versus path, stub/recursive/authority roles, delegation/referrals, cache shortcuts, A/AAAA families and CNAME target dependency/separate caching. Learner correctly traces the changed names and later HTTPS."},
+{"id":"planned-address-change","score":2,"reason":"Card 4 supports old TTL surviving edit, 11:59+3600=12:59, advance lowering, overlap/traffic monitoring and shorter-TTL query costs; learner rejects a universal retirement deadline."},
+{"id":"new-name-not-visible","score":2,"reason":"Card 5 supports negative lifetime independent of new positive TTL, NXDOMAIN versus NODATA type scope, and SERVFAIL as potentially cached resolution failure rather than absence. All criteria appear in learner."},
+{"id":"east-to-west-failover","score":2,"reason":"Card 6 supports separate health/policy action, lookup/request split mismatch, persistent caches/connections, no instant migration and reachable healthy spare capacity. Learner covers each."},
+{"id":"separate-dns-from-service","score":2,"reason":"Card 7 teaches cached/open-connection survival, fresh resolution dependencies, recursive/name/type/error/TTL then authoritative/delegation checks, HTTP-500 separation and limits of redundancy. Learner preserves uncertainty about actual cause."},
+{"id":"validated-dns-and-https","score":2,"reason":"Card 8 supports signed-data origin/integrity chain, no DNS query encryption or health guarantee, and requested-hostname HTTPS identity/encryption. Learner keeps the checks separate after aliases."}
+],
+"hardFailures":[],
+"sourceChecks":[
+{"slide":1,"url":"https://www.cloudflare.com/learning/dns/what-is-dns/","claim":"Cloudflare DNS explanation supports hostname discovery before connection; address discovery does not carry the later HTTP path/exchange.","verified":true},
+{"slide":2,"url":"https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/welcome-dns-service.html","claim":"AWS lookup walkthrough and RFC 1034 support recursive referral following, authoritative zone data and cached shortcuts; teaching hierarchy is correctly labeled illustrative.","verified":true},
+{"slide":3,"url":"https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/ResourceRecordTypes.html","claim":"AWS record reference confirms A/IPv4, AAAA/IPv6 and name-valued CNAME; RFC 1034 alias resolution supports obtaining target addresses.","verified":true},
+{"slide":4,"url":"https://www.rfc-editor.org/rfc/rfc8767.html","claim":"RFC 8767 confirms ordinary TTL aging with exceptional serve-stale beyond expiry. Old entries are not rewritten by authoritative edits; overlap and non-instant cutover follow.","verified":true},
+{"slide":5,"url":"https://www.rfc-editor.org/rfc/rfc9520.html","claim":"RFC 9520 and referenced RFC 2308 distinguish NXDOMAIN/NODATA from resolution failure and require failure caching; negative lifetime is independent of a later positive record.","verified":true},
+{"slide":6,"url":"https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-failover-configuring.html","claim":"AWS failover uses separate health checks to select DNS answers; DNS cache/connection reuse limits traffic precision and speed, and cannot provide application capacity.","verified":true},
+{"slide":7,"url":"https://www.rfc-editor.org/rfc/rfc1034.html","claim":"RFC 1034 describes resolver/authority/cache dependencies and redundant authoritative service; shared wrong data and later HTTP failures remain separate concerns.","verified":true},
+{"slide":8,"url":"https://www.rfc-editor.org/rfc/rfc4033.html","claim":"RFC 4033 confirms origin/integrity authentication without confidentiality or application validation. RFC 9525 independently confirms service identity derives from the requested source hostname rather than an alias target.","verified":true}
+]
 }

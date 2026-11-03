@@ -1,31 +1,43 @@
 import { test, expect } from "@playwright/test";
 import { startEditor } from "./start-editor";
 
-test("API Server has ordered independent decks and returns focus to its own entry", async ({ page }) => {
-  await startEditor(page);
-  await page.locator('.react-flow__node').filter({ hasText: 'API Server' }).first().click();
-  const entries = page.locator('.inspector-learn button');
-  await expect(entries).toHaveText(['Client / Server Model', 'API Server']);
-  const api = page.getByRole('button', { name: 'Learn about API Server', exact: true });
-  await api.click();
-  const dialog = page.getByRole('dialog', { name: 'API Server', exact: true });
-  for (let index = 1; index <= 5; index++) {
-    await expect(dialog.getByText(`${index} of 5`)).toBeVisible();
-    await page.screenshot({ path: `/tmp/api-server-slide-${index}.png` });
-    if (index < 5) await dialog.getByRole('button', { name: 'Next slide' }).click();
-  }
-  await page.keyboard.press('Escape');
-  await expect(api).toBeFocused();
-  await page.getByRole('button', { name: 'Learn about client/server', exact: true }).click();
-  await expect(page.getByRole('dialog').getByText('1 of 5')).toBeVisible();
-  await expect(page.getByRole('dialog').getByRole('heading', { name: 'The client asks. The server responds.' })).toBeVisible();
-  await page.keyboard.press('Escape');
-  await api.click();
-  await expect(dialog.getByText('1 of 5')).toBeVisible();
-  await page.setViewportSize({ width: 390, height: 700 });
-  await expect(dialog.getByRole('button', { name: 'Next slide' })).toBeInViewport();
-  await page.screenshot({ path: '/tmp/api-server-narrow.png' });
-});
+for (const viewport of [{ width: 1280, height: 900 }, { width: 985, height: 543 }, { width: 390, height: 700 }]) {
+  test(`Client/server and API decks remain independent at ${viewport.width}x${viewport.height}`, async ({ page }, testInfo) => {
+    await startEditor(page);
+    await page.locator(".react-flow__node").filter({ hasText: "API Server" }).first().click();
+    await expect(page.locator(".inspector-learn button")).toHaveText(["Client / Server Model", "API Server"]);
+    const count = await page.locator(".react-flow__node").count();
+    await page.setViewportSize(viewport);
+    if (viewport.width <= 900) await page.getByRole("button", { name: "Properties panel", exact: true }).click();
+    for (const [title, label] of [["Client / Server Model", "Learn about client/server"], ["API Server", "Learn about API Server"]]) {
+      const opener = page.getByRole("button", { name: label, exact: true });
+      await opener.click();
+      const dialog = page.getByRole("dialog", { name: title, exact: true });
+      await expect(dialog.getByRole("button", { name: "Previous slide" })).toBeDisabled();
+      for (let slide = 1; slide <= 5; slide++) {
+        await expect(dialog.getByText(`${slide} of 5`, { exact: true })).toBeVisible();
+        expect(await dialog.locator(".lesson-body").evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+        await expect(dialog.getByRole("button", { name: "Next slide" })).toBeInViewport();
+        await page.screenshot({ path: testInfo.outputPath(`${title === "API Server" ? "api" : "client"}-${slide}.png`) });
+        const source = dialog.getByRole("link", { name: "Source reference", exact: true });
+        await expect(source).toHaveAttribute("href", /^https:\/\//);
+        await source.scrollIntoViewIfNeeded();
+        await expect(source).toBeInViewport();
+        await page.screenshot({ path: testInfo.outputPath(`${title === "API Server" ? "api" : "client"}-${slide}-end.png`) });
+        if (slide < 5) await dialog.getByRole("button", { name: "Next slide" }).click();
+      }
+      await expect(dialog.getByRole("button", { name: "Next slide" })).toBeDisabled();
+      await page.keyboard.press("Escape");
+      await expect(opener).toBeFocused();
+      await opener.click();
+      await expect(dialog.getByText("1 of 5", { exact: true })).toBeVisible();
+      await dialog.getByRole("button", { name: "Close lesson" }).click();
+    }
+    await expect(page.getByLabel("Name", { exact: true })).toHaveValue("Notes API");
+    await expect(page.locator(".react-flow__node")).toHaveCount(count);
+    await expect(page.locator(".react-flow__node.selected")).toHaveCount(1);
+  });
+}
 
 test("lesson navigation and dismissal preserve the selected component", async ({ page }) => {
   await startEditor(page);

@@ -1,0 +1,11 @@
+# CAP Theorem release evidence
+
+Revised under the concept-first brief: examples appear only where they clarify a mechanism, decision or failure. Original card count and routing preserved.
+
+Fresh learner `/root/concept_learner_cap_r2`; independent reviewers `concept_review_revisions_a` and `/root/concept_review_foundations_b`. Scores 20/20 and 20/20, all outcomes 2/2, no hard failures. Every objective, diagram meaning and distinct source checked. Adjacent JSON files are byte-identical to the actual reports.
+
+```sh
+npm run eval:lessons -- check-release cap evals/lessons/releases/cap
+```
+
+Current-source gate passes. Shared test, browser, calibration and archive evidence: [editorial release](../../CONCEPT-FIRST-RELEASE.md). These evaluations assess content readiness, not human learning.

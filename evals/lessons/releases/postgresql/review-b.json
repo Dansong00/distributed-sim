@@ -1,0 +1,30 @@
+{
+  "lessonHash": "dd547fd05cdddde4d4e5a0151eec1cd3c51219d76aabb15cbc0943cb950d479d",
+  "rubricHash": "1ff4d8e53a3291ec089ebc241913c4260f76607c10d5b0cc05dc7618e0071a5f",
+  "reviewer": "/root/concept_review_foundations_b",
+  "learnerHash": "6277ad78dcc75004103d6897845c7dcfa842e854255f7eada6290a8ddfeca5a1",
+  "dimensions": {
+    "accuracy": {"score":4,"reason":"Live PostgreSQL documentation supports constraint null semantics, Read Committed rechecks, WAL ordering, replica caveats and index/connection costs. No blanket ACID, freshness or CAP guarantee.","evidence":[{"slide":2,"quote":"a check alone does not reject a null result."}]},
+    "mechanisms": {"score":4,"reason":"All eight card objectives are taught. The stock example connects a race to a conditional update, affected-row check, same transaction and competing-update recheck. Assigned diagrams preserve that condition and distinguish primary from delayed replica state.","evidence":[{"slide":4,"quote":"At Read Committed, a competing update waits and rechecks its condition after the other update commits."}]},
+    "coherence": {"score":4,"reason":"Relational responsibilities lead to declared rules, transaction limits, concurrency, measured access paths, replication and operating policy. The final application combines these mechanisms; listed SQL/transaction prerequisites suffice.","evidence":[{"slide":8,"quote":"Protect concurrent decisions with conditional updates or appropriate locking and isolation."}]},
+    "decisions": {"score":4,"reason":"Local embedded alternatives, finite primary writes, query measurement and explicit loss/freshness/recovery targets yield usable decisions with costs.","evidence":[{"slide":1,"quote":"For simple local storage, an embedded database can avoid a separate service."}]},
+    "clarity": {"score":3,"reason":"Definitions and selective stock/index examples are usable, though the replication card compresses WAL, standby stages, partition behavior and promotion policy into five paragraphs. This is density rather than a missing required concept.","evidence":[{"slide":6,"quote":"The primary accepts writes; a physical standby is a replica that receives and replays WAL to maintain its copy."}]}
+  },
+  "outcomes": [
+    {"id":"reason-relational-fit","score":2,"reason":"All seven criteria supported by actual learner and quotes: server/table/join fit, alternatives, precise primary/unique/null/check/reference rules and limits of cross-row enforcement."},
+    {"id":"reason-acid-guarantees","score":2,"reason":"All eight criteria supported: learner accurately bounds ACID and external effects, defines MVCC and statement snapshots, derives the two-read race, and uses conditional decrement/affected-row check with same-transaction order creation and rollback. Alternative locking implementation is not required because a sound approach is taught."},
+    {"id":"reason-query-access-paths","score":2,"reason":"All nine criteria supported: learner transfers index shape to account/time, inspects plans and measures, explains scan and index costs, WAL/standby/lag and acknowledgement stages, asynchronous loss, partition tension and safe promotion responsibilities. Streaming transport internals are not required by the criteria."},
+    {"id":"reason-operational-costs","score":2,"reason":"All eight criteria supported: bounded connection demand, tested historical recovery, primary write limit and replica/index costs, schema rules and protected stock, query/index validation and requirements-led routing/failover/backup choices."}
+  ],
+  "hardFailures": [],
+  "sourceChecks": [
+    {"slide":1,"url":"https://www.postgresql.org/docs/current/tutorial-concepts.html","claim":"PostgreSQL concepts verifies relational rows/tables; SQL transaction and PostgreSQL server architecture explanations support connected application query processing.","verified":true},
+    {"slide":2,"url":"https://www.postgresql.org/docs/current/ddl-constraints.html","claim":"PostgreSQL constraints page verifies CHECK accepts true/null, NOT NULL requirement, primary-key uniqueness/non-nullness, UNIQUE null semantics and referential limits.","verified":true},
+    {"slide":3,"url":"https://www.postgresql.org/docs/current/tutorial-transactions.html","claim":"PostgreSQL transactions tutorial verifies grouped atomic commit/rollback; isolation and WAL followups bound concurrency and persistence; external HTTP effects are outside the stated database boundary.","verified":true},
+    {"slide":4,"url":"https://www.postgresql.org/docs/current/transaction-iso.html","claim":"PostgreSQL transaction isolation page verifies per-statement Read Committed snapshots and waiting/re-evaluating WHERE on a concurrently updated row, as used by the conditional-stock example.","verified":true},
+    {"slide":5,"url":"https://www.postgresql.org/docs/current/indexes-intro.html","claim":"PostgreSQL index introduction verifies lookup/maintenance tradeoff; official EXPLAIN documentation verifies planner-selected execution and alternatives to index scans.","verified":true},
+    {"slide":6,"url":"https://www.postgresql.org/docs/current/warm-standby.html","claim":"PostgreSQL warm-standby page verifies WAL receipt/replay, async loss and configurable sync stages; WAL introduction and failover followups verify persistence ordering and exclusive replacement authority.","verified":true},
+    {"slide":7,"url":"https://www.postgresql.org/docs/current/continuous-archiving.html","claim":"PostgreSQL continuous archiving verifies historical backup/WAL recovery; max_connections documentation verifies connection-dependent resource allocation.","verified":true},
+    {"slide":8,"url":"https://www.postgresql.org/docs/current/tutorial-concepts.html","claim":"PostgreSQL concepts and previously checked constraints/isolation/index/replication documentation support the final mechanism-based synthesis; no universal vendor guarantee is asserted.","verified":true}
+  ]
+}

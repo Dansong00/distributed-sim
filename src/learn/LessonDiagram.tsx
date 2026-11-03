@@ -10,11 +10,11 @@ export function LessonDiagram({ slide }: { slide: number }) {
     <div><h4>Stateless</h4><div className="lesson-node"><Monitor />Client</div><ArrowDown className="lesson-down" aria-hidden="true" /><div className="lesson-server-pair"><div className="lesson-node"><Server />Server A</div><div className="lesson-node"><Server />Server B</div></div><figcaption>Either server can handle it</figcaption></div>
     <div><h4>Stateful</h4><div className="lesson-node"><Monitor />Client</div><ArrowDown className="lesson-down" aria-hidden="true" /><div className="lesson-node"><Server />Server A</div><figcaption>Session data stays on A</figcaption></div>
   </figure>;
-  return <figure className="lesson-diagram" aria-label="The browser sends a request to the API server and receives a response.">
+  return <figure className="lesson-diagram" aria-label="The client sends a request to the server and receives a response.">
     <div className="lesson-exchange">
-      <div className="lesson-node"><Monitor /><span>Browser</span></div>
-      <div className="lesson-messages"><span>Get profile</span><ArrowRight aria-hidden="true" /><span>Profile data</span><ArrowLeft aria-hidden="true" /></div>
-      <div className="lesson-node"><Server /><span>API Server</span><small>{slide === 1 ? "Checks access" : ""}</small></div>
+      <div className="lesson-node"><Monitor /><span>Client</span></div>
+      <div className="lesson-messages"><span>Request</span><ArrowRight aria-hidden="true" /><span>Response</span><ArrowLeft aria-hidden="true" /></div>
+      <div className="lesson-node"><Server /><span>Server</span><small>{slide === 1 ? "Checks access" : ""}</small></div>
     </div>
     {slide === 1 && <div className="lesson-storage"><ArrowDown aria-hidden="true" /><div className="lesson-node"><Database />Database</div></div>}
   </figure>;

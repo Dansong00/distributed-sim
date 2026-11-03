@@ -4,7 +4,7 @@ import "./database-lessons.css";
 export function CdnHttpCachingDiagram({ slide }: { slide: number }) {
   switch (slide) {
     case 0:
-      return <figure className="lesson-diagram database-flow" aria-label="On a miss, a public logo request goes browser to CDN to origin and the response returns origin to CDN to browser. A browser hit avoids the network request; a CDN hit avoids origin. Storage at each cache depends on its policy.">
+      return <figure className="lesson-diagram database-flow" aria-label="On a miss, a cacheable GET request goes browser to CDN to origin and the response returns origin to CDN to browser. A browser hit avoids the network request; a CDN hit avoids origin. Storage at each cache depends on its policy.">
         <div className="database-flow-step"><div className="lesson-node">Browser private cache<small>Hit: no network request</small></div><ArrowUpDown aria-hidden="true" /></div>
         <div className="database-flow-step"><div className="lesson-node">CDN shared edge cache<small>Hit: no origin request</small></div><ArrowUpDown aria-hidden="true" /></div>
         <div className="database-flow-step"><div className="lesson-node">Origin<small>Serves the resource on a miss</small></div></div>
