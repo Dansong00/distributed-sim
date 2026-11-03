@@ -1,0 +1,111 @@
+export const keyValueLesson = {
+  title: "Key-Value Data Access",
+  reviewed: "2026-11-03",
+  slides: [
+    {
+      section: "The Access Model", title: "Use a known key to retrieve its value",
+      paragraphs: [
+        { label: "Key", text: "Identifies an entry within a store or namespace. The caller supplies this identifier to find the associated value." },
+        { label: "Value", text: "The data stored at that key. It may be bytes, text or a structured record, depending on the store. The application must understand its format." },
+        "A key-value store can hold authoritative data, the record the application treats as its source of truth. It can also hold a disposable copy of data kept elsewhere. That second role is caching; the access model does not decide the role.",
+        "The key-value label says nothing by itself about whether acknowledged writes survive a crash. Check the store's persistence settings and failure guarantees before using it as the only copy.",
+      ],
+      remember: "Start with what the caller knows: the key, and which value it needs.",
+      source: "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html",
+    },
+    {
+      section: "Basic Operations", title: "Read, replace or remove an entry",
+      paragraphs: [
+        { label: "Get", text: "Reads the value for a key, or reports that no entry was found. An empty value is not necessarily an absent entry." },
+        { label: "Put", text: "Stores a value at a key. In a replacement API, putting {mode: quiet, color: green}, then {mode: loud}, leaves only {mode: loud}. The old color field is gone." },
+        { label: "Delete", text: "Removes the entry. A subsequent read that observes this deletion reports absence." },
+        "These names describe a basic interface. Check whether the actual operation replaces, merges fields or rejects an existing key; those behaviors are not interchangeable.",
+        "A get timeout means no result arrived. It does not tell you whether the key exists. Keep operational failures separate from confirmed absence; turning an outage into 'not found' can create incorrect replacement data.",
+      ],
+      remember: "Know the operation's semantics before interpreting its result.",
+      source: "https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_GetItem.html",
+    },
+    {
+      section: "Key and Value Design", title: "Make the key match the record's identity",
+      paragraphs: [
+        "Choose the value boundary around data read and changed together. A complete preferences record fits a lookup for all of one account's preferences. Large values also cost more to transfer and replace.",
+        { label: "Namespace", text: "Separates groups of keys. If account IDs repeat across organizations, include the organization, account ID and record kind. Otherwise preferences for account 7 can collide with another organization's account 7 or its status record." },
+        "Use an unambiguous encoding of those parts. A separator is safe only if values cannot contain it or are escaped consistently. Every caller must construct the same identity the same way.",
+        "A key selects data; it does not grant permission. Verify the caller's access to the organization and record before reading or changing it. A guessed key must not bypass that check.",
+      ],
+      remember: "Design identity, value boundaries and authorization as separate decisions.",
+      source: "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/specifying-conditions.html",
+    },
+    {
+      section: "Queries Beyond a Key", title: "A field inside a value is not automatically searchable",
+      paragraphs: [
+        "Knowing a record's ID lets you fetch it. Asking for all records in a city is a different operation when you do not know their IDs. Storing the city inside each value does not create an efficient lookup by city.",
+        { label: "Scan", text: "Examines entries and filters their values. Its work grows with the entries inspected, even if few match. Filtering the results does not undo the reads already performed." },
+        { label: "Secondary index", text: "Maintains another lookup, such as city to matching record IDs. It can find candidates without inspecting every value, then fetch the needed records." },
+        "An index takes storage and update work. When a record moves cities or is deleted, the index must change too. Check who maintains it and when its results reflect writes; an application-maintained index adds coordination work.",
+        "Some stores supply indexes or ordered range queries; basic key-value access promises neither. Choose the actual access path for each required query.",
+      ],
+      remember: "List the questions your application must answer before choosing its keys and indexes.",
+      source: "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/SecondaryIndexes.html",
+    },
+    {
+      section: "Concurrent Updates", title: "A read followed by a write leaves a gap",
+      paragraphs: [
+        "Two callers read a count of 10. Each adds one locally and puts 11. Both writes can succeed, but the final count is 11 instead of 12. One intended increment is lost.",
+        { label: "Atomic conditional write", text: "Tests a condition and changes the value as one indivisible operation. With version checking, a caller supplies the version it read; the store writes only if that version still matches, and advances it on success." },
+        "Only one update based on the old version succeeds. The rejected caller rereads the current value and version, recomputes its change and makes another conditional attempt. Bound retries when contention persists.",
+        "Checking the version in a separate request before an unconditional put leaves the same race. Verify that the chosen store supports the required atomic operation. Protection for one key does not automatically cover a group of keys or an external action.",
+      ],
+      remember: "The condition and the write must share the same atomic boundary.",
+      source: "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html",
+    },
+    {
+      section: "Uncertain Writes and Retries", title: "A missing response leaves the outcome unknown",
+      paragraphs: [
+        "A write can finish and its reply can be lost. A timeout therefore does not prove that the write failed to execute.",
+        { label: "Idempotent effect", text: "Repeating the same operation leaves the same result. Replacing a value with the identical value twice does this if no other write intervenes. Executing an increment twice adds twice, even if each increment is individually atomic." },
+        "An unconditional retry can also overwrite a newer intervening write. Use the store's documented conditions or operation-identity mechanism when that conflict matters.",
+        "To prevent duplicate increments, the system must recognize the same logical operation and prevent a second effect. Keep the same ID and intent on retries. A request ID alone is insufficient: recording it and changing the data must be coordinated atomically, with duplicate records retained for the retry window. Verify the product's actual support and scope.",
+        "Without verified duplicate protection, do not blindly repeat the uncertain increment. Reconcile its outcome through an application recovery path. Use bounded retry/backoff for retryable failures; retrying every error can worsen an outage.",
+      ],
+      remember: "Atomic execution and harmless repetition are different guarantees.",
+      source: "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html",
+    },
+    {
+      section: "Entry Lifetime", title: "Expiration and eviction remove data for different reasons",
+      paragraphs: [
+        { label: "Time to live, or TTL", text: "An expiration rule for an entry. Check when the product stops returning expired data and when it physically removes it. For example, DynamoDB's background TTL deletion can leave expired items readable while deletion is pending." },
+        { label: "Eviction", text: "Removes entries to manage capacity, such as memory pressure, when the store's policy permits it. An entry can disappear before its TTL; a TTL is not a promise to retain it until the deadline." },
+        "Neither removal mechanism fetches a fresh replacement. A cache user may reload from its source; an authoritative record needs a deliberate retention and recovery policy. Do not silently treat required data as disposable.",
+        "Expiration is also not a scheduler promising that business work runs at the exact deadline. Enforce an access deadline when authorizing use, and use a suitable work-execution mechanism for timed actions.",
+        "Check TTL support, expiry visibility and eviction configuration in the chosen implementation before relying on any of them.",
+      ],
+      remember: "Decide whether a missing entry is acceptable, and what the application should do next.",
+      source: "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/TTL.html",
+    },
+    {
+      section: "Distribution and Guarantees", title: "Spreading keys does not settle every bottleneck",
+      paragraphs: [
+        { label: "Data partition", text: "A portion of the keyspace assigned to a storage node or group. Distributing different key groups can spread their storage and request work." },
+        { label: "Hot key", text: "Receives a disproportionate share of requests. More partitions alone may not help when most work still targets that key's serving capacity. Measure the distribution of requests, not just the number of keys." },
+        { label: "Read consistency", text: "Describes which writes a read is guaranteed to observe. A replica is another maintained copy; if it lags and the read mode permits stale results, it can return an older value after a successful write." },
+        { label: "Durability", text: "Concerns whether acknowledged data survives specified failures. A durable write can still be absent from a lagging read. Conversely, seeing a new value does not prove that it will survive a crash." },
+        "Check the implementation, persistence and replication settings, and the selected read/write mode. More nodes or a successful acknowledgement alone cannot establish every freshness and failure-survival guarantee.",
+      ],
+      remember: "Evaluate load distribution, read visibility and failure survival separately.",
+      source: "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html",
+    },
+    {
+      section: "Choosing the Access Model", title: "Start with the operations the workload needs",
+      paragraphs: [
+        "Independent records fetched and replaced by a known key are a direct fit. The application can ask for the needed value without discovering matching records through a scan.",
+        { label: "Changing filters and joins", text: "Joins combine related records. Frequent joins or new filters over value fields need more than basic key lookup. Scans read extra data; indexes and duplicated records add update work; application-side joins add requests and coordination." },
+        "A store with richer query or transaction support may fit those requirements better. A product can support several access models; the labels alone do not decide the choice.",
+        "Before selecting it, verify authorization, value size and traffic distribution, concurrent-update and retry behavior, required read freshness, durability and retention. Explain which requirements matter for this workload and what happens when the store is unavailable.",
+        "Measure representative requests and failures. A known-key lookup can avoid unnecessary search, but network, value size, hot keys and implementation limits still affect latency and capacity.",
+      ],
+      remember: "A simple access model is useful when it matches the work and its required guarantees.",
+      source: "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-general-nosql-design.html",
+    },
+  ],
+};

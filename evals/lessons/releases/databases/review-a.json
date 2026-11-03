@@ -1,32 +1,30 @@
 {
-"lessonHash": "bfd3da6c352f2ecc613acd31b15a586aa9985642ed940b967289ef26f49e8886",
-"rubricHash": "d1ced45d34a6debb6730654bcce19c45aa2a1f83b39508ef94e9b31b403cb308",
-"reviewer": "/root/concept_review_foundations_a",
-"learnerHash": "3055d3c27eb315570ae2e68b99bd822567d0b820f38f516f9a6d7122e834bec4",
-"dimensions": {
-"accuracy": {"score":4,"reason":"Models and capabilities are separated correctly; persistence, indexes and CAP limits agree with primary sources. Diagrams compare identical product data without implying exclusive capabilities.","evidence":[{"slide":2,"quote":"Categories describe common strengths, not exclusive capabilities."}]},
-"mechanisms": {"score":4,"reason":"Connects representation to reads and duplicate updates; indexing and partition communication explain benefits and failures, beyond listing products.","evidence":[{"slide":6,"quote":"Keeping shared facts in one place reduces duplicate updates but can require joins at read time."}]},
-"coherence": {"score":4,"reason":"Managed data leads to requirements, record and specialized models, overlapping features, costs and failure-aware selection. All eight card objectives support that progression.","evidence":[{"slide":8,"quote":"Connect each requirement to a data layout or capability, then name its write, storage, coordination or operating cost."}]},
-"decisions": {"score":4,"reason":"Gives query and correctness criteria, one-store versus additional-store costs, and measurements that could overturn a choice.","evidence":[{"slide":5,"quote":"A separate service can still make sense when workload needs or operating limits justify it."}]},
-"clarity": {"score":3,"reason":"Definitions and diagrams make the broad survey usable. Slide 4 compresses three specialized mechanisms, but explains every required concept without a missing prerequisite.","evidence":[{"slide":4,"quote":"An embedding represents an item as a list of numbers."}]}
-},
-"outcomes": [
-{"id":"role-and-requirements","score":2,"reason":"All six criteria: learner defines persistent operations, layout/application coupling and recovery limits; inventories records, access patterns, rules, growth, latency and operations; rejects category guarantees using slides 1-2 and 8."},
-{"id":"data-models","score":2,"reason":"All six criteria: slides 3-4 support rows/columns/joins, documents and duplicate-update cost, direct keys, query-driven partition grouping, graph traversal and numerical similarity with truth/equality limits."},
-{"id":"overlap-and-cost","score":2,"reason":"All six criteria: slides 4-6 and 8 support overlapping spatial/vector features, measurement, additional-store coordination, index storage/write costs, duplication and distribution. Learner does not infer performance equivalence from feature names."},
-{"id":"partitions-and-choice","score":2,"reason":"All six criteria: slides 7-8 support live isolated copies, completed-write consistency and request completion, partition-conditional conflict, operation/configuration dependence, requirement-to-cost reasoning and measurements that change a vendor-independent choice."}
-],
-"hardFailures": [
-
-],
-"sourceChecks": [
-{"slide":1,"url":"https://www.postgresql.org/docs/current/tutorial-concepts.html","claim":"PostgreSQL concepts confirms managed relational records; PostgreSQL Backup and Restore explicitly calls for backups and explains recovery approaches.","verified":true},
-{"slide":2,"url":"https://www.postgresql.org/docs/current/datatype-json.html","claim":"PostgreSQL JSON Types confirms relational JSON support; MongoDB modeling links flexible records to application access patterns.","verified":true},
-{"slide":3,"url":"https://www.mongodb.com/docs/manual/data-modeling/","claim":"MongoDB modeling guidance connects embedding and references to read patterns and duplicate-update work; PostgreSQL concepts corroborates relational representation.","verified":true},
-{"slide":4,"url":"https://cassandra.apache.org/doc/latest/cassandra/developing/data-modeling/data-modeling_logical.html","claim":"Cassandra logical modeling selects tables and partition keys from queries. Neo4j graph concepts confirms traversal; pgvector confirms approximate search trades recall for speed.","verified":true},
-{"slide":5,"url":"https://postgis.net/documentation/","claim":"PostGIS documentation and linked Getting Started confirm its PostgreSQL extension; pgvector README confirms vector similarity in PostgreSQL.","verified":true},
-{"slide":6,"url":"https://www.postgresql.org/docs/current/indexes-intro.html","claim":"PostgreSQL indexes introduction explains selective lookup and maintenance/space costs. Distribution and duplication costs are explicitly conditional design guidance.","verified":true},
-{"slide":7,"url":"https://apple.github.io/foundationdb/cap-theorem.html","claim":"FoundationDB CAP page distinguishes theorem availability from system availability; Gilbert-Lynch proof confirms the isolated-write/read conflict.","verified":true},
-{"slide":8,"url":"https://www.postgresql.org/docs/current/tutorial-concepts.html","claim":"PostgreSQL concepts, Cassandra and MongoDB modeling support choosing representation from requirements. No universal performance or recovery guarantee is claimed.","verified":true}
-]
+  "lessonHash": "526f3f7f4fd02566026d9be1b2556b96217ad99420178cf5042afadb7b3ad881",
+  "rubricHash": "d1ced45d34a6debb6730654bcce19c45aa2a1f83b39508ef94e9b31b403cb308",
+  "reviewer": "/root/kv_refresh_review_a",
+  "learnerHash": "f4e927b1f533c4a4d6eb7cff62cc2eee41a41cdda8f917c40a85e803c3174ac9",
+  "dimensions": {
+    "accuracy": {"score":4,"reason":"Database-role and requirements-first correctly avoid automatic durability and category guarantees. Live product documentation supports model overlap; specialized-access claims were checked with Cassandra, Neo4j and pgvector followups.","evidence":[{"slide":1,"quote":"Persistence still depends on storage and recovery configuration."}]},
+    "mechanisms": {"score":4,"reason":"Record-models explains read and update work; specialized-access defines partition keys, graph traversal and vectors; database-costs links indexes, copies and distribution to concrete extra work.","evidence":[{"slide":6,"quote":"It consumes storage and needs maintenance when data changes."}]},
+    "coherence": {"score":4,"reason":"All eight objectives form a requirements-to-model-to-cost progression with CAP introduced after replication is defined. Assigned overview diagram meaning agrees with prose; shared dialog/CSS inspected only. Existing basic network and program prerequisites suffice.","evidence":[{"slide":7,"quote":"Replication maintains copies of data on multiple servers."}]},
+    "decisions": {"score":4,"reason":"Capabilities-overlap and justify-database-choice require measuring real queries before adding stores; cap-introduction connects missing information to stale responses or unavailable operations.","evidence":[{"slide":8,"quote":"Connect each requirement to a data layout or capability, then name its write, storage, coordination or operating cost."}]},
+    "clarity": {"score":3,"reason":"Terminology is explained and the overview is usable, though the specialized-access card compresses three distinct models and the document diagram uses literal escaped newline text, reducing visual ease.","evidence":[{"slide":4,"quote":"Partition lookups, relationship paths, and similarity searches are different workloads."}]}
+  },
+  "outcomes": [
+    {"id":"role-and-requirements","score":2,"reason":"All six criteria supported: learner defines persistent managed data and query/update dependence, rejects guaranteed loss protection, lists records/relationships/read-update patterns, rules/growth/latency/recovery and rejects category guarantees."},
+    {"id":"data-models","score":2,"reason":"All six criteria supported: rows/columns/joins, grouped documents with duplicate update cost, key lookup limits, query-shaped partition grouping distinct from network failure, graph traversal and numeric similarity with no truth/equality guarantee."},
+    {"id":"overlap-and-cost","score":2,"reason":"All six criteria supported across the answer: overlapping spatial/vector capability, actual guarantees and representative measurement, additional synchronization/operations, index maintenance, duplicate coordination and distribution failure costs. Synchronization plus explained divergent copies supports potential disagreement."},
+    {"id":"partitions-and-choice","score":2,"reason":"All six criteria supported: replicated copies, communication partition, single-copy consistency versus completion, isolated-reader conflict, configuration-scoped guarantees, requirements/cost/failure reasoning and workload-driven reconsideration without mandatory vendor or multiple stores."}
+  ],
+  "hardFailures": [],
+  "sourceChecks": [
+    {"slide":1,"url":"https://www.postgresql.org/docs/current/tutorial-concepts.html","claim":"Live PostgreSQL concepts verifies relational stored data organization. Backup/restore followup verifies regular backups and explicit recovery assumptions; the linked concepts page alone does not establish recovery guarantees.","verified":true},
+    {"slide":2,"url":"https://www.postgresql.org/docs/current/datatype-json.html","claim":"Live PostgreSQL JSON Types verifies relational JSON support. MongoDB data modeling corroborates query-driven structure and validation; categories therefore do not define exclusive capabilities.","verified":true},
+    {"slide":3,"url":"https://www.mongodb.com/docs/manual/data-modeling/","claim":"Live MongoDB modeling verifies documents, nested relationships, embedding/reference decisions and access-pattern design; PostgreSQL concepts verifies rows/columns. Direct-key lookup is the defined model, not a claimed product performance guarantee.","verified":true},
+    {"slide":4,"url":"https://cassandra.apache.org/doc/latest/cassandra/developing/data-modeling/data-modeling_logical.html","claim":"Live Cassandra logical modeling explicitly selects one table per query and partition keys from query attributes. Primary Neo4j graph concepts verifies traversal; pgvector README verifies numerical vectors and approximate recall/speed tradeoffs. Cassandra alone is not evidence for the latter two capabilities.","verified":true},
+    {"slide":5,"url":"https://postgis.net/documentation/","claim":"Live PostGIS documentation linked Getting Started verifies enabling its PostgreSQL extension and spatial SQL; pgvector primary README verifies vector columns and nearest-neighbor queries in PostgreSQL.","verified":true},
+    {"slide":6,"url":"https://www.postgresql.org/docs/current/indexes-intro.html","claim":"Live PostgreSQL indexes introduction explains reduced scans and maintenance overhead. MongoDB modeling and the CAP source substantiate duplicate layouts and distributed coordination limits; no cost-free model is asserted.","verified":true},
+    {"slide":7,"url":"https://apple.github.io/foundationdb/cap-theorem.html","claim":"Live FoundationDB CAP explanation defines completed-write reads, partitioned communication and the conditional consistency/availability conflict, including independent divergent copies.","verified":true},
+    {"slide":8,"url":"https://www.postgresql.org/docs/current/tutorial-concepts.html","claim":"Live PostgreSQL concepts establishes layout alternatives, not a universal selection recipe. The card is a defensible synthesis of the checked MongoDB query-first modeling, PostgreSQL indexing costs and backup requirements.","verified":true}
+  ]
 }

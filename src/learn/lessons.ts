@@ -14,13 +14,14 @@ import { apiGatewaysLesson } from "./api-gateways";
 import { loadBalancingLesson } from "./load-balancing";
 import { queuesLesson } from "./queues";
 import { cachingLesson } from "./caching";
+import { keyValueLesson } from "./key-value";
 
-export const lessons = { "client-server": clientServerLesson, "api-server": apiServerLesson, databases: databasesLesson, cap: capLesson, replication: replicationLesson, caching: cachingLesson, queues: queuesLesson, "load-balancing": loadBalancingLesson, "api-gateways": apiGatewaysLesson, dns: dnsLesson, "cdn-http-caching": cdnHttpCachingLesson, postgresql: postgresqlLesson, sqlite: sqliteLesson, mysql: mysqlLesson };
+export const lessons = { "key-value": keyValueLesson, "client-server": clientServerLesson, "api-server": apiServerLesson, databases: databasesLesson, cap: capLesson, replication: replicationLesson, caching: cachingLesson, queues: queuesLesson, "load-balancing": loadBalancingLesson, "api-gateways": apiGatewaysLesson, dns: dnsLesson, "cdn-http-caching": cdnHttpCachingLesson, postgresql: postgresqlLesson, sqlite: sqliteLesson, mysql: mysqlLesson };
 export type LessonId = keyof typeof lessons;
 
 export function lessonsFor(node: DiagramNode): LessonId[] {
   if (node.kind !== "component") return [];
-  if (node.category === "Caches" || node.componentType === "cache") return ["caching"];
+  if (node.category === "Caches" || node.componentType === "cache") return ["caching", "key-value"];
   if (node.category === "Messaging" || node.componentType === "queue") return ["queues"];
   const technology = node.technology?.trim().toLowerCase();
   if (node.componentType === "network" && technology === "cdn") return ["cdn-http-caching"];
@@ -28,6 +29,7 @@ export function lessonsFor(node: DiagramNode): LessonId[] {
   if (node.componentType === "network" && technology === "api gateway") return ["api-gateways"];
   if (node.componentType === "network" && technology === "load balancer") return ["load-balancing"];
   if (node.category === "Databases" || node.componentType === "database") {
+    if (technology === "dynamodb" || technology === "generic database" || (!technology && node.componentType === "database")) return ["databases", "cap", "replication", "key-value"];
     if (technology === "postgresql") return ["databases", "cap", "replication", "postgresql"];
     if (technology === "sqlite") return ["databases", "cap", "replication", "sqlite"];
     if (technology === "mysql") return ["databases", "cap", "replication", "mysql"];

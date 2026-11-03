@@ -1,11 +1,7 @@
 # Database Overview release evidence
 
-Revised under the concept-first brief: examples appear only where they clarify a mechanism, decision or failure. Original card count and routing preserved.
+Content, diagram, eligibility and contract are unchanged from the [concept-first release](../../CONCEPT-FIRST-RELEASE.md). Registering the key-value diagram changed the shared renderer binding, so this release uses fresh actual evidence.
 
-Fresh learner `/root/concept_learner_q03`; independent reviewers `/root/concept_review_foundations_a` and `/root/concept_review_foundations_b`. Scores 19/20 and 19/20, all outcomes 2/2, no hard failures. Every objective, diagram meaning and distinct source checked. Adjacent JSON files are byte-identical to the actual reports.
+Learner `/root/kv_refresh_f03`; independent reviewers `/root/kv_refresh_review_a` and `/root/kv_refresh_review_b`. Scores **19/20 and 20/20**, every outcome 2/2, no hard failures. Every objective, diagram meaning and distinct primary source checked. Adjacent JSON files are byte-identical copies of the finalized reports.
 
-```sh
-npm run eval:lessons -- check-release databases evals/lessons/releases/databases
-```
-
-Current-source gate passes. Shared test, browser, calibration and archive evidence: [editorial release](../../CONCEPT-FIRST-RELEASE.md). These evaluations assess content readiness, not human learning.
+`npm run eval:lessons -- check-release databases evals/lessons/releases/databases` passes against current source. [Shared verification and external archive](../key-value/REPORT.md); [previous report](https://github.com/Dansong00/distributed-sim/blob/6a7b04f97eaea09853a1bff2f66d24e47f9845aa/evals/lessons/releases/databases/REPORT.md). These checks assess content readiness, not human learning.

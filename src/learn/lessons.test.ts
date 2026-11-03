@@ -12,7 +12,7 @@ it("orders shared then specific lessons for API servers even after a rename", ()
 it.each(["mobile-app", "web-browser", "generic-server", "serverless-function"])("keeps %s on the shared lesson only", preset => {
   expect(lessonsFor(createComponent(preset, { x: 0, y: 0 }))).toEqual(["client-server"]);
 });
-it.each(["generic-database", "mongodb", "neo4j", "cassandra", "postgis", "pgvector"])("offers overview, CAP, then Replication for %s", preset => {
+it.each(["mongodb", "neo4j", "cassandra", "postgis", "pgvector"])("offers overview, CAP, then Replication for %s", preset => {
   expect(lessonsFor(createComponent(preset, { x: 0, y: 0 }))).toEqual(["databases", "cap", "replication"]);
 });
 it("orders the overview before SQLite and uses technology rather than the display name", () => {
@@ -55,12 +55,12 @@ it("keeps existing five-slide decks and database decks under ten slides", () => 
 it.each(["generic-cache", "redis", "memcached"])("offers caching for %s after renaming", preset => {
   const node = createComponent(preset, { x: 0, y: 0 });
   node.name = "Product details";
-  expect(lessonsFor(node)).toEqual(["caching"]);
+  expect(lessonsFor(node)).toEqual(["caching", "key-value"]);
 });
 it("supports uncategorized cache components and excludes cache annotations", () => {
   const node = createComponent("redis", { x: 0, y: 0 });
   node.category = undefined;
-  expect(lessonsFor(node)).toEqual(["caching"]);
+  expect(lessonsFor(node)).toEqual(["caching", "key-value"]);
   expect(lessonsFor({ ...node, kind: "sticky" })).toEqual([]);
 });
 
@@ -141,4 +141,26 @@ it("offers CDN and HTTP caching only for CDN technology after renaming", () => {
     other.name = "CDN";
     expect(lessonsFor(other)).not.toContain("cdn-http-caching");
   }
+});
+
+
+it.each(["generic-database", "dynamodb"])("adds key-value access after database foundations for %s", preset => {
+  const node = createComponent(preset, { x: 0, y: 0 });
+  node.name = "Account preferences";
+  expect(lessonsFor(node)).toEqual(["databases", "cap", "replication", "key-value"]);
+});
+it("normalizes key-value database technology and removes its deck when technology changes", () => {
+  const node = createComponent("dynamodb", { x: 0, y: 0 });
+  node.category = undefined;
+  node.technology = " DynamoDB ";
+  expect(lessonsFor(node)).toEqual(["databases", "cap", "replication", "key-value"]);
+  node.technology = "MongoDB";
+  expect(lessonsFor(node)).toEqual(["databases", "cap", "replication"]);
+  node.technology = "DynamoDB";
+  expect(lessonsFor({ ...node, kind: "sticky" })).toEqual([]);
+});
+it.each(["postgresql", "mysql", "sqlite", "mongodb", "api-server", "generic-queue"])("does not infer a key-value deck from the display name of %s", preset => {
+  const node = createComponent(preset, { x: 0, y: 0 });
+  node.name = "Redis";
+  expect(lessonsFor(node)).not.toContain("key-value");
 });

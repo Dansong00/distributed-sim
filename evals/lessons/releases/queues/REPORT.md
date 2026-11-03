@@ -1,13 +1,7 @@
 # Message Queues and Background Workers release evidence
 
-Revised under the concept-first brief: examples appear only where they clarify a mechanism, decision or failure. Original card count and routing preserved.
+Content, diagram, eligibility and contract are unchanged from the [concept-first release](../../CONCEPT-FIRST-RELEASE.md). Registering the key-value diagram changed the shared renderer binding, so this release uses fresh actual evidence.
 
-Fresh learner `/root/concept_learner_q11`; independent reviewers `/root/concept_review_recent_a` and `/root/concept_review_recent_b`. Scores 20/20 and 20/20, all outcomes 2/2, no hard failures. Every objective, diagram meaning and distinct source checked. Adjacent JSON files are byte-identical to the actual reports.
+Learner `/root/kv_refresh_f10`; independent reviewers `/root/kv_refresh_review_a` and `/root/kv_refresh_review_b`. Scores **20/20 and 20/20**, every outcome 2/2, no hard failures. Every objective, diagram meaning and distinct primary source checked. Adjacent JSON files are byte-identical copies of the finalized reports.
 
-```sh
-npm run eval:lessons -- check-release queues evals/lessons/releases/queues
-```
-
-Current-source gate passes. Shared test, browser, calibration and archive evidence: [editorial release](../../CONCEPT-FIRST-RELEASE.md). These evaluations assess content readiness, not human learning.
-
-[Previous report](https://github.com/Dansong00/distributed-sim/blob/de77e3a4ef3cc8f813a3e032c1bc32d78e49ea08/evals/lessons/releases/queues/REPORT.md) preserves earlier release provenance.
+`npm run eval:lessons -- check-release queues evals/lessons/releases/queues` passes against current source. [Shared verification and external archive](../key-value/REPORT.md); [previous report](https://github.com/Dansong00/distributed-sim/blob/6a7b04f97eaea09853a1bff2f66d24e47f9845aa/evals/lessons/releases/queues/REPORT.md). These checks assess content readiness, not human learning.
