@@ -1,11 +1,7 @@
 # CAP Theorem release evidence
 
-Revised under the concept-first brief: examples appear only where they clarify a mechanism, decision or failure. Original card count and routing preserved.
+Content, diagram, eligibility and contract are unchanged from the [concept-first release](../../CONCEPT-FIRST-RELEASE.md). Registering the key-value diagram changed the shared renderer binding, so this release uses fresh actual evidence.
 
-Fresh learner `/root/concept_learner_cap_r2`; independent reviewers `concept_review_revisions_a` and `/root/concept_review_foundations_b`. Scores 20/20 and 20/20, all outcomes 2/2, no hard failures. Every objective, diagram meaning and distinct source checked. Adjacent JSON files are byte-identical to the actual reports.
+Learner `/root/kv_refresh_f04`; independent reviewers `/root/kv_refresh_review_a` and `/root/kv_refresh_review_b`. Scores **20/20 and 20/20**, every outcome 2/2, no hard failures. Every objective, diagram meaning and distinct primary source checked. Adjacent JSON files are byte-identical copies of the finalized reports.
 
-```sh
-npm run eval:lessons -- check-release cap evals/lessons/releases/cap
-```
-
-Current-source gate passes. Shared test, browser, calibration and archive evidence: [editorial release](../../CONCEPT-FIRST-RELEASE.md). These evaluations assess content readiness, not human learning.
+`npm run eval:lessons -- check-release cap evals/lessons/releases/cap` passes against current source. [Shared verification and external archive](../key-value/REPORT.md); [previous report](https://github.com/Dansong00/distributed-sim/blob/6a7b04f97eaea09853a1bff2f66d24e47f9845aa/evals/lessons/releases/cap/REPORT.md). These checks assess content readiness, not human learning.

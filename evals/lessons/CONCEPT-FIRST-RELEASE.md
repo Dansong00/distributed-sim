@@ -1,5 +1,7 @@
 # Concept-first revision — 2026-11-03
 
+Historical record of the editorial release. The unchanged lessons received fresh bound reports when the key-value diagram was registered in the shared viewer; see [the current release](releases/key-value/REPORT.md).
+
 All 14 existing stacks now explain connected concepts directly. Examples remain where they clarify a mechanism, distinction, trade-off or failure; a recurring application is optional. Card counts, component eligibility and renderer are unchanged.
 
 Eight older stacks received their first independently frozen contracts. The existing six retained their technical criteria; only application-specific framing changed in three. Rubric version 2 removes mandatory scenario continuity without changing thresholds (18/20, every dimension at least 3, every outcome 2, no hard failures, score disagreement at most 1). Contracts were frozen before prose; original checksums are archived.

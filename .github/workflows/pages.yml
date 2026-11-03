@@ -55,6 +55,8 @@ jobs:
         run: npm run eval:lessons -- check-release sqlite evals/lessons/releases/sqlite
       - name: Verify mysql release evidence
         run: npm run eval:lessons -- check-release mysql evals/lessons/releases/mysql
+      - name: Verify key-value release evidence
+        run: npm run eval:lessons -- check-release key-value evals/lessons/releases/key-value
       - name: Build for the repository URL
         run: npm run build -- --base /distributed-sim/
       - name: Upload site artifact

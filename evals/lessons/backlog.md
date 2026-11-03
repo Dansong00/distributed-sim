@@ -1,8 +1,8 @@
 # Autonomous learning stack backlog
 
-Status is local source coverage, not a claim of quality. All stacks require the new eval before being called approved. Existing source currently has Client / Server Model, API Server, Database Overview, CAP, Replication, PostgreSQL, SQLite, MySQL, Caching Fundamentals, Message Queues and Background Workers, Load Balancing, API Gateways, DNS, and CDN and HTTP Caching. All fourteen have current passing evaluation reports from the concept-first revision; see [shared evidence](CONCEPT-FIRST-RELEASE.md). This assesses content readiness, not human learning.
+Status is local source coverage, not a claim of quality. All stacks require the new eval before being called approved. Existing source currently has Client / Server Model, API Server, Database Overview, CAP, Replication, PostgreSQL, SQLite, MySQL, Caching Fundamentals, Message Queues and Background Workers, Load Balancing, API Gateways, DNS, and CDN and HTTP Caching, and Key-Value Data Access. The first fourteen retain the concept-first teaching described in [the editorial release](CONCEPT-FIRST-RELEASE.md); their evidence refresh and the new stack are tracked in [the key-value release](releases/key-value/REPORT.md). This assesses content readiness, not human learning.
 
-Default order is shared foundations first, then named technologies. The user approved continuing to CDN and HTTP caching after DNS; future scope corrections override this order.
+Default order is shared foundations first, then named technologies. The user selected Key-Value Data Access after CDN and HTTP caching; that choice overrides the earlier storage-first order. Future scope corrections override this order.
 
 ## Shared foundations
 
@@ -16,9 +16,11 @@ DNS is implemented for DNS components, covering discovery, delegation, record ty
 
 CDN and HTTP Caching is implemented for CDN components, covering response layers, freshness, conditional validation, private-data policies, variants, updates, bounded stale reuse and cost. See releases/cdn-http-caching/REPORT.md for current evidence.
 
+Key-Value Data Access is implemented for Generic Database, DynamoDB, Generic Cache, Redis and Memcached. Its nine cards cover operations, key/value boundaries, queries, concurrent updates, uncertain retries, lifetime, distribution and workload fit. Existing decks retain their order. This shared foundation does not certify product-specific behavior. See releases/key-value/REPORT.md for release gates and evidence.
+
 Next, in prerequisite order:
 1. Object storage; block storage; shared file storage.
-2. Sharding and partition keys; document databases; key-value data access.
+2. Sharding and partition keys; document databases.
 3. Wide-column, graph, geospatial, time-series, search, analytics, and vector retrieval foundations.
 4. Data lakes; lakehouses and table formats; model artifact storage.
 5. Embeddings; retrieval; reranking; model serving; feature stores; model registries.
