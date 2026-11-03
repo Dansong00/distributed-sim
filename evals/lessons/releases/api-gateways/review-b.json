@@ -1,43 +1,71 @@
 {
-  "lessonHash": "d7471c24db3fab160dc8bf1b76e1a886593da14ec4d1b0b293c523948cce3657",
+  "lessonHash": "201e82a24334d31f4ef6fedc3a2b218472910795411376568160285140956405",
   "rubricHash": "77bb703ca8a696a5e358f5fea1f801f1dd16968e5b3f10a64ef422bc1c99459b",
-  "reviewer": "/root/dns_review_b",
-  "learnerHash": "e4d81ea0cd9827cbb2bb4c3e6d7b9710d392ab45e435c8e383cd6291aad8b2c4",
+  "reviewer": "/root/cdn_review_b",
+  "learnerHash": "06a6e76dab98e5ff30cf0b824814a237a5b1b2984d83f199e75efd5bbc0bc533",
   "dimensions": {
     "accuracy": {
       "score": 4,
-      "reason": "All eight card objectives hold: gateway role/routing, decrypted shared checks, identity versus resource access, distributed quota scope, timeout uncertainty, atomic retry protection, partial aggregation and availability limits. Security diagram preserves authenticated caller path and service permission check.",
+      "reason": "Live Microsoft, OWASP and AWS sources support routing, identity boundary, quota precision, unknown write outcomes and atomic duplicate protection. No blanket security/availability guarantee. Diagrams accurately show request/return and protected identity followed by per-note checks.",
       "evidence": [
         {
           "slide": 3,
-          "quote": "Alice can send a header claiming to be Bob. Remove or replace client-supplied identity claims with the validated identity. Notes must accept that identity only through a protected path that authenticates the gateway, preventing a caller from impersonating it. Forwarded identity assertions must be verifiable by Notes."
-        }
-      ]
-    },
-    "mechanisms": {
-      "score": 4,
-      "reason": "Explicit trust boundaries, two-counter arithmetic, nested retry multiplication, transaction/crash-gap protection and optional-versus-required response branches support transferred reasoning.",
-      "evidence": [
+          "quote": "Block direct external access to Notes, or enforce equivalent identity and policy checks on that path. Otherwise callers can bypass the gateway. Encrypting a connection alone does not prove that its caller is the gateway."
+        },
         {
           "slide": 6,
           "quote": "In our design, Notes replicas share a durable database record keyed by caller and operation ID. In one transaction, reserve that key uniquely, create the note and record the result; commit all or none. Concurrent repeats cannot reserve it twice. A completed repeat returns the recorded result without creating another note."
         }
       ]
     },
-    "coherence": {
+    "mechanisms": {
       "score": 4,
-      "reason": "The Notes/Authors request develops through entrance policy, identity, load control, timeouts and retries into aggregation and fit. Transactions are a declared prerequisite; new gateway concepts are introduced before use.",
+      "reason": "Actors, trust boundary, counter example, nine-attempt amplification, transactional duplicate record and partial-failure branch allow the learner to trace outcomes and failure.",
       "evidence": [
         {
+          "slide": 4,
+          "quote": "Suppose each of two gateway replicas independently allows Alice 100 requests per minute. Sending traffic to both can admit 200. That does not enforce a promised combined allowance of 100."
+        },
+        {
+          "slide": 6,
+          "quote": "In our design, Notes replicas share a durable database record keyed by caller and operation ID. In one transaction, reserve that key uniquely, create the note and record the result; commit all or none. Concurrent repeats cannot reserve it twice. A completed repeat returns the recorded result without creating another note."
+        },
+        {
+          "slide": 7,
+          "quote": "Choose the response contract before failure: within a two-second overall budget, for example, stop waiting for optional names after 500 milliseconds and leave time to return the response. Return available notes with names explicitly marked unavailable, rather than claiming the data is complete."
+        }
+      ]
+    },
+    "coherence": {
+      "score": 4,
+      "reason": "One Notes scenario builds from entrance and policy through trust, load, waiting, retry ownership and aggregation. Transaction knowledge is declared; each card objective and its prerequisite concepts are supplied.",
+      "evidence": [
+        {
+          "slide": 1,
+          "quote": "Our app has a Notes service and an Authors service. An API gateway is a client-facing intermediary that forwards API requests and applies shared entrance rules. A backend service is the application that handles the forwarded request."
+        },
+        {
           "slide": 5,
-          "quote": "Timing out does not by itself cancel in-flight work or undo a committed note. The service can continue after the gateway stops waiting. Retrying that creation blindly can create another note."
+          "quote": "Notes may commit a new note while its response is lost. A gateway timeout or error tells the client that no successful response arrived in time, not whether the write committed. The outcome is unknown to the client."
+        },
+        {
+          "slide": 6,
+          "quote": "An idempotency key is one stable identifier for a logical operation, reused on every attempt. Deduplication means recognizing repeats. Notes, which owns the creation effect, must enforce it; a gateway adding a key cannot make an arbitrary write safe."
         }
       ]
     },
     "decisions": {
       "score": 4,
-      "reason": "Teaches when shared entry earns its cost, strict quota coordination costs, required versus optional failure choices and reachable failover with surviving capacity. More replicas are not presented as complete security or capacity.",
+      "reason": "Concrete choice of retry owner, explicit optional/required failure policy, coordination costs and when to omit a gateway support application beyond recalling terms.",
       "evidence": [
+        {
+          "slide": 4,
+          "quote": "Best-effort throttling may permit bursts or exceed a target; it is not strict quota accounting. A strict shared allowance needs coordinated admission so replicas cannot spend the same allowance twice. Coordination adds latency or a dependency that may require refusing work when accounting is unavailable."
+        },
+        {
+          "slide": 7,
+          "quote": "If required Notes data is unavailable by its allocated deadline, fail the overview instead. Do not invent notes or disguise required-data loss. Keep complex application workflows in a service rather than growing them inside gateway policies."
+        },
         {
           "slide": 8,
           "quote": "One adequate Notes API can check identity, permissions and request limits itself. A separate gateway may be unnecessary. Shared routing and policies across several services can justify one, but add a network hop, configuration and operating responsibility."
@@ -45,12 +73,16 @@
       ]
     },
     "clarity": {
-      "score": 4,
-      "reason": "Definitions and concrete numbers explain concepts at first use. Notes permissions, forged headers and lost creation response keep boundaries concrete; no unprovided advanced mechanism is required for the stated objectives.",
+      "score": 3,
+      "reason": "Definitions and small numerical examples are sufficient for the declared engineer. Identity and transaction cards are dense but readable; renderer and diagrams provide clear direction and labels.",
       "evidence": [
         {
           "slide": 4,
           "quote": "Throttling limits request rate. A burst is a short surge; a quota is an allowance over a stated period. Scope specifies which callers and gateway instances share a limit. A per-user limit groups requests by the validated user identity."
+        },
+        {
+          "slide": 5,
+          "quote": "A timeout limits how long a caller waits. An overall deadline is the latest useful response time. In-flight work means requests already underway."
         }
       ]
     }
@@ -59,32 +91,32 @@
     {
       "id": "routing-and-role",
       "score": 2,
-      "reason": "C1: client/gateway/Notes/database/reverse response traced. C2: service routing versus replica balancing with product overlap. C3: decrypt HTTP, bounded size check before forwarding and protect backend TLS. C4: shared checks avoid duplication while Notes retains business rules; slides 1/2 support all."
+      "reason": "C1: slide 1 and learner trace request and return via gateway. C2: routing versus replica selection allows one product to do both. C3: slide 2 teaches decryption and bounded early body rejection. C4: shared checks reduce duplication while business rules remain in Notes. Card 1 gateway/backend/replica and card 2 routing/edge-policy definitions are explicit."
     },
     {
       "id": "identity-and-bypass",
       "score": 2,
-      "reason": "C1: validated identity versus permission. C2: replace forged Bob header with Alice identity. C3: verifiable assertion plus authenticated protected gateway path, encryption alone insufficient. C4: block bypass or equivalent checks. C5: Notes denies Bob note absent Alice permission; slide 3 supports all."
+      "reason": "C1-2: slide 3 and learner distinguish credential validation from note permission and remove forged identity. C3: protected path authenticates gateway and Notes verifies assertions. C4: direct access blocked or checked equivalently. C5: Notes denies Alice absent per-note permission. Identity card covers every required distinction."
     },
     {
       "id": "distributed-limits",
       "score": 2,
-      "reason": "C1: combined user-minute scope, two local 100 limits admit 200. C2: burst/rate versus strict allowance. C3: coordinated admission with latency/dependency/refusal cost. C4: wait for retry delay and bound retries. C5: unequal query costs/shared database remain; slide 4 supports all."
+      "reason": "C1: slide 4 teaches combined scope and 2x100=200. C2: throttling, burst and quota definitions distinguish best effort from strict accounting. C3: shared admission prevents double spending, costing latency/dependency. C4: 429 delay and bounded retry. C5: unequal cost and database bottlenecks persist. Learner explains all five, not merely names them."
     },
     {
       "id": "create-note-timeout",
       "score": 2,
-      "reason": "C1: downstream wait reserves return time and retries share remaining deadline. C2: timeout neither proves failure nor cancels/undoes effect. C3: 3x3=9, one client retry owner with bounded delay. C4: stable caller/operation ID and cross-replica recorded outcome. C5: unique key, effect and result in one durable transaction, gateway-only or fresh keys insufficient; slides 5/6 support all."
+      "reason": "C1-2: slide 5 and learner budget all waits/retries and preserve unknown write outcome despite commit, without automatic cancellation. C3: slide 6 calculates nine and chooses client-only bounded delayed retry. C4-5: stable caller/operation key, shared durable result and atomic unique reservation plus creation explain both concurrency and crash protection; gateway-only/fresh-key failures explicit. Deadline and retry card criteria satisfied."
     },
     {
       "id": "overview-partial-failure",
       "score": 2,
-      "reason": "C1: one client response combines multiple backend calls, with dependency cost. C2: two-second budget and 500ms optional wait. C3: names explicitly unavailable while required notes returned. C4: fail if required Notes data unavailable; slide 7 supports all."
+      "reason": "C1: slide 7 defines aggregation/fan-out and client-call savings with remaining backend work. C2: two-second budget and 500ms optional deadline. C3: learner returns notes with explicitly unavailable names. C4: required Notes failure fails overview. All aggregation card criteria taught."
     },
     {
       "id": "gateway-fit-and-failure",
       "score": 2,
-      "reason": "C1: one adequate API may omit gateway; shared multi-service routing justifies. C2: extra hop/configuration/operation. C3: reachable alternate and surviving gateway/backend capacity. C4: replicas cannot fix shared policy, database bottleneck or omitted note permission; slide 8 supports all."
+      "reason": "C1-2: slide 8 supports omitting a gateway for one adequate API versus shared-service policies and hop/operations cost. C3: headroom definition and reachable alternate with surviving capacities. C4: shared bad rule/dependency, database overload and missing permissions remain. Learner and fit card cover all criteria."
     }
   ],
   "hardFailures": [],
@@ -92,49 +124,49 @@
     {
       "slide": 1,
       "url": "https://learn.microsoft.com/en-us/azure/architecture/microservices/design/gateway",
-      "claim": "Microsoft API gateways describes reverse-proxy routing/shared policy and gateway products that also distribute traffic across instances. Request diagram is consistent.",
+      "claim": "API gateway forwards requests, selects backends and can also load balance; Microsoft gateway architecture supports these roles.",
       "verified": true
     },
     {
       "slide": 2,
       "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/gateway-offloading",
-      "claim": "Microsoft Gateway Offloading explicitly terminates client TLS, validates backend certificate and separately encrypts backend hop; shared concerns do not replace business logic. Bounded body rejection is a stated policy design, not unlimited buffering.",
+      "claim": "Gateway offloading centralizes shared policies and TLS termination; application-specific decisions remain at services.",
       "verified": true
     },
     {
       "slide": 3,
       "url": "https://cheatsheetseries.owasp.org/cheatsheets/Microservices_Security_Cheat_Sheet.html",
-      "claim": "OWASP requires service-level object/business authorization, validated propagated identity and separately authenticated calling service, and prevention of gateway bypass. Identity diagram preserves these boundaries.",
+      "claim": "OWASP requires authenticated/verifiable propagated identity, prevention of unchecked bypass and service-level authorization.",
       "verified": true
     },
     {
       "slide": 4,
       "url": "https://learn.microsoft.com/en-us/azure/api-management/rate-limit-by-key-policy",
-      "claim": "Microsoft rate-limit-by-key warns distributed rate limiting is not exact and exposes 429/retry interval. Independent allowances can sum; a strict shared allowance requires preventing double admission, with dependency cost.",
+      "claim": "Microsoft warns distributed rate limiting is not fully accurate; independent counters cannot enforce one strict combined quota.",
       "verified": true
     },
     {
       "slide": 5,
       "url": "https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/",
-      "claim": "AWS timeouts/retries explains waiting limits and that timeout does not rule out side effects; bounded waits/retries must fit the caller deadline, not promise cancellation.",
+      "claim": "AWS states timeout does not establish absence of side effects; waits and retries must be bounded.",
       "verified": true
     },
     {
       "slide": 6,
       "url": "https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/",
-      "claim": "AWS idempotent APIs requires stable caller request identity and atomic token/mutation storage; retries article demonstrates layered multiplication and single retry point. Nine-attempt example and transaction scope are sound.",
+      "claim": "AWS explicitly requires atomic recording of idempotent token and related mutations; same client key recognizes repeats.",
       "verified": true
     },
     {
       "slide": 7,
       "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/gateway-aggregation",
-      "claim": "Microsoft Gateway Aggregation documents multiple backend calls, optional timeout/partial response and added bottleneck/dependency concerns. Lesson explicitly declares required Notes versus optional Authors contract.",
+      "claim": "Microsoft aggregation supports bounded dependency calls and explicit partial-versus-failed response policy.",
       "verified": true
     },
     {
       "slide": 8,
       "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/gateway-routing",
-      "claim": "Microsoft Gateway Routing notes single failure point, capacity bottleneck, load testing and lack of need for simple applications. Lesson makes alternate path/capacity requirements explicit rather than promising redundancy cures shared failures.",
+      "claim": "Microsoft routing identifies failure-point and bottleneck risks; replicas require usable paths and capacity.",
       "verified": true
     }
   ]
