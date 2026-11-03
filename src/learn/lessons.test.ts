@@ -40,6 +40,7 @@ it("orders the overview before MySQL after renaming and normalizes technology", 
 });
 it("hides lessons on unrelated components and annotations", () => {
   const node = createComponent("cdn", { x: 0, y: 0 });
+  node.technology = "Unsupported network appliance";
   expect(lessonsFor(node)).toEqual([]);
   expect(lessonsFor({ ...node, kind: "sticky", category: "Databases" })).toEqual([]);
 });
@@ -124,5 +125,20 @@ it("offers DNS only for network DNS technology after renaming", () => {
     const other = createComponent(preset, { x: 0, y: 0 });
     other.name = "DNS";
     expect(lessonsFor(other)).not.toContain("dns");
+  }
+});
+
+it("offers CDN and HTTP caching only for CDN technology after renaming", () => {
+  const node = createComponent("cdn", { x: 0, y: 0 });
+  node.name = "Notes edge";
+  node.technology = " cDn ";
+  expect(lessonsFor(node)).toEqual(["cdn-http-caching"]);
+  expect(lessonsFor({ ...node, category: undefined })).toEqual(["cdn-http-caching"]);
+  expect(lessonsFor({ ...node, kind: "sticky" })).toEqual([]);
+  expect(lessonsFor({ ...node, componentType: "client" })).toEqual(["client-server"]);
+  for (const preset of ["load-balancer", "api-gateway", "dns", "api-server"]) {
+    const other = createComponent(preset, { x: 0, y: 0 });
+    other.name = "CDN";
+    expect(lessonsFor(other)).not.toContain("cdn-http-caching");
   }
 });
