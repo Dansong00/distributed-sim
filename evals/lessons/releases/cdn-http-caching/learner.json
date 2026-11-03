@@ -1,15 +1,15 @@
 {
-  "lessonHash": "5723a000ebba2ee7e3e354ad5380069ebca7b307f5619403a3d14d805453392d",
+  "lessonHash": "3497c7006c3694e86f6356445b4f00a54837f29a362145a9f8ad2aee783b4ce7",
   "rubricHash": "3a284f263ba181997b31f9bc05a81ae3529fc276781fa2990485d2a3e1e8a488",
-  "respondent": "/root/cdn_learner_b6",
+  "respondent": "cdn-learner-refresh",
   "answers": [
     {
       "id": "public-asset-flow-and-value",
-      "answer": "An HTTP cache stores response bodies and metadata (status and headers) for reuse. The browser private cache serves that user agent; a CDN operates shared edge caches near users; origin is the responsible resource server. A hit reuses a suitable response, while a miss lacks a usable one. Empty caches send browser → CDN → origin and return origin → CDN → browser, storing only where policy permits. A browser hit avoids the network request; another browser that misses locally can get a CDN hit without origin contact. Stored objects are HTTP responses, not replicated database records; hits need not reach origin or its database. CDN request hit ratio is hits divided by requests reaching that CDN: 800/1000 = 80%. The other 200 each make one origin request, so origin receives 200. Browser hits never reach this denominator. Different response sizes prevent interpreting request hits as bytes saved; actual validation, background requests, extra layers and application/database work need separate measurement. Repeated public assets and popular published pages can lower latency through nearby responses and reduce origin request load and transfer. CDN requests/transfer cost money and keys, invalidation and monitoring add work. For low-traffic, mostly private or rarely reused Notes responses, omit shared caching when measured reuse, latency and total-cost benefits do not justify costs; retain privacy rules.",
+      "answer": "An HTTP cache stores response bodies and metadata, such as status and headers, so a later GET can reuse them. The browser's private cache serves that one user agent. A CDN runs shared caches at edge servers near users. The origin is the server responsible for the logo. A hit reuses a stored response that is suitable for this request. A miss means there is no stored response usable for this request.\n\nWith empty caches, the GET goes browser, then CDN, then origin. The response returns origin, then CDN, then browser. Each cache stores it only if its policy permits. What is stored is the HTTP response, not a replicated database record. The origin may read a database, but a later hit need not reach the database. Not every request reaches the origin.\n\nA browser hit serves the logo from that browser's private cache and avoids the network request, so it does not reach the CDN or the origin. After another browser misses locally, a CDN hit can return the logo from the shared edge without contacting the origin.\n\nRequest hit ratio is cache hits divided by requests at a specified layer. Here the layer is this CDN, and a CDN hit means serving from its cache without contacting origin. Of the 1,000 GETs that reach the CDN, 800 are hits, so the ratio is 800 / 1,000 = 80%. Each of the other 200 requests makes exactly one origin request, and there are no background requests or extra layers, so origin receives 200 requests.\n\nThat 80% does not include browser hits, because those never entered this denominator. It is not a byte hit ratio, because response sizes differ. Revalidation, background refreshes, extra layers, and application work need their own measurements. 80% does not prove 80% less database work or 80% less transfer.\n\nRepeated public assets and popular published pages can reduce latency by answering nearby and can reduce origin requests and transfer. CDN requests and transfer can incur charges, and key configuration, invalidation, and monitoring add operational work. For a low-traffic Notes app whose responses are mostly private or rarely reused, omit shared caching if those measured benefits do not justify the cost. Compare reuse, latency, and total cost, and keep private notes private rather than sharing them to raise the hit ratio.",
       "evidence": [
         {
           "slide": 1,
-          "quote": "Our Notes browser requests the public logo with GET. An HTTP cache stores response bodies and metadata, such as status and headers, for reuse. A browser's private cache serves that user agent. A content delivery network (CDN) runs shared caches at edge servers near users. The origin is the server responsible for the resource."
+          "quote": "An HTTP cache stores response bodies and metadata, such as status and headers, for reuse. A browser's private cache serves that user agent. A content delivery network (CDN) runs shared caches at edge servers near users. The origin is the server responsible for the resource."
         },
         {
           "slide": 1,
@@ -18,6 +18,10 @@
         {
           "slide": 1,
           "quote": "A browser hit avoids that network request. After another browser misses locally, a CDN hit can return the logo without contacting origin. These are cached HTTP responses, not replicated database records. The origin may read a database, but a cache hit need not reach it."
+        },
+        {
+          "slide": 1,
+          "quote": "Identify the cache layer before saying which work a hit avoids."
         },
         {
           "slide": 8,
@@ -39,7 +43,7 @@
     },
     {
       "id": "freshness-then-validation",
-      "answer": "Cache-Control carries response caching directives. public explicitly permits shared caching subject to other rules; max-age=60 gives a 60-second freshness lifetime; s-maxage=300 overrides that lifetime in shared caches only. Fresh means young enough for reuse without validation under policy; stale means the freshness limit has been reached, without requiring body deletion. Age estimates seconds since generation or successful origin validation, including cache time. At Age 90 the browser is stale by 30 seconds (60−90=−30; no fresh lifetime remains); CDN is fresh with 300−90=210 seconds remaining. Delivery does not reset age or prove unchanged origin content, and a cache may evict earlier. A representation is the returned resource form, such as HTML. Revalidation checks whether the stored form remains usable. ETag is an opaque representation validator preserved without interpretation. The stale CDN sends conditional GET to origin with If-None-Match: \"v1\", requesting a body only if the selected representation no longer matches. If unchanged, origin returns 304 without replacement body; CDN updates applicable metadata including freshness and serves its retained body to the ordinary browser GET. If changed, origin returns 200 with new body and ETag: \"v2\"; CDN serves the new response and replaces its stored representation if policy allows. ETag does not push updates into other caches. 304 saves body transfer on the validation hop, but still contacts origin, which may execute logic or query a database.",
+      "answer": "Cache-Control carries caching directives. public explicitly permits shared caching, subject to other rules. max-age sets the freshness lifetime in seconds; here it is 60, and the browser uses that. s-maxage overrides max-age only in shared caches, so the CDN uses 300 seconds. A fresh response is young enough to reuse without validation under its policy. A stale response has reached its freshness limit; the body need not be deleted. Freshness is permission to reuse, not proof that the origin page is unchanged. Age estimates seconds since the response was generated or successfully validated at the origin, including time already spent in caches.\n\nThis response arrives with Age: 90. Ignore transit and clock differences. The browser's lifetime is 60 seconds, so the browser is 30 seconds past its lifetime and must not treat the response as fresh. The CDN's shared lifetime is 300 seconds, so it has 300 − 90 = 210 seconds of freshness left and may treat the response as fresh. Receiving the response does not start a new full lifetime.\n\nLater the CDN holds a stale published page with ETag: \"v1\" and its policy does not allow serving that stale. A representation is the returned form of the resource, such as the page HTML. Revalidation checks whether the stored representation is still usable. An ETag is an opaque validator for that representation; the client keeps the tag and does not interpret it. The CDN sends a conditional GET to origin with If-None-Match: \"v1\", asking for a body only if the selected representation no longer matches.\n\nIf the page is unchanged, origin returns 304 Not Modified and no replacement body. The CDN updates its stored metadata, including freshness, and answers the browser's ordinary GET with the body it already kept, the v1 body.\n\nIf the page is now v2, origin returns 200 with the new body and its validator, ETag: \"v2\". The CDN replaces its stored representation if policy allows, and serves that new body. The ETag does not push the change into other caches.\n\nValidation does not avoid the network request. Origin was contacted. A 304 only saves retransmitting the body on that hop. Origin may still run application logic or query a database to decide whether the representation changed, so validation does not guarantee that no origin or database work happened.",
       "evidence": [
         {
           "slide": 2,
@@ -52,10 +56,6 @@
         {
           "slide": 2,
           "quote": "Age estimates seconds since generation or successful validation at origin, including time spent through caches. If this response arrives with Age: 90, ignoring transit and clock differences, the browser is 30 seconds past its lifetime. The CDN has 300 − 90 = 210 seconds of freshness left. Receiving it does not start a new full lifetime."
-        },
-        {
-          "slide": 2,
-          "quote": "A cache may evict a response sooner to free space. Freshness sets reuse limits, not guaranteed retention. When validation is needed, a stored body can still save transfer."
         },
         {
           "slide": 3,
@@ -81,7 +81,7 @@
     },
     {
       "id": "protect-private-notes",
-      "answer": "Cookies are browser-held state: Set-Cookie requests browser storage and Cookie sends state back. Authorization is a request header carrying credentials. Authentication establishes identity; authorization checks permission to read a note. Choose unqualified no-cache for a public page that may be stored but must successfully validate before each reuse. Choose private for a note allowed in browser cache but not shared caches; private does not itself require validation every use, and other directives apply. Choose no-store for sensitive responses HTTP caches must not store. It cannot erase earlier delivered copies or replace access checks. Cookie/Set-Cookie do not automatically partition entries by user or universally prevent caching. Authorization requests have special shared-cache restrictions, but response policy can allow reuse, so authentication does not universally bypass CDN caching. Reusing one user’s response for another can leak private notes. Keep origin authorization and verify explicit private/no-store policy plus actual CDN rules prevent shared storage and reuse on private-note routes. Test different users and do not mark personalized responses public to raise hits.",
+      "answer": "Cookies are state held by the browser. Set-Cookie asks the browser to store that state. Cookie sends it back on a later request. Authorization is a request header that carries credentials. Authentication establishes who the caller is. Authorization checks whether that caller may read the note.\n\nno-cache, used without extra qualifiers, allows storage but requires successful validation before every reuse. It does not mean never store. private forbids shared-cache storage. It does not forbid browser storage, and it does not by itself require validation on every use. no-store tells HTTP caches not to store the response. It does not erase copies already delivered, and it does not replace a permission check.\n\nFor a public page that may be stored but must be validated before every reuse, use unqualified no-cache. For a private note that may live only in the browser cache, use private. For a sensitive note that HTTP caches must not store, use no-store. Other directives can still apply, and the policy has to be chosen explicitly.\n\nCookie, Set-Cookie, and authentication are not a universal per-user cache key and not a guarantee that the CDN will skip the response. They do not automatically create a separate cache entry per user or universally prevent caching. Requests that carry Authorization have special shared-cache restrictions, but the response policy can still permit reuse. A shared response reused for the wrong user can leak a private note.\n\nKeep the permission check at the origin. For private-note routes, verify that the explicit private or no-store policy and the actual CDN rules prevent shared storage and reuse. Test with different users. Do not mark a personalized note public to raise the hit rate.",
       "evidence": [
         {
           "slide": 4,
@@ -102,12 +102,16 @@
         {
           "slide": 4,
           "quote": "Keep authorization at origin. For private-note routes, verify that explicit private/no-store policies and actual CDN rules prevent shared storage and reuse. Test different users; do not mark personalized notes public for a higher hit rate."
+        },
+        {
+          "slide": 4,
+          "quote": "no-cache means validate; no-store means do not store; private excludes shared caches."
         }
       ]
     },
     {
       "id": "separate-public-variants",
-      "answer": "A cache key identifies the stored response that can satisfy a request. HTTP matching uses method and target URL, with selected headers distinguishing variants, which are different returned forms of the resource. Keep format=pdf and format=html query values distinct and distinguish Accept-Language en and fr. Vary names request headers that must match for reuse; Vary: Accept-Language separates language variants when supported and honored. If CDN ignores query parameters, verify its actual key settings preserve the meaningful format query values as well as language matching; configure correct matching or bypass caching until both survive. Dropping format can return HTML for a PDF request, and dropping language loses the matching language distinction. Irrelevant tracking parameters multiply entries and lower hit rate; exclude them only after confirming they cannot change content. Vary does not modify URLs, grant permission, or override private/no-store; distinct public variants do not authorize sharing private notes.",
+      "answer": "A cache key identifies which stored response can satisfy a request. HTTP caching uses the method and the target URL, and selected request headers distinguish variants. A variant is a different returned form of the same resource.\n\nThis export changes with the query, ?format=pdf versus ?format=html, and with Accept-Language, en versus fr. The format values have to stay distinct in the key. If the CDN is configured to ignore query parameters, it could return HTML for a PDF request. Verify the actual key settings. Do not assume every CDN includes every query parameter. Vary: Accept-Language tells a cache that this request header's value must match before the stored response is reused, which separates the language variants when the cache supports and honors Vary. CDN support and custom keys differ, so verify that both format and language survive the real matching rules, or bypass caching until they do.\n\nDropping a distinction that changes the body returns the wrong variant, such as HTML for a PDF request or English for a French request. Keeping irrelevant tracking parameters does the opposite harm to the hit rate: they create extra cache entries and fewer hits. Exclude a parameter only after confirming it does not change the response.\n\nVary does not authorize sharing private notes. It does not change the URL, grant permission, or override private or no-store. Separating public variants is not permission to share a private note.",
       "evidence": [
         {
           "slide": 5,
@@ -124,12 +128,16 @@
         {
           "slide": 5,
           "quote": "Irrelevant tracking parameters can create extra entries and fewer hits. Exclude them only after confirming they do not change the response. Vary does not change the URL, grant permission or override private/no-store. Correctly separated public variants are not permission to share private notes."
+        },
+        {
+          "slide": 5,
+          "quote": "Keep distinctions that change content; remove only distinctions proven irrelevant."
         }
       ]
     },
     {
       "id": "deploy-and-unpublish",
-      "answer": "A versioned asset URL changes when its bytes change: publish changed JavaScript as app.v2.js instead of overwriting app.v1.js. Long caching suits immutable bytes at each URL. Update the referring page to request v2; an old cached page can still request v1. For a published page that keeps its URL, choose freshness/revalidation based on acceptable update delay, such as short freshness or validation on every reuse. Editing a database does not rewrite stored HTTP responses. A CDN purge removes or invalidates targeted CDN entries according to provider behavior. Verify relevant URL, variant and CDN-layer coverage, propagation, and completion; do not assume simultaneous replacement. Purging CDN does not evict fresh browser responses or erase downloads. Unpublishing can stop future origin access and trigger purges, but cannot instantly revoke already delivered public content, so choose lifetimes with this limit in mind.",
+      "answer": "A versioned asset URL changes when the bytes change. Publish app.v2.js instead of overwriting app.v1.js. Long caching fits those immutable URLs, because the bytes at each URL stay the same. The page that refers to the script must be updated to request v2. An old cached copy of the page can still request v1, so v1 has to remain available for those clients until that page reference has moved.\n\nA CDN purge removes or invalidates the targeted CDN entries according to the provider. Verify that it covers the relevant URLs, variants, and CDN cache layers, and check how it propagates and when it completes. Purge is something to check, not a simultaneous replacement everywhere.\n\nThe edited page that keeps the same URL needs a freshness or revalidation policy chosen for the update delay you can tolerate. A database edit does not rewrite stored HTTP responses. Short freshness, or validation on each reuse, is a different trade-off from a long-lived versioned file.\n\nA database update or a CDN purge does not instantly update every browser. Purging CDN entries does not evict fresh browser copies or erase content already downloaded. Unpublishing can stop future origin access and can trigger purges, but a public page already delivered cannot be instantly revoked. Choose the lifetimes with that limit in mind before publishing.",
       "evidence": [
         {
           "slide": 6,
@@ -151,11 +159,11 @@
     },
     {
       "id": "bounded-outage-fallback",
-      "answer": "stale-while-revalidate permits bounded stale use while attempting background validation to hide its latency. stale-if-error permits bounded stale fallback on eligible errors such as origin failure. They are optional permissions, not freshness or availability guarantees. max-age=60 makes the page fresh for 60 seconds, with stale allowances counted after expiry. At age 75 it is 15 seconds stale, within the extra 30 seconds allowed through age 90, so serve the stored copy while refreshing in the background. At age 150 it is 90 seconds stale and the eligible error allows fallback within the 120-second stale-if-error allowance through age 180. At age 200 it is 140 seconds stale, beyond both allowances; neither directive authorizes stale reuse even with the error. A cold cache has no response for fallback and exhausted allowances can expose failure. Provider support and policy must permit use; private/no-store are not overridden. Private-note correctness or urgent removal may prohibit showing older content even if fallback helps public-help availability.",
+      "answer": "stale-while-revalidate permits a bounded reuse of a stale response while the cache attempts validation in the background, which hides that validation latency. stale-if-error permits a bounded stale fallback when an eligible error happens, such as an origin failure. Both are optional permissions. They are not a promise that the response is fresh or that the origin is available. Assume this cache supports them, has an eligible stored response, has no conflicting directive, and transit time is negligible.\n\nThe response is fresh for 60 seconds. The stale windows start when that freshness expires. At age 75 it is 15 seconds stale. The extra 30-second stale-while-revalidate window permits reuse while a background revalidation runs, through age 90.\n\nAt age 150, with an eligible origin error, the response is 90 seconds stale. Freshness ended at 60 seconds, and stale-if-error lasts another 120 seconds, through age 180. Age 150 is inside that window, so the stored copy may be served as the error fallback.\n\nAt age 200 with the same error, neither extension still applies. The background-validation window ended at age 90, and the error window ended at age 180. These directives do not authorize stale reuse.\n\nIf no stored copy exists, a cold cache has nothing to fall back to, and an exhausted allowance can expose the failure. This policy is unsuitable for a private note or for urgent removal. Stale reuse can keep serving the old response, these directives do not override private or no-store, and private-note correctness or an urgent takedown can forbid stale reuse even when it would help a public help page stay available.",
       "evidence": [
         {
           "slide": 7,
-          "quote": "Our public help page tolerates delay. stale-while-revalidate permits bounded stale reuse while attempting background validation, hiding validation latency. stale-if-error permits bounded stale fallback on eligible errors, such as an origin failure. These are optional permissions, not freshness or availability promises."
+          "quote": "stale-while-revalidate permits bounded stale reuse while attempting background validation, hiding validation latency. stale-if-error permits bounded stale fallback on eligible errors, such as an origin failure. These are optional permissions, not freshness or availability promises."
         },
         {
           "slide": 7,
@@ -168,6 +176,10 @@
         {
           "slide": 7,
           "quote": "A cold cache has no response to fall back to, and exhausted allowances can expose the failure. Verify provider support and policy; these directives do not override private/no-store. Private-note correctness or urgent removal may forbid stale reuse even when it improves public-help availability."
+        },
+        {
+          "slide": 7,
+          "quote": "Count stale allowance after freshness expires, and require an eligible stored copy."
         }
       ]
     }

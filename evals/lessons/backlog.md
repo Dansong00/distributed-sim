@@ -1,6 +1,6 @@
 # Autonomous learning stack backlog
 
-Status is local source coverage, not a claim of quality. All stacks require the new eval before being called approved. Existing source currently has Client / Server Model, API Server, Database Overview, CAP, Replication, PostgreSQL, SQLite, MySQL, Caching Fundamentals, Message Queues and Background Workers, Load Balancing, API Gateways, DNS, and CDN and HTTP Caching. Caching, messaging, load balancing, API gateways, DNS and CDN/HTTP caching have current passing evaluation reports; prior code-review and browser passes do not retroactively count as learning-quality evaluations.
+Status is local source coverage, not a claim of quality. All stacks require the new eval before being called approved. Existing source currently has Client / Server Model, API Server, Database Overview, CAP, Replication, PostgreSQL, SQLite, MySQL, Caching Fundamentals, Message Queues and Background Workers, Load Balancing, API Gateways, DNS, CDN and HTTP Caching, and Object Storage. Caching, messaging, load balancing, API gateways, DNS, CDN/HTTP caching, and object storage have current passing evaluation reports; prior code-review and browser passes do not retroactively count as learning-quality evaluations.
 
 Default order is shared foundations first, then named technologies. The user approved continuing to CDN and HTTP caching after DNS; future scope corrections override this order.
 
@@ -16,8 +16,10 @@ DNS is implemented for DNS components, covering discovery, delegation, record ty
 
 CDN and HTTP Caching is implemented for CDN components, covering response layers, freshness, conditional validation, private-data policies, variants, updates, bounded stale reuse and cost. See releases/cdn-http-caching/REPORT.md for current evidence.
 
+Object Storage is implemented for object-storage components, covering a named attachment, whole-object replacement, read and list limits, lost responses, durability versus request success, and the split with the note record. See releases/object-storage/REPORT.md for current evidence.
+
 Next, in prerequisite order:
-1. Object storage; block storage; shared file storage.
+1. Block storage; shared file storage.
 2. Sharding and partition keys; document databases; key-value data access.
 3. Wide-column, graph, geospatial, time-series, search, analytics, and vector retrieval foundations.
 4. Data lakes; lakehouses and table formats; model artifact storage.

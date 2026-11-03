@@ -1,6 +1,6 @@
 # API Gateways release evidence
 
-CDN registration changed the shared renderer bound by the existing hash. This stack's content, diagram and eligibility are unchanged. Fresh learner `/root/cdn_learner_p7` and independent reviewers `/root/cdn_review_a` and `/root/cdn_review_b` evaluated external case `p7`: 20/20 and 19/20, every outcome 2/2, no hard failures. All objectives, diagram meaning and distinct sources checked. Adjacent JSON files match the original reports; no old hashes were relabeled.
+Object-storage registration changed the shared dialog hash. Lesson text is unchanged. Learner `api-gateways-learner-refresh` and reviewers `api-gateways-review-a` and `api-gateways-review-b` scored 20/20 and 20/20, every outcome 2/2, no hard failures.
 
 ```sh
 npm run eval:lessons -- check-release api-gateways evals/lessons/releases/api-gateways

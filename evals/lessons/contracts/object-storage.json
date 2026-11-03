@@ -1,0 +1,357 @@
+{
+  "audience": "HTTP/API engineers learning to reason about an Object Storage component in an interview-sized Notes architecture. The concrete operation is storing and later retrieving one named attachment, for example the key notes/42/export.pdf in a bucket. Teach the shared object-storage foundation used by a generic object store, Amazon S3, and Google Cloud Storage.",
+  "prerequisites": [
+    "An HTTP client sends a request and receives a response that can be lost.",
+    "A database stores application records, and a committed write can remain stored even if the caller gets no response."
+  ],
+  "objectives": [
+    {
+      "id": "object-and-key",
+      "description": "Define a bucket, an object as opaque bytes plus metadata, and a key, and explain why the flat-namespace name notes/42/export.pdf is one key rather than a directory that can be atomically renamed."
+    },
+    {
+      "id": "store-and-retrieve",
+      "description": "Trace a successful Notes upload and later download of that one object, including which system stores the PDF bytes and which stores the note record and key, and why those two writes are not one transaction."
+    },
+    {
+      "id": "whole-object-replace",
+      "description": "Explain that a new upload of the same key replaces the whole object rather than editing bytes in place, what a concurrent read can observe on S3 and GCS, and why older bytes remain only through a separate retention feature rather than through designed durability."
+    },
+    {
+      "id": "read-and-list-limits",
+      "description": "State what S3 and GCS document for a read or list after a successful write, which of those guarantees are not universal, and why a paginated listing is not one atomic snapshot or a multi-key transaction."
+    },
+    {
+      "id": "lost-response",
+      "description": "Explain why a lost PUT response does not prove the object is absent, what an unconditional retry can overwrite, and how S3 and GCS create-if-absent preconditions differ from a universal safe retry."
+    },
+    {
+      "id": "durability-versus-success",
+      "description": "Separate designed durability and availability from a successful HTTP response, including what an acknowledged write required, what a one-zone or zonal bucket can still lose, and why durability does not retain overwritten or deleted bytes."
+    },
+    {
+      "id": "access-boundary",
+      "description": "Explain that the object store authorizes its own credentials and policies, not Notes per-note ownership, and that a GCS access change can lag behind the metadata update."
+    },
+    {
+      "id": "placement-and-split",
+      "description": "Choose object storage for the opaque PDF and the database for note fields and permissions, and sequence the object acknowledgment and the key commit so a lost response or a failed commit has a defined outcome."
+    }
+  ],
+  "questions": [
+    {
+      "id": "upload-and-fetch-one-attachment",
+      "question": "The Notes API stores one PDF attachment and later downloads it. Define bucket, object, and key. For a flat-namespace bucket, is notes/42/export.pdf one object name, or a directory plus a file that the store can atomically rename? What do console folders and a prefix-plus-delimiter listing represent? What does renaming that prefix require on S3, and what does renaming a GCS simulated folder require? Trace a successful upload and a later download: which component writes the bytes, when may the note row record the key, which component reads the object back, what the database stores, and what the object store stores? Is that object read a database query? Do the object write and the database commit succeed or fail as one transaction?",
+      "criteria": [
+        "A bucket is a container. An object is opaque bytes plus metadata. A key is the object's name and identifies that object within the bucket.",
+        "In an S3 general-purpose bucket or a GCS flat-namespace bucket, notes/42/export.pdf is a single key. The slash characters do not create directories, and the store does not provide an atomic filesystem rename of a parent directory.",
+        "Tools may present a prefix and a delimiter as folders. Renaming that prefix is not one atomic rename: on S3 each object whose key contains the prefix has to be renamed, and a GCS simulated-folder rename copies and deletes each object and can stop halfway.",
+        "On a successful upload the Notes API writes the PDF bytes as one complete object at that key. It records the key on the note only after it accepts that write as successful. A later download reads the key from the note and requests that object.",
+        "The database stores the note record and the key. The object store stores the object bytes and metadata. The download retrieves that object; it does not query note fields.",
+        "The object write and the database commit are separate operations. Either can succeed while the other fails. The object store does not commit them together."
+      ],
+      "criticalMisconceptions": [
+        "Object storage is a filesystem with directories and atomic rename.",
+        "The slash in notes/42/export.pdf creates a directory the store can rename in one operation.",
+        "Reading the attachment object queries the note row.",
+        "The object write and the database update commit as one transaction."
+      ]
+    },
+    {
+      "id": "replace-the-export",
+      "question": "A second upload writes a new PDF to the same key notes/42/export.pdf. Does that write change bytes inside the existing object the way a disk write does, or does it supply a complete replacement object? If a read runs during that write, what can S3 return for that one key, and what does GCS serve before the replacement upload completes and after it completes? Without versioning, is the previous PDF still the current object? When S3 versioning is off, what does an unconditional overwrite do to the current object? When GCS Object Versioning and soft delete are both off, what happens to the old live version on replace? Which separate S3 and GCS features can retain older bytes, and does designed durability provide that retention by itself?",
+      "criteria": [
+        "The upload writes a complete object for that key. It does not patch bytes inside the stored object the way a disk write does.",
+        "An S3 update of a single key is atomic: a concurrent read returns the previous complete object or the new complete object, never a mixture of the two.",
+        "A GCS object is immutable for its lifetime. Until the replacement upload completes, readers receive the old object; after it completes, readers receive the new object.",
+        "Without versioning, the previous bytes are not the current object. An unconditional S3 overwrite replaces the current object. On GCS, with Object Versioning and soft delete both disabled, replacement permanently deletes the old live version.",
+        "Designed durability does not keep overwritten bytes. S3 versioning is an optional feature that preserves older versions. GCS Object Versioning retains a noncurrent version on replace, and GCS soft delete can retain a replaced live object even when versioning is disabled. Those controls are separate from the durability design."
+      ],
+      "criticalMisconceptions": [
+        "A PUT edits bytes inside an object the way a disk does.",
+        "A concurrent read can return a PDF spliced from the old and new bytes.",
+        "Designed durability means an overwrite keeps the previous bytes.",
+        "Versioning is always on, so the old PDF remains the current object.",
+            "GCS can retain a replaced object only when Object Versioning is enabled."
+      ]
+    },
+    {
+      "id": "read-after-success-and-listing",
+      "question": "The upload of notes/42/export.pdf returned success. On current Amazon S3 and on Google Cloud Storage, what does a read of that key started after that response return, and can a list started after that response include the key? Was current S3 always documented this way, and is this behavior a promise of every object store? What can GCS still return if the region that first stored the object is unavailable before cross-region replication, and does strong consistency mean that read cannot fail? If two unconditional writes to that same key overlap, what winner rule and acknowledgment limit does S3 document, why is a later read required, and what must you avoid assuming on GCS or on every store? How many keys can one S3 list response contain? What does a GCS pageToken omit when a new object is created in the name range already listed? Is that listing one atomic snapshot of the bucket? Can S3 change this key and a second key in one atomic update?",
+      "criteria": [
+        "After the client receives a successful write response, current S3 documents that a following GET or LIST returns the object written by that request, and GCS documents that the object is immediately available to read and to list.",
+        "S3's consistency overview says this strong read-after-write behavior replaced S3's earlier eventual consistency. The same read-after-write behavior is documented for GCS. It is not a promise of every object store, and current S3 object reads and lists are not documented as eventually consistent.",
+        "GCS strong read-after-write means that read does not return a stale object or a false 404. If the first region is unavailable before cross-region replication, the read can still return a retryable 500, so strong consistency does not mean the read cannot fail.",
+        "When two unconditional S3 writes to the same key overlap, S3 uses last-writer-wins by timestamp, acknowledgment order does not identify the winner, and a read after both writes are acknowledged shows which object remains. That rule is specific to S3. GCS documents preconditions so a replacement can be limited to an expected generation; do not invent a universal winner.",
+        "One S3 list response contains at most 1000 keys, so listing a bucket can take further requests. S3 does not define that multi-page walk as one frozen snapshot. GCS documents that an object created before the next page is omitted from later pages when its name is in the namespace already listed. A listing is not one atomic snapshot of the bucket.",
+        "S3 applies each update to one key. It cannot atomically update this key together with another key."
+      ],
+      "criticalMisconceptions": [
+        "Every object store shows a new object on the next read and list, including stores and historical S3 behavior that were eventually consistent.",
+        "Current Amazon S3 object reads and lists are eventually consistent.",
+        "Strong consistency means the following read cannot fail.",
+        "Listing is one atomic snapshot.",
+        "S3 can commit two keys in one atomic update.",
+        "Every object store resolves overlapping writes with S3's latest-timestamp rule."
+      ]
+    },
+    {
+      "id": "timeout-and-conditional-retry",
+      "question": "The Notes API's write of notes/42/export.pdf times out and no response arrives. Does that prove the object was not stored? What can a later unconditional write that succeeds do to a PDF another writer has stored at the same key? For a create that should proceed only when no live object exists, what does S3 If-None-Match: * return, what does GCS ifGenerationMatch=0 return, and are those preconditions available on every object store? Does a 412 prove that this PDF's bytes are the stored object? If the conditional request's response is also lost, is the outcome known? On a store with documented read-after-write, what does a later read after the timeout establish, and what does it leave unknown? What changes when S3 versioning has a delete marker as the current version, or when GCS has only noncurrent versions?",
+      "criteria": [
+        "A timeout or lost response does not prove the object is absent. The write may have completed after the client stopped waiting, just as a committed database write can remain stored when its caller receives no response.",
+        "A later unconditional write that succeeds stores this request's complete object at the key and can replace another writer's PDF.",
+        "Create-if-absent preconditions are product features, not a universal object-store API. On S3, If-None-Match: * returns 200 when no current object has that key and 412 when one does. On GCS, ifGenerationMatch=0 proceeds only when no live object has that name and returns 412 when a live object exists.",
+        "A received 412 proves the precondition failed. It does not prove the stored bytes are this PDF.",
+        "A lost response to the conditional write is still ambiguous. A received success response and a received precondition failure are evidence; the absence of a response is not.",
+        "On a store that documents read-after-write, a later read after the timeout reports only that read's result. Finding the key shows that some complete object is present, not that the bytes are this PDF. A miss is evidence of absence only under that store's documented consistency. The lost response itself remains unknown.",
+        "With S3 versioning, If-None-Match: * can still succeed when the current version is a delete marker. With GCS, ifGenerationMatch=0 can still proceed when only noncurrent versions exist. Neither case means this upload's bytes are already the live object."
+      ],
+      "criticalMisconceptions": [
+        "A timeout proves the object was not stored.",
+        "An unconditional retry is safe because a write cannot replace a newer object at the same key.",
+        "Every object store supports If-None-Match: * or ifGenerationMatch=0.",
+        "A 412 means these PDF bytes are already stored.",
+        "A lost conditional response means the object is absent."
+      ]
+    },
+    {
+      "id": "durability-is-not-this-response",
+      "question": "The provider advertises about 11 nines of durability for this bucket. Using Google Cloud Storage's definitions, what is durability and what is availability? What yearly durability and availability figures does Amazon S3 standard storage name? When does S3 consider an upload successful, and when does GCS confirm a write? Does that design mean this write's HTTP response arrived? What can still happen to data in S3 One Zone if its Availability Zone is lost, and to a GCS zonal bucket if its zone fails? If an overwrite or a delete succeeds, do the previous bytes remain because the store is durable? Which optional controls add recovery beyond durability, and how long do S3 and GCS say to wait after enabling versioning before relying on it for writes, deletes, or replacements?",
+      "criteria": [
+        "GCS defines availability as the ability to access data when requested and durability as long-term protection so that stored data remains intact and uncorrupted. S3 standard storage is designed for 99.999999999 percent durability and 99.99 percent availability of objects over a given year.",
+        "S3 considers an upload successful only after it has checked integrity and stored the data redundantly across multiple devices. GCS confirms a write as successful only after the data has been redundantly stored. Those checks describe a completed write, not the chance that the caller's HTTP response arrived.",
+        "The durability design does not mean this HTTP request succeeded. A lost response leaves the outcome unknown. S3 One Zone data may be lost if that Availability Zone is lost, and a GCS zonal bucket may become unavailable or permanently lose data if its zone fails, even though both quote an 11-nines design against equipment failure.",
+        "Durability does not preserve overwritten or deleted bytes. S3's durability system does not protect against deletes, and an overwrite without versioning replaces the current object.",
+        "Versioning, replication, and S3 Object Lock are optional controls beyond the durability the store already applies. After versioning is first enabled, S3 recommends waiting 15 minutes before PUT or DELETE requests, and GCS says to wait at least 30 seconds before deleting or replacing objects, because that bucket configuration change is not immediate."
+      ],
+      "criticalMisconceptions": [
+        "Designed durability means the HTTP request succeeded.",
+        "Designed durability means an overwrite keeps the previous bytes.",
+        "An 11-nines design means a One Zone or zonal bucket survives loss of its single zone.",
+        "Durability and availability are the same yearly figure.",
+        "Versioning takes effect for the very next write the moment it is enabled on S3 or GCS."
+      ]
+    },
+    {
+      "id": "authorize-and-place-the-pdf",
+      "question": "A user downloads the export for note 42. What does the object store check: the Notes user and that note's owner, or the credentials and policies presented on the request? What is the S3 default for buckets and objects, and which kinds of policy grant access? Which IAM permission does GCS require to list objects? If the Notes API holds a credential that can read every attachment and skips its note check, can the store still return another note's object? GCS says granting and revoking access is eventually consistent: what remains possible after access is removed? Which bytes belong in object storage, which records stay in the database, and why is the bucket a poor place for in-place edits of the PDF, queries over note fields, or Notes per-note permissions? In what order should the API confirm the object and commit the key? What remains if the database commit fails? What can a reader be offered if the key is committed before the upload is confirmed? Does listing the bucket repair that split?",
+      "criteria": [
+        "The object store authorizes the credentials on the request against its own policies. It does not look up the Notes user or enforce that user's permission on note 42.",
+        "S3 buckets and objects are private by default, and access is granted explicitly through mechanisms such as IAM and bucket policies. GCS object listing requires the storage.objects.list permission for the authenticated caller. A prefix or object rule limits only the credential it names, and only when an operator wrote that mapping.",
+        "If the Notes API uses a credential that can read every attachment and does not check the note record first, the store can return another note's object. The per-note decision is the application's responsibility.",
+        "On GCS, removing a user's access is reflected immediately in the bucket metadata, but that user may still have access for a short time, typically about a minute and sometimes longer. That lag is not instant revocation, and it is not a rule of every object store.",
+        "The PDF bytes belong in the object store because they are one opaque object addressed by key and replaced as a whole. The note fields and the permission decision stay in the database. The bucket is a poor fit for editing bytes inside the PDF, querying note fields, or replacing the Notes permission check.",
+        "The API confirms that the object write completed, resolving a lost response before treating the object as stored, and then commits the key on the note. If the database commit fails, the object can remain with no note pointing at it. If the key is committed first, a reader can be directed to a key the store does not have. A bucket listing is not a transaction that repairs either outcome."
+      ],
+      "criticalMisconceptions": [
+        "The store enforces Notes per-note permissions by itself.",
+        "A private-by-default bucket applies the note owner's permission without an application check.",
+        "Removing GCS access revokes every caller immediately, and every object store does the same.",
+        "The attachment bucket replaces the database for note records and permissions.",
+        "Uploading the object and committing the key are one atomic transaction.",
+        "Listing the bucket is one atomic snapshot that repairs a missing object."
+      ]
+    }
+  ],
+  "diagramFile": "src/learn/ObjectStorageDiagram.tsx",
+  "cards": [
+    {
+      "id": "object-and-key",
+      "slide": 1,
+      "objective": "Define a bucket, an object as opaque bytes plus metadata, and a key, and explain why the flat-namespace name notes/42/export.pdf is one key rather than a directory that can be atomically renamed.",
+      "prerequisites": [],
+      "questions": [
+        {
+          "id": "object-and-key-card",
+          "question": "Notes stores an attachment under the name notes/42/export.pdf. Define bucket, object, and key. For a flat-namespace bucket, is that name one object key or a directory plus a file the store can atomically rename? What do console folders and a prefix-plus-delimiter listing represent? What does renaming that prefix require on S3, and what does renaming a GCS simulated folder require?",
+          "criteria": [
+            "A bucket is a container. An object is opaque bytes plus metadata. A key is the object's name and identifies that object within the bucket.",
+            "In an S3 general-purpose bucket or a GCS flat-namespace bucket, notes/42/export.pdf is a single key. The slash characters do not create directories, and the store does not provide an atomic filesystem rename of a parent directory.",
+            "Tools may present a prefix and a delimiter as folders. Renaming that prefix is not one atomic rename: on S3 each object whose key contains the prefix has to be renamed, and a GCS simulated-folder rename copies and deletes each object and can stop halfway."
+          ],
+          "criticalMisconceptions": [
+            "Object storage is a filesystem with directories and atomic rename.",
+            "The slash in notes/42/export.pdf creates a directory the store can rename in one operation.",
+            "A console folder or a delimiter listing is a POSIX directory."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "store-and-retrieve",
+      "slide": 2,
+      "objective": "Trace a successful Notes upload and later download of that one object, including which system stores the PDF bytes and which stores the note record and key, and why those two writes are not one transaction.",
+      "prerequisites": ["object-and-key"],
+      "questions": [
+        {
+          "id": "store-and-retrieve-card",
+          "question": "The Notes API successfully stores notes/42/export.pdf and later downloads it. Which component writes the bytes, when may the note row record the key, and which component reads the object back? What does the database store, and what does the object store store? Is that object read a database query? Do the object write and the database commit succeed or fail as one transaction?",
+          "criteria": [
+            "On a successful upload the Notes API writes the PDF bytes as one complete object at that key. It records the key on the note only after it accepts that write as successful. A later download reads the key from the note and requests that object.",
+            "The database stores the note record and the key. The object store stores the object bytes and metadata. The download retrieves that object; it does not query note fields.",
+            "The object write and the database commit are separate operations. Either can succeed while the other fails. The object store does not commit them together."
+          ],
+          "criticalMisconceptions": [
+            "Reading the attachment object queries the note row.",
+            "The object write and the database update commit as one transaction.",
+            "The object store stores the note's permission record in place of the database."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "whole-object-replace",
+      "slide": 3,
+      "objective": "Explain that a new upload of the same key replaces the whole object rather than editing bytes in place, what a concurrent read can observe on S3 and GCS, and why older bytes remain only through a separate retention feature rather than through designed durability.",
+      "prerequisites": ["store-and-retrieve"],
+      "questions": [
+        {
+          "id": "whole-object-replace-card",
+          "question": "A second upload writes a new PDF to the same key notes/42/export.pdf. Does that write change bytes inside the existing object the way a disk write does, or does it supply a complete replacement object? If a read runs during that write, what can S3 return for that one key, and what does GCS serve before the replacement upload completes and after it completes? Without versioning, is the previous PDF still the current object? When S3 versioning is off, what does an unconditional overwrite do to the current object? When GCS Object Versioning and soft delete are both off, what happens to the old live version on replace? Which separate S3 and GCS features can retain older bytes, and does designed durability provide that retention by itself?",
+          "criteria": [
+            "The upload writes a complete object for that key. It does not patch bytes inside the stored object the way a disk write does.",
+            "An S3 update of a single key is atomic: a concurrent read returns the previous complete object or the new complete object, never a mixture of the two.",
+            "A GCS object is immutable for its lifetime. Until the replacement upload completes, readers receive the old object; after it completes, readers receive the new object.",
+            "Without versioning, the previous bytes are not the current object. An unconditional S3 overwrite replaces the current object. On GCS, with Object Versioning and soft delete both disabled, replacement permanently deletes the old live version.",
+            "Designed durability does not keep overwritten bytes. S3 versioning is an optional feature that preserves older versions. GCS Object Versioning retains a noncurrent version on replace, and GCS soft delete can retain a replaced live object even when versioning is disabled. Those controls are separate from the durability design."
+          ],
+          "criticalMisconceptions": [
+            "A PUT edits bytes inside an object the way a disk does.",
+            "A concurrent read can return a PDF spliced from the old and new bytes.",
+            "Designed durability means an overwrite keeps the previous bytes.",
+            "Versioning is always on, so the old PDF remains the current object.",
+            "GCS can retain a replaced object only when Object Versioning is enabled."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "read-and-list-limits",
+      "slide": 4,
+      "objective": "State what S3 and GCS document for a read or list after a successful write, which of those guarantees are not universal, and why a paginated listing is not one atomic snapshot or a multi-key transaction.",
+      "prerequisites": ["whole-object-replace"],
+      "questions": [
+        {
+          "id": "read-and-list-limits-card",
+          "question": "The upload of notes/42/export.pdf returned success. On current Amazon S3 and on Google Cloud Storage, what does a read of that key started after that response return, and can a list started after that response include the key? Was current S3 always documented this way, and is this behavior a promise of every object store? What can GCS still return if the region that first stored the object is unavailable before cross-region replication, and does strong consistency mean that read cannot fail? If two unconditional writes to that same key overlap, what winner rule and acknowledgment limit does S3 document, why is a later read required, and what must you avoid assuming on GCS or on every store? How many keys can one S3 list response contain? What does a GCS pageToken omit when a new object is created in the name range already listed? Is that listing one atomic snapshot of the bucket? Can S3 change this key and a second key in one atomic update?",
+          "criteria": [
+            "After the client receives a successful write response, current S3 documents that a following GET or LIST returns the object written by that request, and GCS documents that the object is immediately available to read and to list.",
+            "S3's consistency overview says this strong read-after-write behavior replaced S3's earlier eventual consistency. The same read-after-write behavior is documented for GCS. It is not a promise of every object store, and current S3 object reads and lists are not documented as eventually consistent.",
+            "GCS strong read-after-write means that read does not return a stale object or a false 404. If the first region is unavailable before cross-region replication, the read can still return a retryable 500, so strong consistency does not mean the read cannot fail.",
+            "When two unconditional S3 writes to the same key overlap, S3 uses last-writer-wins by timestamp, acknowledgment order does not identify the winner, and a read after both writes are acknowledged shows which object remains. That rule is specific to S3. GCS documents preconditions so a replacement can be limited to an expected generation; do not invent a universal winner.",
+            "One S3 list response contains at most 1000 keys, so listing a bucket can take further requests. S3 does not define that multi-page walk as one frozen snapshot. GCS documents that an object created before the next page is omitted from later pages when its name is in the namespace already listed. A listing is not one atomic snapshot of the bucket.",
+            "S3 applies each update to one key. It cannot atomically update this key together with another key."
+          ],
+          "criticalMisconceptions": [
+            "Every object store shows a new object on the next read and list, including stores and historical S3 behavior that were eventually consistent.",
+            "Current Amazon S3 object reads and lists are eventually consistent.",
+            "Strong consistency means the following read cannot fail.",
+            "Listing is one atomic snapshot.",
+            "S3 can commit two keys in one atomic update.",
+            "Every object store resolves overlapping writes with S3's latest-timestamp rule."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lost-response",
+      "slide": 5,
+      "objective": "Explain why a lost PUT response does not prove the object is absent, what an unconditional retry can overwrite, and how S3 and GCS create-if-absent preconditions differ from a universal safe retry.",
+      "prerequisites": ["read-and-list-limits"],
+      "questions": [
+        {
+          "id": "lost-response-card",
+          "question": "The Notes API's write of notes/42/export.pdf times out and no response arrives. Does that prove the object was not stored? What can a later unconditional write that succeeds do to a PDF another writer has stored at the same key? For a create that should proceed only when no live object exists, what does S3 If-None-Match: * return, what does GCS ifGenerationMatch=0 return, and are those preconditions available on every object store? Does a 412 prove that this PDF's bytes are the stored object? If the conditional request's response is also lost, is the outcome known? On a store with documented read-after-write, what does a later read after the timeout establish, and what does it leave unknown? What changes when S3 versioning has a delete marker as the current version, or when GCS has only noncurrent versions?",
+          "criteria": [
+            "A timeout or lost response does not prove the object is absent. The write may have completed after the client stopped waiting, just as a committed database write can remain stored when its caller receives no response.",
+            "A later unconditional write that succeeds stores this request's complete object at the key and can replace another writer's PDF.",
+            "Create-if-absent preconditions are product features, not a universal object-store API. On S3, If-None-Match: * returns 200 when no current object has that key and 412 when one does. On GCS, ifGenerationMatch=0 proceeds only when no live object has that name and returns 412 when a live object exists.",
+            "A received 412 proves the precondition failed. It does not prove the stored bytes are this PDF.",
+            "A lost response to the conditional write is still ambiguous. A received success response and a received precondition failure are evidence; the absence of a response is not.",
+            "On a store that documents read-after-write, a later read after the timeout reports only that read's result. Finding the key shows that some complete object is present, not that the bytes are this PDF. A miss is evidence of absence only under that store's documented consistency. The lost response itself remains unknown.",
+            "With S3 versioning, If-None-Match: * can still succeed when the current version is a delete marker. With GCS, ifGenerationMatch=0 can still proceed when only noncurrent versions exist. Neither case means this upload's bytes are already the live object."
+          ],
+          "criticalMisconceptions": [
+            "A timeout proves the object was not stored.",
+            "An unconditional retry is safe because a write cannot replace a newer object at the same key.",
+            "Every object store supports If-None-Match: * or ifGenerationMatch=0.",
+            "A 412 means these PDF bytes are already stored.",
+            "A lost conditional response means the object is absent."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "durability-versus-success",
+      "slide": 6,
+      "objective": "Separate designed durability and availability from a successful HTTP response, including what an acknowledged write required, what a one-zone or zonal bucket can still lose, and why durability does not retain overwritten or deleted bytes.",
+      "prerequisites": ["lost-response"],
+      "questions": [
+        {
+          "id": "durability-versus-success-card",
+          "question": "The provider advertises about 11 nines of durability for this bucket. Using Google Cloud Storage's definitions, what is durability and what is availability? What yearly durability and availability figures does Amazon S3 standard storage name? When does S3 consider an upload successful, and when does GCS confirm a write? Does that design mean this write's HTTP response arrived? What can still happen to data in S3 One Zone if its Availability Zone is lost, and to a GCS zonal bucket if its zone fails? If an overwrite or a delete succeeds, do the previous bytes remain because the store is durable? Which optional controls add recovery beyond durability, and how long do S3 and GCS say to wait after enabling versioning before relying on it for writes, deletes, or replacements?",
+          "criteria": [
+            "GCS defines availability as the ability to access data when requested and durability as long-term protection so that stored data remains intact and uncorrupted. S3 standard storage is designed for 99.999999999 percent durability and 99.99 percent availability of objects over a given year.",
+            "S3 considers an upload successful only after it has checked integrity and stored the data redundantly across multiple devices. GCS confirms a write as successful only after the data has been redundantly stored. Those checks describe a completed write, not the chance that the caller's HTTP response arrived.",
+            "The durability design does not mean this HTTP request succeeded. A lost response leaves the outcome unknown. S3 One Zone data may be lost if that Availability Zone is lost, and a GCS zonal bucket may become unavailable or permanently lose data if its zone fails, even though both quote an 11-nines design against equipment failure.",
+            "Durability does not preserve overwritten or deleted bytes. S3's durability system does not protect against deletes, and an overwrite without versioning replaces the current object.",
+            "Versioning, replication, and S3 Object Lock are optional controls beyond the durability the store already applies. After versioning is first enabled, S3 recommends waiting 15 minutes before PUT or DELETE requests, and GCS says to wait at least 30 seconds before deleting or replacing objects, because that bucket configuration change is not immediate."
+          ],
+          "criticalMisconceptions": [
+            "Designed durability means the HTTP request succeeded.",
+            "Designed durability means an overwrite keeps the previous bytes.",
+            "An 11-nines design means a One Zone or zonal bucket survives loss of its single zone.",
+            "Durability and availability are the same yearly figure.",
+            "Versioning takes effect for the very next write the moment it is enabled on S3 or GCS."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "access-boundary",
+      "slide": 7,
+      "objective": "Explain that the object store authorizes its own credentials and policies, not Notes per-note ownership, and that a GCS access change can lag behind the metadata update.",
+      "prerequisites": ["durability-versus-success"],
+      "questions": [
+        {
+          "id": "access-boundary-card",
+          "question": "A user downloads the export for note 42. What does the object store check: the Notes user and that note's owner, or the credentials and policies presented on the request? What is the S3 default for buckets and objects, and which kinds of policy grant access? Which IAM permission does GCS require to list objects? If the Notes API holds a credential that can read every attachment and skips its note check, can the store still return another note's object? GCS says granting and revoking access is eventually consistent: what remains possible after access is removed, and is that lag true of every object store?",
+          "criteria": [
+            "The object store authorizes the credentials on the request against its own policies. It does not look up the Notes user or enforce that user's permission on note 42.",
+            "S3 buckets and objects are private by default, and access is granted explicitly through mechanisms such as IAM and bucket policies. GCS object listing requires the storage.objects.list permission for the authenticated caller. A prefix or object rule limits only the credential it names, and only when an operator wrote that mapping.",
+            "If the Notes API uses a credential that can read every attachment and does not check the note record first, the store can return another note's object. The per-note decision is the application's responsibility.",
+            "On GCS, removing a user's access is reflected immediately in the bucket metadata, but that user may still have access for a short time, typically about a minute and sometimes longer. That lag is not instant revocation, and it is not a rule of every object store."
+          ],
+          "criticalMisconceptions": [
+            "The store enforces Notes per-note permissions by itself.",
+            "A private-by-default bucket applies the note owner's permission without an application check.",
+            "Removing GCS access revokes every caller immediately, and every object store does the same."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "placement-and-split",
+      "slide": 8,
+      "objective": "Choose object storage for the opaque PDF and the database for note fields and permissions, and sequence the object acknowledgment and the key commit so a lost response or a failed commit has a defined outcome.",
+      "prerequisites": ["access-boundary"],
+      "questions": [
+        {
+          "id": "placement-and-split-card",
+          "question": "Notes must keep the export PDF, the note fields, and the decision of who may read note 42. Which bytes belong in object storage, which records stay in the database, and why is the bucket a poor place for in-place edits of the PDF, queries over note fields, or Notes per-note permissions? In what order should the API confirm the object and commit the key? What remains if the database commit fails? What can a reader be offered if the key is committed before the upload is confirmed? Does listing the bucket repair that split?",
+          "criteria": [
+            "The PDF bytes belong in the object store because they are one opaque object addressed by key and replaced as a whole. The note fields and the permission decision stay in the database. The bucket is a poor fit for editing bytes inside the PDF, querying note fields, or replacing the Notes permission check.",
+            "The API confirms that the object write completed, resolving a lost response before treating the object as stored, and then commits the key on the note. If the database commit fails, the object can remain with no note pointing at it. If the key is committed first, a reader can be directed to a key the store does not have. A bucket listing is not a transaction that repairs either outcome."
+          ],
+          "criticalMisconceptions": [
+            "The attachment bucket replaces the database for note records and permissions.",
+            "Uploading the object and committing the key are one atomic transaction.",
+            "Listing the bucket is one atomic snapshot that repairs a missing object.",
+            "A lost upload response is safe to ignore once the note row names the key."
+          ]
+        }
+      ]
+    }
+  ]
+}

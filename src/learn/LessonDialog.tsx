@@ -12,6 +12,7 @@ import { CAPDiagram } from "./CAPDiagram";
 import { ReplicationDiagram } from "./ReplicationDiagram";
 
 import { CdnHttpCachingDiagram } from "./CdnHttpCachingDiagram";
+import { ObjectStorageDiagram } from "./ObjectStorageDiagram";
 import { DnsDiagram } from "./DnsDiagram";
 import { ApiGatewayDiagram } from "./ApiGatewayDiagram";
 import { LoadBalancingDiagram } from "./LoadBalancingDiagram";
@@ -33,6 +34,7 @@ const diagrams = {
   "api-gateways": ApiGatewayDiagram,
   dns: DnsDiagram,
   "cdn-http-caching": CdnHttpCachingDiagram,
+  "object-storage": ObjectStorageDiagram,
 } satisfies Record<LessonId, typeof LessonDiagram>;
 
 export function LessonDialog({ lessonId, onClose }: { lessonId: LessonId; onClose: () => void }) {

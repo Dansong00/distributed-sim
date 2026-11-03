@@ -2,7 +2,7 @@
 
 Eight cards follow public Notes responses through browser/CDN/origin layers, freshness, conditional validation, privacy, variants, updates, stale limits and cost. Only normalized CDN technology on network components exposes this stack. The independently frozen contract defines eight ordered objectives and six scenarios.
 
-Current-source `check-release` passes: learner `/root/cdn_learner_b6`, independent reviewers `/root/cdn_review_a` and `/root/cdn_review_b`, scores 20/20 and 19/20; every outcome 2/2, no hard failures. All objectives, diagram meaning and primary sources checked. Reviewer B rates clarity 3/4 for dense but usable privacy/cost cards. Adjacent JSON files are unchanged outputs from external case `b6`; no automatic per-card learner sessions.
+Object-storage registration changed the shared dialog hash. Lesson text is unchanged. Current-source `check-release` passes: learner `cdn-learner-refresh`, reviewers `cdn-review-a` and `cdn-review-b`, 20/20 and 20/20, every outcome 2/2, no hard failures.
 
 Both reviewers reject case `r9` at 9/20 for false no-cache/private semantics and automatic cookie/authentication safety guarantees. The learner identified contradictions too. This semantic control is limited calibration, not proof of evaluator reliability or human learning.
 

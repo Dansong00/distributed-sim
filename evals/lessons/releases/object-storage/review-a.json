@@ -1,0 +1,161 @@
+{
+  "lessonHash": "6f9e1a22d9a07a217a6e1d36fabb6ec9b76de58a379880a01e8c47d7424c9c34",
+  "rubricHash": "73135482538c47cf4fb02c80c168698f6e4188417d6283fe19523dce3f675bb9",
+  "reviewer": "object-storage-review-a5",
+  "learnerHash": "2e4ab0e942822f8db4cdf3b4fd04799208ca975fd3f6afff35bd40d4b9962574",
+  "dimensions": {
+    "accuracy": {
+      "score": 4,
+      "reason": "The numerical, consistency, precondition, and failure claims match the linked pages and the related AWS and Google Cloud pages those claims come from. S3's consistency page states strong read-after-write after a successful write and says that behavior replaced earlier eventual consistency. The S3 FAQ states 11-nines durability, 99.99% availability for Standard, success only after integrity checks and redundant storage, One Zone loss if the zone is lost, and that durability does not protect deletes. GCS consistency states immediate read and list, the public-cache exception, a retryable 500 before replication, the 30-second versioning wait, and the access lag. The durability definition on the consistency slide stops at 'intact'; Google's availability-durability page also says 'uncorrupted' and 'immediately upon request.' That shortening does not reverse the distinction or add a guarantee.",
+      "evidence": [
+        {
+          "slide": 2,
+          "quote": "After a successful write of a new object, or an overwrite or delete of an existing object, any subsequent read immediately receives the latest version. A list after that write reflects the change."
+        },
+        {
+          "slide": 6,
+          "quote": "S3 One Zone data may be lost if that Availability Zone is lost, even when the class quotes an 11-nines design against equipment failure."
+        }
+      ]
+    },
+    "mechanisms": {
+      "score": 4,
+      "reason": "A reader can trace the Notes API, the object store, and the database through a successful upload, a whole-object replacement, a lost response, and a failed key commit. Cause and effect are explicit for S3's single-key atomic read, GCS immutability, create-if-absent 200 versus 412, and a list that is not one snapshot.",
+      "evidence": [
+        {
+          "slide": 5,
+          "quote": "A timeout or lost response does not prove the object is absent. The write may have completed after the client stopped waiting, just as a committed database write can remain stored when its caller receives no response."
+        },
+        {
+          "slide": 3,
+          "quote": "A GCS object is immutable for its lifetime. Until the replacement upload completes, readers receive the old object. After it completes, readers receive the new object."
+        }
+      ]
+    },
+    "coherence": {
+      "score": 3,
+      "reason": "The same notes/42/export.pdf case runs from the key through placement, and the two declared prerequisites are used when the lost response is explained. S3's concurrent-read rule and the list-page limit are taught, but they sit on the durability and access slides rather than with the replace and listing objectives. Slide 3 also names the timestamp rule and generation preconditions before those rules are spelled out.",
+      "evidence": [
+        {
+          "slide": 3,
+          "quote": "Do not treat S3's timestamp rule as a GCS mechanism."
+        },
+        {
+          "slide": 8,
+          "quote": "The API confirms that the object write completed, resolving a lost response before treating the object as stored, and then commits the key on the note."
+        }
+      ]
+    },
+    "decisions": {
+      "score": 4,
+      "reason": "The deck says when the bucket is the right place for the PDF and when it is a poor place for in-place edits, note queries, and per-note permissions. It pairs that with failure responses: treat a missing response as unknown, do not retry unconditionally, confirm the object before committing the key, and do not expect durability, a list, or a private bucket to retain bytes or enforce note ownership.",
+      "evidence": [
+        {
+          "slide": 8,
+          "quote": "The bucket is a poor fit for editing bytes inside the PDF, querying note fields, or replacing the Notes permission check."
+        },
+        {
+          "slide": 6,
+          "quote": "Versioning, replication, and S3 Object Lock are optional controls beyond the durability the store already applies."
+        }
+      ]
+    },
+    "clarity": {
+      "score": 3,
+      "reason": "Bucket, object, key, prefix, and the remember lines are plain, and the renderer shows the paragraphs, takeaway, and source link. Several later terms are used operationally without a first-use definition, especially delete marker, generation, and version-suspended. The paragraphs are also long enough that a reader has to unpack several limits from one block.",
+      "evidence": [
+        {
+          "slide": 2,
+          "quote": "A bucket is a container. An object is opaque bytes plus metadata. A key is that object's name and identifies it inside the bucket."
+        },
+        {
+          "slide": 5,
+          "quote": "With S3 versioning, If-None-Match: * can still succeed when the current version is a delete marker."
+        }
+      ]
+    }
+  },
+  "outcomes": [
+    {
+      "id": "upload-and-fetch-one-attachment",
+      "score": 2,
+      "reason": "Every criterion is on the slides and the learner's quotes support it. Slide 2 defines bucket, object, and key. Slides 1 and 3 say notes/42/export.pdf is one key or one object name, that slashes do not create directories, and that a console prefix or a delimiter listing is only a presentation. Slide 6 says an S3 prefix rename renames each object whose key contains it, and slide 3 says a GCS simulated-folder rename copies and deletes each object and can stop halfway. The learner quotes the successful upload, the key recorded only after success, the later download, which store holds the bytes versus the note, and that the two writes are not one transaction."
+    },
+    {
+      "id": "replace-the-export",
+      "score": 2,
+      "reason": "The learner quotes a complete replacement rather than an in-place patch, S3's previous-or-new atomic read, and GCS serving the old object until the replacement completes and the new object after. Quotes also cover an unversioned S3 overwrite, a GCS replace that permanently deletes the old live version when versioning and soft delete are off, S3 versioning plus replication and Object Lock as optional retention, a GCS noncurrent version, and soft delete when versioning is off. Designed durability is quoted as not providing that retention."
+    },
+    {
+      "id": "read-after-success-and-listing",
+      "score": 2,
+      "reason": "The learner quotes current S3 read-after-write and list behavior, GCS immediate availability to read and list, the replacement of S3's earlier eventual consistency, and that this is not every store. The 500-before-replication case and the statement that strong consistency does not mean the read cannot fail are quoted, including the public-cache exception the Notes attachment is distinguished from. Overlapping S3 writes are quoted as last-writer-wins by timestamp, with acknowledgment order insufficient and the rule specific to S3; the learner also quotes the instruction not to treat that rule as a GCS mechanism. The 1,000-key S3 page, the GCS omission of a new name in an already listed range, the non-snapshot listing, and the one-key S3 update are quoted."
+    },
+    {
+      "id": "timeout-and-conditional-retry",
+      "score": 2,
+      "reason": "The learner's slide 5 quotes cover each criterion: a timeout does not prove absence, an unconditional success can replace another writer's PDF, If-None-Match: * returns 200 or 412 and is not a universal API, ifGenerationMatch=0 proceeds only with no live object and returns 412 when one exists, a 412 does not prove these bytes are stored, a lost conditional response stays ambiguous, and a later read shows only that read's result. The delete-marker success and the noncurrent-only GCS case are quoted, with the S3 sentence that this does not mean the upload's bytes are already the live object."
+    },
+    {
+      "id": "durability-is-not-this-response",
+      "score": 2,
+      "reason": "The learner quotes GCS's availability and durability definitions as the deck states them, S3 Standard's 99.999999999 percent durability and 99.99 percent availability as different yearly figures, S3's integrity-and-redundant-storage success check, and GCS confirming a write only after redundant storage. The same quotes say those checks are not proof the HTTP response arrived. One Zone loss and a GCS zonal bucket that can still lose data are quoted. Overwrite and delete are quoted as outside durability, and versioning, replication, and Object Lock are quoted as optional, with the 15-minute S3 wait and the 30-second GCS wait."
+    },
+    {
+      "id": "authorize-and-place-the-pdf",
+      "score": 2,
+      "reason": "The learner quotes the store checking request credentials and policies rather than the Notes user, S3 private-by-default access through IAM and bucket policies, storage.objects.list, and a broad API credential returning another note's object. The GCS removal lag, including that it is not instant and not universal, is quoted. Placement of the PDF versus note fields and permissions is quoted, as is confirm-then-commit, an object left with no note, a key committed before the object exists, and a listing that repairs neither outcome."
+    }
+  ],
+  "hardFailures": [],
+  "sourceChecks": [
+    {
+      "slide": 1,
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html",
+      "claim": "The object-keys page says the S3 data model is a flat structure with no hierarchy of subfolders, and that the console uses a key-name prefix and a delimiter to present a folder. That supports the slide's claim that notes/42/export.pdf is one key and that a console folder is not a directory the store can rename as a filesystem parent.",
+      "verified": true
+    },
+    {
+      "slide": 2,
+      "url": "https://aws.amazon.com/s3/consistency/",
+      "claim": "The consistency overview says that after a successful write of a new object, or an overwrite or delete, any subsequent read immediately receives the latest version and a list reflects the change. It also says S3 pioneered object storage with eventual consistency and now delivers strong read-after-write and list consistency, which supports the slide's history and current-behavior claims.",
+      "verified": true
+    },
+    {
+      "slide": 3,
+      "url": "https://cloud.google.com/storage/docs/objects",
+      "claim": "The objects page says object data is opaque, a flat namespace has no directories, a slash is part of the object name, objects are immutable, readers receive the old object until a replacement upload completes and the new object after, and renaming a simulated folder copies and deletes each object and can leave only some objects moved. That supports the slide.",
+      "verified": true
+    },
+    {
+      "slide": 4,
+      "url": "https://cloud.google.com/storage/docs/consistency",
+      "claim": "The consistency page says a success response makes the object immediately available to read and list, that this does not return a stale object or a false 404 except for a publicly readable cached object, that a retryable 500 is possible if the first location is unavailable before replication, that versioning should be followed by a wait of at least 30 seconds, and that removed access shows up immediately in metadata while the user may still have access for about a minute. Those sentences support the slide. The page does not define durability; it also does not contradict the slide's durability sentence.",
+      "verified": true
+    },
+    {
+      "slide": 5,
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/conditional-writes.html",
+      "claim": "The conditional-writes page says If-None-Match: * returns 200 OK when no current object has the key and 412 when one does, succeeds when the current version is a delete marker, and that a PUT without that header overwrites an object in an unversioned or version-suspended bucket. That supports the S3 precondition and unconditional-overwrite claims on the slide.",
+      "verified": true
+    },
+    {
+      "slide": 6,
+      "url": "https://aws.amazon.com/s3/faqs/",
+      "claim": "The FAQ says S3 Standard is designed for 99.99% availability and S3 for 99.999999999% durability, that an upload is successful only after integrity checking and redundant storage, that One Zone data may be lost if the Availability Zone is lost despite an 11-nines design against equipment failure, that the durability system does not protect against deletes, that versioning, replication, and Object Lock are optional controls beyond durability, and that renaming a prefix renames each object that contains it. Those FAQ passages support the corresponding slide sentences.",
+      "verified": true
+    },
+    {
+      "slide": 7,
+      "url": "https://cloud.google.com/storage/docs/json_api/v1/objects/list",
+      "claim": "The list method requires storage.objects.list for the authenticated caller, and its pageToken description says an object created before the next page is omitted from later pages when its name is in the namespace already listed. A delimiter listing is described as mimicking a directory. That supports the GCS listing claims. The page does not state S3's 1,000-key page size; the S3 ListObjects API does, and this page does not contradict it.",
+      "verified": true
+    },
+    {
+      "slide": 8,
+      "url": "https://cloud.google.com/storage/docs/object-versioning",
+      "claim": "The versioning reference says that with Object Versioning and soft delete disabled, replacing an object permanently deletes the old live version; with versioning enabled, the old live object becomes noncurrent; and with soft delete enabled and versioning disabled, the replaced live object is soft-deleted. That supports the retention claims and the statement that designed durability alone does not keep the old bytes.",
+      "verified": true
+    }
+  ]
+}

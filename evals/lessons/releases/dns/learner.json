@@ -1,12 +1,16 @@
 {
-  "lessonHash": "9014d471e2ada2d2c02888d87d7c979a4fa9156765ba3495c3fd71770e5c887e",
+  "lessonHash": "74389bdcbd05fbe6a384c9ea8d6951b31b05a09cc10929b8e2bfb11943cdbf5f",
   "rubricHash": "47e1a50ac83f3568173b11b58fcacdfd420c4d30df6c9ec3574d0527c2e6c0ac",
-  "respondent": "/root/cdn_learner_v3",
+  "respondent": "dns-learner-refresh",
   "answers": [
     {
       "id": "resolve-notes",
-      "answer": "DNS resolves api.notes.example, not /notes/42. The stub is the client's local lookup helper; it asks the recursive resolver to obtain an answer. A zone is a managed portion of DNS names; its authoritative servers supply its records. Delegation assigns a child zone to authorities, and referrals point toward them rather than supplying the final host address. With empty caches the recursive resolver asks root, follows its .example referral, then .example's notes.example referral to that authority. It obtains api's CNAME to edge.notes.example and follows that target to usable address data; the data can accompany the alias, otherwise further lookup is needed. CNAME is a name alias, not an address or HTTP redirect. A supplies IPv4; AAAA supplies IPv6; the client uses a reachable family. The resolver returns the result to the stub, then the client connects to an address and sends HTTPS /notes/42 independently of the DNS servers. An address proves neither API health nor ability to serve the note. Later cached addresses or an existing connection may avoid lookup; cached delegations shorten the authority traversal. Alias and target data cache separately, so the alias depends on usable target data.",
+      "answer": "The client wants https://api.notes.example/notes/42. The hostname api.notes.example names the destination. DNS discovers an address for that name. It does not resolve the path /notes/42. Relevant caches start empty, so this lookup cannot reuse a stored answer.\n\nThe stub resolver is the client's local lookup helper. It asks a recursive resolver to obtain the answer. The stub does not itself walk the hierarchy. An authoritative server answers from the records it serves for a zone, a managed portion of the DNS name space. Delegation assigns a child zone to its authoritative servers. A referral points the resolver at those servers. A referral is not the final host address.\n\nThe recursive resolver asks the root and receives a referral to .example. It asks that .example authority and follows its referral to the notes.example authority. Root does not hold every host address. The notes.example authority holds the final records for api.notes.example. Those records include a CNAME: api.notes.example is an alias for the DNS name edge.notes.example, not an IP address, URL, or HTTP path. The alias does not redirect /notes/42. Resolution follows the target to obtain address data. An A record supplies an IPv4 address. An AAAA record supplies an IPv6 address. The client uses an address family it can reach. The target's A or AAAA data may already be returned with the alias; otherwise a further lookup is required. Without usable target address data, the alias alone gives the client nothing to connect to. The alias also adds a dependency on the target's DNS data even if one team manages both names. The recursive resolver returns the resulting address to the stub.\n\nThe client then connects to that address and sends the HTTPS request for /notes/42. That request and its response do not pass through the DNS servers. An address answer does not prove that Notes is healthy or able to serve the note.\n\nLater, a usable cached address or an existing connection can avoid a fresh lookup. Cached answers can skip authority visits, and cached delegations can let the resolver start closer to the answer. The alias and the target address records can be cached separately.",
       "evidence": [
+        {
+          "slide": 1,
+          "quote": "A hostname, api.notes.example, names a network destination. An IP address is the network address used to reach it."
+        },
         {
           "slide": 1,
           "quote": "DNS, the Domain Name System, provides name discovery. A DNS record is typed data associated with a name. For this web lookup, the client obtains address records, connects to an address, and sends the HTTPS request for /notes/42."
@@ -29,7 +33,7 @@
         },
         {
           "slide": 2,
-          "quote": "Assume empty relevant caches in our teaching hierarchy. The recursive resolver asks root, receives a referral to .example, asks that authority, then follows its referral to the notes.example authority. That authority holds the final records for api.notes.example. Root does not hold every host's address."
+          "quote": "The recursive resolver asks root, receives a referral to .example, asks that authority, then follows its referral to the notes.example authority. That authority holds the final records for api.notes.example. Root does not hold every host's address."
         },
         {
           "slide": 2,
@@ -37,7 +41,7 @@
         },
         {
           "slide": 3,
-          "quote": "IPv4 and IPv6 are two IP address families. An A record supplies an IPv4 address, such as 192.0.2.10. An AAAA record supplies an IPv6 address, such as 2001:db8::10. A client uses an address family it can reach."
+          "quote": "An A record supplies an IPv4 address, such as 192.0.2.10. An AAAA record supplies an IPv6 address, such as 2001:db8::10. A client uses an address family it can reach."
         },
         {
           "slide": 3,
@@ -55,11 +59,15 @@
     },
     {
       "id": "planned-address-change",
-      "answer": "TTL limits ordinary cache reuse in seconds, aged independently by each cache. The resolver received 3600 seconds at 11:59, so its old answer can remain ordinarily usable until 12:59, not necessarily refresh by 12:01. Lowering TTL at noon does not rewrite that entry. For a planned move, lower the TTL before the address switch and allow the previous 3600-second lifetime to age out before switching. Keep the old destination usable through the transition; monitor traffic, errors and existing connections at both destinations to judge when that overlap can end. The lesson gives no fixed universally safe shutdown time: connections do not migrate, independent caches expire differently, and some resolvers can serve expired data when refresh fails. Short TTL increases refresh queries and dependence on functioning DNS, so it cannot guarantee simultaneous worldwide cutover or a hard recovery deadline.",
+      "answer": "TTL, time to live, limits ordinary cache reuse in seconds. Each cache ages the TTL it received with that answer. It is not a worldwide update timer, and a new TTL cannot rewrite an old cached answer.\n\nThis resolver cached the old address at 11:59 with the 3600-second TTL it received then. At noon the record's TTL is lowered to 60 seconds and the address is changed. That edit does not rewrite the entry already cached. The same rule as a resolver that cached a 300-second TTL at 10:00 and could keep using it until 10:05 after a 10:01 edit applies here: the existing entry stays ordinarily usable until the TTL it received runs out, 3600 seconds after 11:59, not by 12:01. The resolver need not refresh by 12:01.\n\nA safer planned change lowers the TTL first, to 60 seconds, then waits until the previous 3600-second TTL has aged out, and only then switches the address. Keep the old destination usable through that overlap. Monitor traffic, errors, and existing connections at both destinations. DNS edits do not move open connections.\n\nShort TTLs cost more refresh queries and make clients depend on working DNS more often. TTL is not a worldwide cutover. Independent caches and connection lifetimes prevent everyone from switching at once. Some resolvers can still serve expired data when a refresh fails, so TTL is not a hard global recovery deadline.",
       "evidence": [
         {
           "slide": 4,
-          "quote": "Now consider a direct address record for api.notes.example instead of the alias. TTL, or time to live, limits ordinary cache reuse in seconds. Each cache ages the TTL it received; it is not a worldwide update timer."
+          "quote": "A new TTL cannot rewrite an old cached answer"
+        },
+        {
+          "slide": 4,
+          "quote": "TTL, or time to live, limits ordinary cache reuse in seconds. Each cache ages the TTL it received; it is not a worldwide update timer."
         },
         {
           "slide": 4,
@@ -72,12 +80,16 @@
         {
           "slide": 4,
           "quote": "Shorter TTLs mean more refresh queries and more frequent dependence on working DNS. Independent caches and connection lifetimes prevent a simultaneous cutover. Some resolvers can even serve expired data when refreshing fails, so TTL is not a hard global recovery deadline."
+        },
+        {
+          "slide": 4,
+          "quote": "Plan overlap and observe clients; a TTL edit is not a cache purge."
         }
       ]
     },
     {
       "id": "new-name-not-visible",
-      "answer": "Negative caching reuses an answer reporting absence. The earlier NXDOMAIN says the queried name does not exist, but that cached answer has its own lifetime. Creating the A record does not notify the cache, and its new 30-second positive TTL does not clear the older negative answer. NXDOMAIN concerns name absence. NODATA for AAAA means the name exists without the requested AAAA type; it does not establish absence of A data or of the name. SERVFAIL means resolution could not be completed, perhaps because usable answers could not be obtained; it does not prove nonexistence. Resolution failures can also be cached to avoid repeatedly hammering failing DNS servers. Inspect the queried name, type and status to distinguish these investigations.",
+      "answer": "Negative caching reuses an answer that reports absence. Before the name existed, this resolver cached NXDOMAIN for api.notes.example. NXDOMAIN says the queried name does not exist. Adding the name and a 30-second A record does not notify that cache. The negative answer has its own cache lifetime. The new positive record's TTL does not clear it, so the resolver can keep reporting absence until that negative lifetime ends.\n\nNODATA is a different absence answer. The name exists, but it has no record of the requested type. A response with no AAAA record does not mean there is no A record, and it does not mean the name is missing.\n\nSERVFAIL means resolution could not be completed, for example because the resolver could not obtain a usable answer. It is not proof that the name does not exist. Resolution failures may also be cached, so a failure can be reused to avoid hammering failing DNS servers.\n\nCheck the name, the record type, and the status before changing records. A cached NXDOMAIN, a missing type, and a lookup failure are different problems.",
       "evidence": [
         {
           "slide": 5,
@@ -94,12 +106,16 @@
         {
           "slide": 5,
           "quote": "Check the requested name, record type and returned status before changing records. A missing type, a cached absent name and a lookup failure call for different investigations."
+        },
+        {
+          "slide": 5,
+          "quote": "Distinguish an answer about absence from a failure to obtain an answer."
         }
       ]
     },
     {
       "id": "east-to-west-failover",
-      "answer": "Steering selects destinations returned in DNS answers; failover changes the selected destination after failure. A separate health check with policy, or an operator, must detect east's failure and change the answers; ordinary records do not detect application health. Equal lookup answers do not mean equal HTTP request counts: a shared resolver reuses one answer for many clients, and a client can send many requests through one address or connection. Removing east only changes new answers; clients with cached east data can still try it, and open connections do not migrate. DNS does not select again for every HTTP request. West must be reachable and healthy with enough spare capacity for the redirected work. Health checks sample behavior and cannot promise every request succeeds; changing DNS neither creates capacity nor guarantees immediate recovery.",
+      "answer": "Steering is DNS selecting the destinations it returns in answers. Failover changes that selected destination after a failure. Ordinary DNS records do not detect that east's application is unhealthy. A separate health check and policy, or an operator, must notice east's failure and change the answers so new lookups return west.\n\nReturning each endpoint for some lookups does not put half of the HTTP requests on each endpoint. A shared recursive resolver can reuse one answer for many clients, and each client can send many requests on that address or connection. Equal DNS answers are not an equal split of requests.\n\nRemoving east from new answers does not instantly move everyone. Clients with the old answer cached can still try east until that cache entry stops being reused. Existing connections do not migrate to west just because DNS changed. DNS is not choosing a destination again for every HTTP request.\n\nFor recovery, west must be reachable and healthy and must have enough spare capacity for the redirected work. A health signal is only a sample. It does not promise every request succeeds. Changing DNS does not create that capacity and does not guarantee instant recovery.",
       "evidence": [
         {
           "slide": 6,
@@ -116,12 +132,16 @@
         {
           "slide": 6,
           "quote": "West must be reachable, healthy and have enough spare capacity for redirected work. A health signal is a sample, not a promise that every request succeeds; DNS changes do not create capacity or guarantee instant recovery."
+        },
+        {
+          "slide": 6,
+          "quote": "DNS steers future address discovery, subject to caches and client behavior."
         }
       ]
     },
     {
       "id": "separate-dns-from-service",
-      "answer": "An open connection can keep working without lookup, and a usable cached address may allow a new connection even during a DNS outage. New uncached users need reachable recursive resolution, correct delegation and answering authorities, so their failures can coexist with working sessions. Inspect the client's recursive resolver first: queried name and type, answer/error and remaining TTL. Compare authoritative data and parent delegation for wrong or failed results. A new authoritative address alongside an old cached one suggests cache age rather than automatically requiring another edit. Once the expected address is obtained, investigate connection, HTTPS and application outcomes separately. An HTTP 500 shows an HTTP service responded with an error, not by itself a DNS lookup failure; successful discovery cannot establish application health. Reachable alternate resolvers and authoritative servers reduce individual server failures, but cannot correct a shared wrong record, broken delegation or failed Notes API; duplicate bad configuration can return the same wrong result.",
+      "answer": "These outcomes come from different steps. A client that already has a usable cached address can still connect during a DNS problem, and an open connection can keep working with no new lookup. That is why some users with open sessions still work. New users who need a fresh lookup cannot resolve api.notes.example when the recursive resolver, the delegation, or the authoritative servers cannot answer.\n\nThe user who gets the expected address and then an HTTP 500 has finished name discovery. HTTP 500 means the HTTP service responded with an error. It is not, by itself, a DNS lookup failure. Successful DNS does not prove the application works. After the expected address is obtained, inspect the connection, HTTPS, and the application separately.\n\nTo separate the failures, start at the client's recursive resolver. Inspect the queried name and type, the answer or error, and the remaining TTL. If the result is wrong or failing, compare the authoritative data and the parent delegation. An authoritative new address next to a cached old one is a cache-age question, not an automatic reason to edit the record again. A resolver or delegation problem shows up as a lookup error or a wrong or stale answer. A connection, certificate, or application problem shows up only after an address was obtained.\n\nReachable alternate resolvers and authoritative servers reduce the loss of one DNS server. They do not fix a shared wrong record, a broken delegation, or a failed Notes API. Several DNS servers with the same bad configuration can all return that same wrong result.",
       "evidence": [
         {
           "slide": 7,
@@ -138,12 +158,16 @@
         {
           "slide": 7,
           "quote": "Once the expected address is obtained, inspect connection, HTTPS and application results separately. HTTP 500 means an HTTP service responded with an error; it is not by itself a DNS lookup failure. Successful DNS does not prove the application works."
+        },
+        {
+          "slide": 7,
+          "quote": "Locate the failed step before changing DNS or the application."
         }
       ]
     },
     {
       "id": "validated-dns-and-https",
-      "answer": "DNSSEC signs DNS data. A validating resolver checks signatures through a chain of trust starting at a configured trusted key, with each trusted signing key vouching for the next link. Successful validation establishes the signed data's origin and integrity, detecting alteration. It does not encrypt or hide the query, certify Notes health or guarantee availability. It does not remove HTTPS certificate validation. HTTPS separately authenticates the endpoint by certificate validation and encrypts the HTTP exchange. The client must verify api.notes.example, the requested hostname, even if DNS resolves via edge.notes.example. DNS validation also grants no permission to read notes; application access rules remain.",
+      "answer": "DNSSEC adds signatures to DNS data. A validating resolver checks those signatures through a chain of trust: each trusted signing key vouches for the next link, starting from a configured trusted key. Successful validation establishes the origin and integrity of the signed DNS data. It means the data was not altered without detection.\n\nThat validates DNS data, not the Notes application. It does not hide the query: DNSSEC does not encrypt the query. It does not prove Notes is healthy, and it does not guarantee availability. It does not remove the HTTPS certificate check. Unsigned data also does not get these signature checks just because the resolver supports DNSSEC.\n\nHTTPS separately authenticates the endpoint by certificate validation and encrypts the HTTP exchange. The client must still verify the certificate for the hostname it requested, api.notes.example, even if DNS followed an alias to another name. A valid DNSSEC answer does not replace that check. Reaching a real server also does not grant permission to read every note. The application's access rules still apply.",
       "evidence": [
         {
           "slide": 8,
@@ -160,6 +184,10 @@
         {
           "slide": 8,
           "quote": "A valid DNSSEC answer does not remove HTTPS certificate checks. Nor does discovering a real server give the caller permission to read every note; the application's access rules still apply."
+        },
+        {
+          "slide": 8,
+          "quote": "DNSSEC protects DNS data; HTTPS protects the connection to the requested service identity."
         }
       ]
     }

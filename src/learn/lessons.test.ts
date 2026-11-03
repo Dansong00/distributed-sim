@@ -128,6 +128,23 @@ it("offers DNS only for network DNS technology after renaming", () => {
   }
 });
 
+it("offers object storage only for object-storage components after renaming", () => {
+  const node = createComponent("s3", { x: 0, y: 0 });
+  node.name = "Note files";
+  node.technology = " S3 ";
+  expect(lessonsFor(node)).toEqual(["object-storage"]);
+  expect(lessonsFor(createComponent("generic-object-storage", { x: 0, y: 0 }))).toEqual(["object-storage"]);
+  expect(lessonsFor(createComponent("google-cloud-storage", { x: 0, y: 0 }))).toEqual(["object-storage"]);
+  expect(lessonsFor({ ...node, category: undefined })).toEqual(["object-storage"]);
+  expect(lessonsFor({ ...node, kind: "sticky" })).toEqual([]);
+  expect(lessonsFor({ ...node, componentType: "block-storage" })).toEqual([]);
+  for (const preset of ["generic-block-storage", "generic-file-storage", "generic-data-lake", "cdn"]) {
+    const other = createComponent(preset, { x: 0, y: 0 });
+    other.name = "S3";
+    expect(lessonsFor(other)).not.toContain("object-storage");
+  }
+});
+
 it("offers CDN and HTTP caching only for CDN technology after renaming", () => {
   const node = createComponent("cdn", { x: 0, y: 0 });
   node.name = "Notes edge";

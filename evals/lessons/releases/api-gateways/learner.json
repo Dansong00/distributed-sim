@@ -1,19 +1,27 @@
 {
-  "lessonHash": "201e82a24334d31f4ef6fedc3a2b218472910795411376568160285140956405",
+  "lessonHash": "11aff1de0bc04a170dff065cbc127e837a40d55fdf7cdd6c8873761628749b0a",
   "rubricHash": "77bb703ca8a696a5e358f5fea1f801f1dd16968e5b3f10a64ef422bc1c99459b",
-  "respondent": "/root/cdn_learner_p7",
+  "respondent": "api-gateways-learner-refresh",
   "answers": [
     {
       "id": "routing-and-role",
-      "answer": "A successful /notes request goes from the client through the gateway to Notes, which reads the database; its response returns through the gateway to the client. Choosing Notes versus Authors is service routing; choosing between the two Notes copies is load balancing. One gateway product can perform both. The shared body-size rule is an entrance policy. For HTTPS, inspecting method/path and body requires decrypted HTTP: terminate client TLS at the gateway and separately protect the service connection with TLS and certificate validation. Reject oversized bodies before forwarding, using a bounded check rather than unlimited buffering. Notes retains business validation such as whether a locked note may be edited because that decision depends on application data.",
+      "answer": "The client calls the gateway, for example GET /notes. The gateway is the client-facing intermediary: it applies the shared entrance rules and routes that request to the Notes service. Notes does the application work and reads the database. The response travels back through the gateway to the client. Sending /authors goes to Authors the same way.\n\nChoosing Notes rather than Authors is service routing. Choosing one of the two Notes replicas is load balancing. A gateway product can do both, so the routing and the replica choice do not have to be two separate boxes. The shared policy here is an edge rule: reject an oversized body before forwarding it. Apply a bounded size check, not unlimited buffering while waiting to learn the size. Sharing that rule avoids repeating it in every service. The selected service still does the application work.\n\nFor HTTPS, method and path routing and body inspection need decrypted HTTP. TLS termination ends the client's encrypted connection at the gateway so those rules can see the request. Protect the gateway-to-service connection separately with TLS and validate the service's certificate.\n\nReject the oversized request at the gateway before it is forwarded. Note-specific business validation still belongs in Notes. A general entrance rule cannot decide, from application data, whether a note can be edited after it is locked.",
       "evidence": [
+        {
+          "slide": 1,
+          "quote": "An API gateway is a client-facing intermediary that forwards API requests and applies shared entrance rules. A backend service is the application that handles the forwarded request."
+        },
         {
           "slide": 1,
           "quote": "The client requests /notes through the gateway. The gateway routes it to Notes, which reads the database. The response travels back through the gateway to the client."
         },
         {
           "slide": 1,
-          "quote": "Replicas are copies serving the same role. Choosing Notes rather than Authors is service routing; distributing traffic across two Notes replicas is load balancing. A gateway product can do both, so two separate boxes are not always needed."
+          "quote": "Choosing Notes rather than Authors is service routing; distributing traffic across two Notes replicas is load balancing. A gateway product can do both, so two separate boxes are not always needed."
+        },
+        {
+          "slide": 1,
+          "quote": "Use the gateway for a shared API entrance; the selected service still performs the application work."
         },
         {
           "slide": 2,
@@ -35,7 +43,7 @@
     },
     {
       "id": "identity-and-bypass",
-      "answer": "Authentication validates credentials to establish who Alice is; authorization decides what she may do. The gateway must validate credentials, not merely accept a token or identity header. It must remove or replace her Bob claim with validated Alice identity. Notes accepts a verifiable identity assertion only over a protected path that authenticates the gateway; encryption alone does not establish the caller is the gateway. Block direct external access to Notes or apply equivalent identity and policy checks there so clients cannot bypass the entrance. Notes must consult its application data for permission on Bob’s particular private note and deny Alice unless allowed. Knowing Alice is signed in does not establish permission for that note.",
+      "answer": "Authentication checks who the caller is by validating credentials. Authorization decides what that caller may do. The gateway must validate Alice's credentials. Merely receiving her token, or the header that claims she is Bob, is not validation.\n\nThe gateway must remove or replace that client-supplied identity header with the validated identity, so the claim to be Bob is not forwarded as fact. Notes can trust the forwarded identity only on a protected path that authenticates the gateway, so a caller cannot impersonate the gateway. The forwarded identity assertion must be verifiable by Notes.\n\nThe direct address has to be closed or given the same checks. Block direct external access to Notes, or enforce equivalent identity and policy checks on that path. Otherwise clients bypass the gateway. Encrypting the connection does not prove the caller is the gateway.\n\nNotes must check permission for this particular note, using its application data. Successful gateway authentication only establishes that the caller is Alice. It is not permission to read Bob's private note. Deny that note unless Alice has permission for it.",
       "evidence": [
         {
           "slide": 3,
@@ -52,12 +60,16 @@
         {
           "slide": 3,
           "quote": "Notes checks Alice's permission for the particular note using its application data. Deny access to Bob's private note unless Alice has permission, even when gateway authentication succeeds."
+        },
+        {
+          "slide": 3,
+          "quote": "Verified identity is input to the permission check, not permission to read every note."
         }
       ]
     },
     {
       "id": "distributed-limits",
-      "answer": "The promise is a combined allowance of 100 accepted requests per validated user in one minute across both gateway replicas. Independent allowances let Alice consume 100 at each, totaling 200. Throttling controls rate; a burst is a short surge and a quota is an allowance over a stated period. Best-effort throttling can exceed its target or admit bursts, so it does not satisfy this strict combined quota. Strict shared accounting needs coordinated admission preventing replicas from spending the same allowance twice. This adds latency or a dependency, potentially requiring refusal when accounting is unavailable. A client receiving 429 should respect any retry delay, wait, and bound retries rather than immediately repeat. Even accurate counting cannot guarantee capacity because expensive queries cost more than small reads and the shared database may overload.",
+      "answer": "The promised limit is a per-user quota: at most 100 accepted requests for that validated user per minute, shared by the gateway instances. Scope is which callers and which gateway instances share one allowance. A per-user limit groups requests by the validated user, and the promise is one combined allowance of 100, not 100 on each replica.\n\nEach replica independently allowing 100 does not enforce that. If Alice's traffic is sent to both replicas, each can admit 100 and the pair can admit 200.\n\nA burst is a short surge. A quota is an allowance over a stated period, here 100 requests per user per minute. Best-effort throttling may permit bursts or exceed a target. It is not strict quota accounting. A strict shared quota needs coordinated admission so the two replicas cannot spend the same allowance twice. That coordination adds latency, or a dependency that may require refusing work when the accounting is unavailable.\n\nOn a 429 Too Many Requests response, the client should respect any supplied retry delay, wait, and bound retries instead of repeating immediately.\n\nEven a correctly enforced request count cannot guarantee that an expensive Notes query fits backend capacity. An expensive query costs more than a small read, and the shared database can still overload.",
       "evidence": [
         {
           "slide": 4,
@@ -74,12 +86,16 @@
         {
           "slide": 4,
           "quote": "On a 429 Too Many Requests response, respect any supplied retry delay; wait and bound retries instead of repeating immediately. Even a strict request-count limit cannot guarantee capacity: an expensive Notes query costs more than a small read, and a shared database can still overload."
+        },
+        {
+          "slide": 4,
+          "quote": "Specify the scope and required precision before promising a limit."
         }
       ]
     },
     {
       "id": "create-note-timeout",
-      "answer": "Fit the gateway wait for Notes inside the two-second end-to-end budget, reserving time for gateway work and returning the response; retry delays and attempts consume the remaining budget rather than receiving two new seconds each. A timeout means no successful response arrived in time: the client cannot conclude whether the write committed. In this scenario it did commit, and timing out neither undoes it nor necessarily cancels in-flight work. Three client attempts times three gateway attempts can reach Notes nine times. Choose the client as retry owner; the gateway forwards each attempt once, with client attempts and delays bounded by the remaining deadline. Reuse one stable operation/idempotency key for this logical creation on every attempt. Notes owns the effect and must enforce duplicate recognition across replicas using a shared durable database record keyed by caller and operation ID. In one transaction uniquely reserve the key, create the note and record its result, committing all or none. Concurrent repeats cannot reserve it twice; completed repeats return the saved result without new notes. Separate writes leave a crash gap. A gateway-only key or record does not coordinate Notes’ transaction and cannot make an arbitrary write safe. A fresh key per attempt labels each as a different operation and defeats deduplication.",
+      "answer": "The client has one two-second overall budget. The gateway's wait for Notes has to fit inside that budget, leaving time for gateway processing and for returning the response. Retry attempts and their delays spend that same remaining budget. Each attempt does not get a fresh two seconds.\n\nThe service committed the note, but the response was lost. A gateway timeout tells the client that no successful response arrived in time. It does not say whether the write committed. The outcome is unknown to the client. The timeout does not cancel the in-flight work or undo the committed note. Notes can continue after the gateway stops waiting.\n\nIf the client and the gateway can each make three total attempts, retries multiply. Three client attempts, each causing three gateway attempts, can reach Notes nine times. Retrying the creation blindly can create another note. Choose one retry owner. Here the client retries, and the gateway forwards each attempt once. Bound the attempts and delay them inside the remaining deadline.\n\nThe client reuses one idempotency key, a stable identifier for this logical create, on every attempt. Notes owns the creation effect and must enforce duplicate protection. The Notes replicas share a durable database record keyed by caller and operation ID. In one transaction, reserve that key uniquely, create the note, and record the result. Commit all or none. Concurrent repeats cannot reserve the key twice. A completed repeat returns the recorded result without creating another note.\n\nA gateway-only key or record does not coordinate that Notes transaction, and a gateway adding a key cannot make an arbitrary write safe. A new key on every attempt describes a different operation and defeats duplicate recognition. Separate record and creation writes also leave a crash gap, so the reserve, the create, and the recorded result stay in one transaction.",
       "evidence": [
         {
           "slide": 5,
@@ -103,7 +119,7 @@
         },
         {
           "slide": 6,
-          "quote": "In our design, Notes replicas share a durable database record keyed by caller and operation ID. In one transaction, reserve that key uniquely, create the note and record the result; commit all or none. Concurrent repeats cannot reserve it twice. A completed repeat returns the recorded result without creating another note."
+          "quote": "Notes replicas share a durable database record keyed by caller and operation ID. In one transaction, reserve that key uniquely, create the note and record the result; commit all or none. Concurrent repeats cannot reserve it twice. A completed repeat returns the recorded result without creating another note."
         },
         {
           "slide": 6,
@@ -113,7 +129,7 @@
     },
     {
       "id": "overview-partial-failure",
-      "answer": "Aggregation combines the Notes and Authors responses into one client response; fan-out is making those multiple backend calls. Fewer client calls can help a slow client network, but backend work remains and the combined response depends on multiple services. Choose a two-second overall budget, stop waiting for optional Authors names after 500 milliseconds, and reserve time to return the response. Return available notes with display names explicitly marked unavailable, so the response does not claim completeness. Notes data is required: if unavailable by its allocated deadline, fail the overview rather than inventing notes or concealing required-data loss.",
+      "answer": "Aggregation combines the Notes and Authors responses into one overview for the client. Fan-out means the gateway makes those multiple backend calls: Notes for the required notes, and Authors for the optional display names. The client makes fewer calls, which can help on a slow network. The backend work remains, and the overview now depends on more than one service. One client request is not one backend operation.\n\nAuthors is optional and is stalling. Inside a two-second overall budget, stop waiting for those names after 500 milliseconds and leave time to return the response. Return the notes that are available, and mark the display names explicitly unavailable. Do not claim the overview is complete.\n\nIf Notes fails instead, the required note data is missing. Fail the overview when that data is unavailable by its allocated deadline. Do not invent notes or disguise the loss of required data. A partial response is useful only when the missing data and the failure policy are explicit.",
       "evidence": [
         {
           "slide": 7,
@@ -130,12 +146,16 @@
         {
           "slide": 7,
           "quote": "If required Notes data is unavailable by its allocated deadline, fail the overview instead. Do not invent notes or disguise required-data loss. Keep complex application workflows in a service rather than growing them inside gateway policies."
+        },
+        {
+          "slide": 7,
+          "quote": "A partial response is useful only when its missing data and failure policy are explicit."
         }
       ]
     },
     {
       "id": "gateway-fit-and-failure",
-      "answer": "With one adequate Notes API already enforcing identity, permissions and limits, a separate gateway may add no needed capability. Several services needing shared routing and policies can justify it, at the cost of a network hop, configuration and operating responsibility. Because the gateway is a common failure point, surviving its failure requires an alternate gateway clients can actually reach and sufficient surviving gateway and backend spare capacity. Gateway copies can share the same bad routing rule or failed dependency; extra copies do not correct that shared failure. They also cannot create capacity in a saturated Notes database or supply the missing application-data-based permission check for a particular note. Test the reachable failover path and observe latency, rejections and backend errors to judge the tradeoff.",
+      "answer": "A separate gateway may be unnecessary while one adequate Notes API already checks identity, permissions, and request limits itself. There is no shared entrance across services yet, so the extra hop is not earning its cost.\n\nShared routing and policies across several services can justify adding one. That is the change: more than one service that should share entrance rules. The cost is a network hop, configuration, and operating responsibility.\n\nWith one gateway in front of several services, that gateway can become a common failure point. After it fails, a reachable alternate gateway must remain, and the surviving gateways and backends need enough spare capacity. Another box in the diagram is not enough.\n\nAdding gateway replicas cannot by itself fix a saturated Notes database, because more gateways do not create database capacity. They cannot fix a bad routing rule or a failed dependency that the replicas share. They also do not supply a missing per-note permission check. Test the reachable failover path and watch latency, rejections, and backend errors before treating the shared entrance as worth its cost.",
       "evidence": [
         {
           "slide": 8,
@@ -152,6 +172,10 @@
         {
           "slide": 8,
           "quote": "Test the reachable failover path and watch latency, rejections and backend errors. Decide from the workload and failure behavior whether the shared entrance is worth its cost."
+        },
+        {
+          "slide": 8,
+          "quote": "A gateway organizes API access; its presence alone guarantees neither security nor availability."
         }
       ]
     }

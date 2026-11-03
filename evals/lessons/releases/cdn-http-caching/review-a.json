@@ -1,84 +1,88 @@
 {
-  "lessonHash": "5723a000ebba2ee7e3e354ad5380069ebca7b307f5619403a3d14d805453392d",
+  "lessonHash": "3497c7006c3694e86f6356445b4f00a54837f29a362145a9f8ad2aee783b4ce7",
   "rubricHash": "3a284f263ba181997b31f9bc05a81ae3529fc276781fa2990485d2a3e1e8a488",
-  "reviewer": "/root/cdn_review_a",
-  "learnerHash": "64e9882e814bf772e83bb79c93f0d99bf7f627d087fee177547bbf346db69823",
+  "reviewer": "cdn-review-a",
+  "learnerHash": "6031032433a9a85d450b9ddebbc75e4ef7f8c9ec48e4aa8220f2470665d5cfa4",
   "dimensions": {
     "accuracy": {
       "score": 4,
-      "reason": "All eight cards make source-supported, scoped claims. Age, privacy, validation work, purge reach and stale allowances avoid false guarantees; diagram labels agree with the text.",
+      "reason": "The miss path, Age arithmetic, 304 versus 200, unqualified no-cache, private, and no-store, and the stale windows match MDN, RFC 9111, and RFC 5861. The deck refuses the false guarantees those sources leave open: freshness is not proof the origin is unchanged, a cookie is not a per-user cache key, a purge does not clear browsers, and a hit ratio is not a measure of database work.",
       "evidence": [
         {
           "slide": 2,
-          "quote": "Age estimates seconds since generation or successful validation at origin, including time spent through caches. If this response arrives with Age: 90, ignoring transit and clock differences, the browser is 30 seconds past its lifetime. The CDN has 300 − 90 = 210 seconds of freshness left. Receiving it does not start a new full lifetime."
+          "quote": "Freshness is permission to reuse, not proof that origin content is unchanged."
         },
         {
           "slide": 4,
-          "quote": "For a sensitive note, no-store instructs HTTP caches not to store the response. It cannot erase previously delivered copies or replace permission checks. Choose the policy explicitly instead of relying on a header's misleading name."
+          "quote": "authentication alone is no universal CDN bypass guarantee."
+        },
+        {
+          "slide": 7,
+          "quote": "At age 200 neither extension still permits stale reuse."
         }
       ]
     },
     "mechanisms": {
       "score": 4,
-      "reason": "Actors and stored state are explicit, including two-way miss flow, both validation branches, key mismatch consequences and bounded failure fallback. Diagrams correctly preserve origin contact for 304 and 200.",
+      "reason": "A reader can trace a public GET through browser, CDN, and origin, then apply one response's existing Age to two different lifetimes. The same reader can follow If-None-Match to either a 304 that reuses the stored body or a 200 that replaces it, and can place ages 75, 150, and 200 inside or outside the stale windows.",
       "evidence": [
         {
           "slide": 1,
-          "quote": "A hit reuses a suitable stored response; a miss lacks one usable for this request. With empty caches, the request goes browser → CDN → origin. The response returns origin → CDN → browser; each cache stores it only if its applicable policy permits."
+          "quote": "With empty caches, the request goes browser \u2192 CDN \u2192 origin. The response returns origin \u2192 CDN \u2192 browser"
+        },
+        {
+          "slide": 2,
+          "quote": "If this response arrives with Age: 90, ignoring transit and clock differences, the browser is 30 seconds past its lifetime. The CDN has 300 \u2212 90 = 210 seconds of freshness left."
         },
         {
           "slide": 3,
-          "quote": "If unchanged, origin returns 304 Not Modified without a replacement body. The CDN updates applicable stored metadata, including freshness information, and uses its retained body to answer the browser's ordinary GET."
-        },
-        {
-          "slide": 7,
-          "quote": "At age 75 it is 15 seconds stale: the additional 30-second background-validation window permits reuse while refreshing, through age 90. At age 150 with an eligible error, it is 90 seconds stale: the error allowance lasts another 120 seconds after expiry, through age 180. At age 200 neither extension still permits stale reuse."
+          "quote": "If unchanged, origin returns 304 Not Modified without a replacement body."
         }
       ]
     },
     "coherence": {
       "score": 4,
-      "reason": "The same Notes scenario moves from layers to freshness, validation, privacy, variants, removal, failures and value. Required terms are defined before the learner needs them; every objective has an explanatory card.",
+      "reason": "The public logo and published Notes page carry the same response from the first miss through freshness, revalidation, privacy, variants, versioning, stale fallback, and the hit-ratio decision. Cache, hit, and freshness are defined before the slides that use them, and private-note rules stay in force when a later slide discusses raising the hit ratio.",
       "evidence": [
         {
           "slide": 1,
-          "quote": "Next we need a rule for how long a stored response may be reused without asking whether it changed."
+          "quote": "Our Notes browser requests the public logo with GET."
         },
         {
-          "slide": 3,
-          "quote": "A representation is the returned form of a resource, such as a published note's HTML. Revalidation checks whether the stored representation remains usable. ETag is an opaque validator identifying that representation; clients preserve the tag rather than interpreting it."
-        },
-        {
-          "slide": 6,
-          "quote": "A published note that keeps its URL needs a chosen freshness/revalidation policy matching the tolerated update delay. A database edit does not rewrite stored HTTP responses. Short freshness or validation on each reuse makes a different trade-off from long-lived versioned assets."
+          "slide": 8,
+          "quote": "Keep privacy rules intact rather than making private content shared to improve a metric."
         }
       ]
     },
     "decisions": {
       "score": 4,
-      "reason": "Concrete policy choices connect content type to acceptable delay, privacy, stale failure behavior and measured cost; omission of shared caching is an explicit defensible choice.",
+      "reason": "Public pages, browser-only notes, and sensitive notes get different directives, and versioned URLs are separated from mutable pages that keep one URL. Stale reuse is allowed only for public help content inside a counted window, and a low-traffic private app is told to skip shared caching when the cost is not justified. Each choice names what it does not do, including instant revocation.",
       "evidence": [
         {
+          "slide": 4,
+          "quote": "no-cache means validate; no-store means do not store; private excludes shared caches."
+        },
+        {
           "slide": 6,
-          "quote": "Purging CDN entries does not evict fresh browser copies or erase downloaded content. Unpublishing can stop future origin access and trigger purges, but already delivered public content cannot be instantly revoked. Choose cache lifetimes with that limit in mind before publishing."
+          "quote": "already delivered public content cannot be instantly revoked."
         },
         {
           "slide": 8,
-          "quote": "For a low-traffic Notes app serving mostly private or rarely reused responses, omit shared caching if measured benefits do not justify those costs. Compare reuse, latency and total cost. Keep privacy rules intact rather than making private content shared to improve a metric."
+          "quote": "omit shared caching if measured benefits do not justify those costs."
         }
       ]
     },
     "clarity": {
       "score": 4,
-      "reason": "Plain definitions and worked numbers make the mechanisms reproducible. Detail is scoped to ordinary GET caching; renderer displays the paragraphs, takeaway and matching diagrams without hiding the qualifications.",
+      "reason": "Hit, miss, freshness, revalidation, no-cache, private, no-store, cache key, and the two stale directives are defined in plain language at first use. The path diagram and the 304-versus-200 diagram match the text, including that both validation branches still contact origin.",
       "evidence": [
         {
-          "slide": 2,
-          "quote": "Cache-Control is a response header carrying caching rules called directives. A fresh response is young enough for reuse without validation under its policy. A stale response has reached its freshness limit; its body need not be deleted. Freshness is permission to reuse, not proof that origin content is unchanged."
+          "slide": 3,
+          "quote": "Body bandwidth saved is different from an origin request avoided."
         },
         {
           "slide": 5,
-          "quote": "A cache key identifies which stored response can satisfy a request. HTTP caching uses the method and target URL, with selected request headers distinguishing variants: different returned forms of the same resource."
+          "quote": "A cache key identifies which stored response can satisfy a request."
         }
       ]
     }
@@ -87,32 +91,32 @@
     {
       "id": "public-asset-flow-and-value",
       "score": 2,
-      "reason": "C1-4: learner defines all actors, reusable response state, bidirectional miss path and distinct browser/CDN hit stopping points; slide 1 supports each. C5-6: slide 8 supports 80%, 200 origin requests and exclusions for browser hits, bytes and extra work. C7-8: nearby reuse benefits, charges/operations and omitting low-reuse private workloads are explained with matching evidence."
+      "reason": "Slides 1 and 8 teach the browser, CDN, and origin path, which hop a browser hit and a CDN hit avoid, and the 800/1,000 ratio that sends 200 requests to origin only under the stated one-request assumption. The learner quotes that browser hits are outside that denominator and that 80% is not 80% less database work."
     },
     {
       "id": "freshness-then-validation",
       "score": 2,
-      "reason": "C1-4: slide 2 supports directives, retained stale body, inherited Age and 30-seconds-stale/210-seconds-fresh arithmetic without unchanged-origin guarantee. C5-8: slide 3 supports representation/validator definitions, conditional request, both 304 retained-body/metadata and 200 replacement branches, and remaining origin/database work. Learner explains all rather than supplying outside knowledge."
+      "reason": "Slides 2 and 3 teach public, max-age for the browser, s-maxage for the CDN, Age that is not reset on delivery, and the 90-second example that leaves the browser 30 seconds stale and the CDN 210 seconds fresh. The learner quotes the v1 conditional GET, the 304 that reuses the body after contacting origin, and the 200 that replaces the representation."
     },
     {
       "id": "protect-private-notes",
       "score": 2,
-      "reason": "C1: cookie and identity/permission definitions are taught. C2-4: slide 4 distinguishes validation-required storage, private-cache-only eligibility and no-store without erasure or authorization promises. C5-6: learner traces cross-user reuse risk and explains why headers alone do not guarantee isolation; explicit policies, origin permission and CDN checks are evidenced."
+      "reason": "Slide 4 defines cookies, Authorization, authentication, and authorization, then assigns unqualified no-cache, private, and no-store to the three note cases. The learner quotes that cookies do not create per-user entries, that authentication is not a universal CDN bypass, and that origin authorization plus the actual CDN rules still have to be checked."
     },
     {
       "id": "separate-public-variants",
       "score": 2,
-      "reason": "C1-3: slide 5 teaches key/variant definitions, format query distinction and supported Vary language matching. C4: learner explains wrong format/language versus needless fragmentation and conditional removal of tracking parameters. C5: variant separation is explicitly not permission to share private notes."
+      "reason": "Slide 5 teaches the method and URL key, distinct format query values, Vary: Accept-Language when the cache honors it, and the hit-rate cost of irrelevant parameters. The learner quotes the instruction to verify a CDN that might ignore query parameters and the statement that Vary does not authorize sharing private notes."
     },
     {
       "id": "deploy-and-unpublish",
       "score": 2,
-      "reason": "C1: slide 6 supports immutable version URLs, updating references and old-page v1 risk. C2: mutable-page delay policy and database/cache distinction are explained. C3-4: targeted provider purge, variant/layer/propagation checks and inability to revoke browser/downloaded copies are supported."
+      "reason": "Slide 6 teaches publishing app.v2.js and updating the referring page, a separate freshness policy for a page that keeps its URL, and a provider purge whose coverage and completion must be checked. The learner quotes that a database edit does not rewrite cached responses and that a purge does not evict fresh browser copies or erase delivered content."
     },
     {
       "id": "bounded-outage-fallback",
       "score": 2,
-      "reason": "C1-3: slide 7 supports latency-hiding versus error fallback and expiry-relative calculations at 75, 150 and 200. C4: support, policy, existing copy and allowance limits are explicit. C5: learner explains stale-content choice for help versus private correctness/urgent removal; slide 6 additionally establishes delivered-copy limits."
+      "reason": "Slide 7 teaches stale-while-revalidate as latency hiding through age 90 and stale-if-error as an error fallback through age 180, with neither permission left at age 200. The learner quotes the requirement for an eligible stored copy and the refusal to use the policy for private notes or urgent removal."
     }
   ],
   "hardFailures": [],
@@ -120,49 +124,49 @@
     {
       "slide": 1,
       "url": "https://www.cloudflare.com/learning/cdn/what-is-a-cdn/",
-      "claim": "CDN edges cache responses near users; a usable hit can avoid origin. Cloudflare CDN explanation and RFC 9111 cache semantics support the scoped flow.",
+      "claim": "Cloudflare describes a CDN as edge servers that cache content closer to users so a later request need not fetch it from the origin host. That supports the slide's shared edge cache, origin as the server responsible for the resource, and a CDN hit that returns the logo without contacting origin. The stored object is the HTTP response, which the article distinguishes from the origin's own hosting.",
       "verified": true
     },
     {
       "slide": 2,
       "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cache-Control",
-      "claim": "MDN confirms shared-only s-maxage precedence and existing Age subtraction; 60/300 lifetimes with Age 90 imply browser stale and CDN 210 seconds remaining.",
+      "claim": "MDN says max-age is time since origin generation, not time since receipt, and that an Age of 100 seconds is deducted from the remaining lifetime. s-maxage overrides max-age for shared caches and is ignored by private caches. A stale response need not be deleted. The slide's public, max-age=60, s-maxage=300 response at Age 90, leaving the browser 30 seconds past freshness and the CDN 210 seconds, matches that arithmetic when transit is ignored as the slide states. Freshness is reuse permission, not proof the origin is unchanged.",
       "verified": true
     },
     {
       "slide": 3,
       "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/ETag",
-      "claim": "MDN ETag confirms If-None-Match comparison and matching 304 without body; RFC 9111 3.2/4.3 supports metadata updating and replacement responses.",
+      "claim": "MDN defines an ETag as an identifier for one version of a resource. A stale cache sends that value in If-None-Match; a match returns 304 Not Modified with no body, and a change returns a new representation. The slide's v1 conditional GET, metadata update with the retained body, and v2 replacement match. The origin is still contacted to make that comparison, so saved body bandwidth is not an avoided origin request.",
       "verified": true
     },
     {
       "slide": 4,
       "url": "https://www.rfc-editor.org/rfc/rfc9111.html",
-      "claim": "RFC 9111 5.2.2 distinguishes no-cache validation, private shared-storage exclusion and no-store; 3.5 and 8 reject universal authentication/cookie isolation guarantees.",
+      "claim": "RFC 9111 says unqualified no-cache may be stored but must be validated before reuse, unqualified private must not be stored by a shared cache, and no-store must not be stored by private or shared caches and is not itself a privacy guarantee. A shared cache must not reuse a response to an Authorization request unless a directive such as public or s-maxage explicitly allows it. The cache key is the method and target URI plus selected variant headers, not Cookie by default. The slide's three directives, leak warning, and refusal of a universal CDN bypass match.",
       "verified": true
     },
     {
       "slide": 5,
       "url": "https://developers.cloudflare.com/cache/how-to/cache-keys/",
-      "claim": "Cloudflare cache-key settings support query/header inclusion and ignore-query collisions; RFC 9111 4.1 supports Vary matching subject to support/configuration.",
+      "claim": "Cloudflare's default cache key includes the URL and query string, but an Ignore Query String setting, or a custom include/exclude list, can drop parameters and serve one stored response for different queries. Headers such as Accept-Language are not in the default key and must be added explicitly where the plan allows. The slide's warning to verify format and language in the real key, and the hit-rate cost of extra parameters, match. Vary does not override a private or no-store policy.",
       "verified": true
     },
     {
       "slide": 6,
       "url": "https://developers.cloudflare.com/cache/how-to/purge-cache/",
-      "claim": "Cloudflare purge documentation distinguishes targeted invalidation/removal and says HTTP 200 alone does not prove eviction; per-layer HTTP storage explains browser copies surviving CDN purge.",
+      "claim": "Cloudflare purge is scoped by URL, hostname, tag, prefix, or everything, and a 200 only means the request was received, not that every cached object was evicted. The slide's instruction to verify URLs, variants, layers, and completion matches that check. A CDN purge does not evict a browser's fresh copy or erase a copy already downloaded, so unpublishing cannot promise instant revocation.",
       "verified": true
     },
     {
       "slide": 7,
       "url": "https://www.rfc-editor.org/rfc/rfc5861.html",
-      "claim": "RFC 5861 sections 3-4 permit bounded stale use after freshness expiry; windows here end at ages 90 and 180, and a stored eligible response is required.",
+      "claim": "RFC 5861 lets a cache serve a response for stale-while-revalidate seconds after it becomes stale while revalidating in the background, and the example adds that delta to max-age. stale-if-error allows a stale response on a 500-class error only until it is staler than the given delta; the example stops at max-age plus that delta. The slide's windows through age 90 and age 180, and the refusal at age 200, match. Both directives are optional and do not create a response when none is stored.",
       "verified": true
     },
     {
       "slide": 8,
       "url": "https://www.cloudflare.com/learning/cdn/what-is-a-cache-hit-ratio/",
-      "claim": "Cloudflare defines request hits/received requests and cautions that hit ratio alone is insufficient; stated single-layer assumptions yield 80% and 200 origin requests.",
+      "claim": "Cloudflare defines cache hit ratio as hits divided by hits plus misses at the cache being measured. Eight hundred hits out of one thousand requests is 80%, and the other two hundred are the misses that reach origin under the slide's one-request assumption. The article also says a high ratio is not the whole measure of effectiveness. The slide's exclusion of browser hits, the distinction from byte ratio, and the refusal to treat 80% as 80% less database work are consistent with measuring one layer's requests.",
       "verified": true
     }
   ]

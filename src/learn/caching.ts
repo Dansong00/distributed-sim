@@ -58,7 +58,7 @@ export const cachingLesson = {
       paragraphs: [
         { label: "Local cache", text: "Lives inside each API process. Reads avoid a network call, but each process fills and updates its own copy. One can hold $20 while another holds $25." },
         { label: "Shared cache", text: "Several API servers use a separate cache service, such as Redis or Memcached. They can reuse entries, but each lookup adds a network call and the service needs operating." },
-        "Restarting one API process discards its local cache; other processes keep their copies. If the shared cache is unreachable, every API server using it loses access to those cached entries.",
+        "Restarting one API process discards its local cache; other processes keep their copies. If the shared cache is unreachable, every API server using it loses access to those cached entries. Losing that access does not by itself establish whether the application requests fail.",
       ],
       remember: "Sharing reduces separate copies. It does not automatically keep the cache current with the database.",
       source: "https://aws.amazon.com/builders-library/caching-challenges-and-strategies/",
@@ -67,7 +67,7 @@ export const cachingLesson = {
       section: "Failure Under Load", title: "A missing popular product can flood the database",
       paragraphs: [
         { label: "Cache stampede", text: "Many requests miss the same product together and repeat its database lookup. Coalescing requests lets concurrent readers share one in-progress lookup." },
-        "A cache outage can turn most reads into database traffic. Limit fallback work to what the database can handle; reject excess requests or serve older data only where the product rules permit it.",
+        "A cache outage can turn most reads into database traffic. The application cannot read a value from a cache it cannot reach. Limit fallback work to what the database can handle and reject excess requests. Serve older data only where the product rules permit it and a copy remains reachable outside that failed cache, such as a response the process still holds.",
         "Test with an empty or unavailable cache. A warm cache can hide insufficient database capacity.",
       ],
       remember: "Falling back to the database is a load decision, not a free recovery path.",
