@@ -1,23 +1,15 @@
 {
-  "lessonHash": "b4b15c0e818b9c421e215042122396c723a5bb973fd64d178a5be15420b73036",
+  "lessonHash": "169743f31fee0b226feb3e2705ecc52af00943903a10c7b5e9d81c5559aab6a2",
   "rubricHash": "338513cb85781ad0f087b381e652913b1f1b83dd1ac06313c76936cb82694d09",
-  "respondent": "/root/gateway_learner_t2",
+  "respondent": "/root/dns_learner_p8",
   "answers": [
     {
       "id": "http-routing",
-      "answer": "The client contacts the balancer entry point; it forwards the request to an application backend, which performs the application/database work and returns the response through the balancer to the client. Choose L7 to route /search and /purchase to different pools: it understands HTTP requests and must see readable HTTP paths. For HTTPS the proxy normally terminates the client TLS connection; backend encryption is a separate choice. L4 typically selects a backend per TCP connection using network information, so many requests reusing one connection may all reach that backend without new selections. A single adequate server may make a balancer unnecessary when traffic distribution and redundant serving are not needed.",
+      "answer": "The client contacts the service entry point, the reverse proxy forwards to a selected application server, that server performs the application work and database access, and the response returns through the balancer to the client. Choose L7 for /search and /purchase routing because it understands HTTP paths. It needs readable HTTP contents; an HTTPS proxy normally terminates client TLS to inspect requests, with backend encryption configured separately. L4 normally selects a backend per TCP connection using network information. Many HTTP requests can reuse that connection and remain on its selected backend without fresh selection. A single adequate server can suffice without a balancer when distribution or redundant serving is unnecessary.",
       "evidence": [
         {
           "slide": 1,
           "quote": "In this reverse-proxy example, the client contacts one service entry point. The balancer forwards the request to a selected backend. That server reads the note from the database and returns a response through the balancer to the client."
-        },
-        {
-          "slide": 2,
-          "quote": "Routes at the transport level. For TCP traffic, it typically chooses a backend for a connection using network information, not HTTP paths."
-        },
-        {
-          "slide": 2,
-          "quote": "Many note requests can reuse that connection. They can all reach the same backend; adding requests on that connection does not force new selections."
         },
         {
           "slide": 2,
@@ -28,6 +20,14 @@
           "quote": "Path routing requires readable HTTP contents. TLS encrypts the connection; an HTTPS proxy normally ends, or terminates, that TLS connection to inspect requests. Encryption to the backend is a separate configuration choice."
         },
         {
+          "slide": 2,
+          "quote": "Routes at the transport level. For TCP traffic, it typically chooses a backend for a connection using network information, not HTTP paths."
+        },
+        {
+          "slide": 2,
+          "quote": "Many note requests can reuse that connection. They can all reach the same backend; adding requests on that connection does not force new selections."
+        },
+        {
           "slide": 1,
           "quote": "One adequate server may be enough if the service does not need traffic distribution or redundant serving. A balancer is not automatically useful in front of it."
         }
@@ -35,7 +35,7 @@
     },
     {
       "id": "selection-and-capacity",
-      "answer": "Round robin takes turns among eligible backends and is simple for comparable servers and work, but treats cheap lookups and long requests as one request each, so equal turns need not mean equal work. Least connections prefers fewer active connections and can help when durations vary, but connections can carry unequal amounts of work. Weights control the traffic share; twice the measured capacity suggests starting with twice the weight, but a configured weight is neither a live measurement nor a performance guarantee. Actual latency and resource use must guide the choice. Adding an application backend distributes more application capacity but does not remove a saturated shared database bottleneck. Availability after failure requires a reachable alternate entry path with working, tested failover if the balancer fails, and enough spare capacity in surviving backends if a backend fails. Excess work should be visibly limited or rejected when survivors lack capacity.",
+      "answer": "Round robin takes turns among eligible servers and is simple for similar servers and work, but counts a cheap lookup and a long request equally. Least connections prefers fewer active connections and may help with differing durations, but a connection count can hide very different amounts of work. Weights control traffic share: twice the measured capacity suggests twice the initial weight, but the configured ratio is neither live capacity measurement nor a performance guarantee. Check latency and resource use. More application servers cannot remove the shared saturated database bottleneck, so they alone may not increase throughput. Availability after a machine fails requires a reachable alternate entry path or available managed entry with tested failover, and enough spare capacity on surviving backends for the load. Excess work must be limited or visibly rejected when survivors lack capacity.",
       "evidence": [
         {
           "slide": 3,
@@ -64,16 +64,12 @@
         {
           "slide": 8,
           "quote": "A lone balancer is itself a possible failure point. If it fails, clients need a reachable alternate entry path, not just another disconnected balancer box. Use an available managed entry or redundant frontends with working failover, and test that path."
-        },
-        {
-          "slide": 8,
-          "quote": "Measure request latency, errors and backend and database resource use under representative traffic, including a failure. Redundant components alone do not guarantee an available service."
         }
       ]
     },
     {
       "id": "readiness-gap",
-      "answer": "The health endpoint answering 200 only demonstrates the capability it checks; useful purchase work also requires database access. A readiness check should reflect those required serving capabilities. Even an improved check has limited coverage, periodic intervals and failure thresholds; a backend can fail immediately after passing, so detection is delayed. Once detected and removed from eligible backends it stops receiving new selections. Removal cannot complete, undo, or safely replay already underway requests, which may still fail. The all-unhealthy policy must also be checked because some balancers send to unhealthy targets when every target fails checks.",
+      "answer": "A 200 from the health endpoint only shows that endpoint can answer; it does not establish that purchases can use their required database. The check should reflect capabilities needed for useful new work. Even an improved check has limited coverage, periodic intervals and failure thresholds; the server can fail just after passing, delaying detection. Removing it from eligible backends stops new selections, but requests underway can still fail. Removal neither completes nor undoes nor safely replays those requests. The product all-unhealthy policy also matters because some balancers send to unhealthy targets if all fail their checks.",
       "evidence": [
         {
           "slide": 4,
@@ -95,7 +91,7 @@
     },
     {
       "id": "session-failover",
-      "answer": "B cannot read a cart held only in A's memory. If A fails, the only cart copy can be lost. Stickiness prefers A for that customer and helps ordinary requests reach its local cart, but can skew load and restrict placement. It neither copies the cart nor guarantees survival of A's failure. Shared session storage lets either server read the cart, at the cost of access or coordination work and reliance on the shared store's availability.",
+      "answer": "B cannot read the cart kept only in A memory, and losing A can lose the sole cart copy. Stickiness prefers the same backend and can keep ordinary requests on A, but it can skew load and restrict placement. It neither copies the cart nor guarantees its survival when A fails. Shared session storage lets either backend read it, at the cost of access or coordination work and a shared dependency whose availability also matters.",
       "evidence": [
         {
           "slide": 5,
@@ -113,7 +109,7 @@
     },
     {
       "id": "deployment-drain",
-      "answer": "First stop assigning new work to A, then let the accepted 20-second request finish within a bounded drain deadline, and shut A down after its accepted work completes or the deadline expires. New assignments are work not yet accepted; the accepted request is already underway and must be tracked. Merely stopping new L4 connections is insufficient because the existing connection can carry further HTTP requests without a new connection assignment. Draining must manage existing connection lifetimes or stop accepting more requests; request-aware L7 draining must still track accepted work. If the deadline expires, forced termination may interrupt the unfinished request, and its work is not automatically moved to B.",
+      "answer": "First stop new assignments to A, then allow already accepted work such as the 20-second request to finish within a bounded drain deadline. Address existing connection lifetimes or stop accepting further HTTP requests too. Shut down after accepted work completes or when the deadline expires. At expiry forced termination may interrupt unfinished requests; their work is not automatically moved to B. Stopping new L4 connections alone leaves a reused existing connection able to carry new HTTP requests. Draining therefore needs to handle the connection and request units involved; even request-aware L7 draining must track accepted work.",
       "evidence": [
         {
           "slide": 6,
@@ -131,7 +127,7 @@
     },
     {
       "id": "purchase-retry",
-      "answer": "The purchase can commit even though its response never reaches the client, so the timeout does not tell the client whether the purchase was saved. A blind retry on B can perform the purchase again. Reuse one stable idempotency key for the same logical purchase on every attempt, and have all backends use a shared durable database record of that key and result. In one transaction, insert the key under a database uniqueness constraint, perform the purchase write and record its result; commit all or none. A repeat returns that stored result without repeating the purchase. Separate check-then-write steps can race or leave a crash gap. A fresh key makes the retry unrecognizable as the same operation, and A-only memory cannot reliably protect a retry handled by B. Bound and delay retries because their extra requests consume capacity and can worsen overload; retry policy does not itself prevent duplicates or guarantee success.",
+      "answer": "Because a write may commit even though its response is lost, the timeout does not tell the client whether the purchase committed. A blind retry on B can create a second purchase. Use one stable idempotency key for the logical purchase across every attempt. All backends use a shared durable database record of its key and result. Atomically insert the database-unique key, create the purchase and store the result in one transaction, committing all or none. A repeat then returns the recorded result without another purchase. Separate check-then-write steps can race or leave a crash gap. A new key on each attempt does not identify the repeat, and a key only in A memory cannot reliably protect retry on B. Bound and delay retries because their extra load consumes capacity and can worsen overload; retry policy alone neither protects against duplicates nor guarantees success.",
       "evidence": [
         {
           "slide": 7,

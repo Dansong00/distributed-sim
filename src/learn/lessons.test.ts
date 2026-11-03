@@ -39,7 +39,7 @@ it("orders the overview before MySQL after renaming and normalizes technology", 
   expect(lessonsFor(node)).toEqual(["databases", "cap", "replication"]);
 });
 it("hides lessons on unrelated components and annotations", () => {
-  const node = createComponent("dns", { x: 0, y: 0 });
+  const node = createComponent("cdn", { x: 0, y: 0 });
   expect(lessonsFor(node)).toEqual([]);
   expect(lessonsFor({ ...node, kind: "sticky", category: "Databases" })).toEqual([]);
 });
@@ -109,5 +109,20 @@ it("offers API gateways only for gateway technology after renaming", () => {
     const other = createComponent(preset, { x: 0, y: 0 });
     other.name = "API Gateway";
     expect(lessonsFor(other)).not.toContain("api-gateways");
+  }
+});
+
+it("offers DNS only for network DNS technology after renaming", () => {
+  const node = createComponent("dns", { x: 0, y: 0 });
+  node.name = "Notes lookup";
+  node.technology = " dNs ";
+  expect(lessonsFor(node)).toEqual(["dns"]);
+  expect(lessonsFor({ ...node, category: undefined })).toEqual(["dns"]);
+  expect(lessonsFor({ ...node, kind: "sticky" })).toEqual([]);
+  expect(lessonsFor({ ...node, componentType: "client" })).toEqual(["client-server"]);
+  for (const preset of ["load-balancer", "api-gateway", "cdn", "api-server"]) {
+    const other = createComponent(preset, { x: 0, y: 0 });
+    other.name = "DNS";
+    expect(lessonsFor(other)).not.toContain("dns");
   }
 });

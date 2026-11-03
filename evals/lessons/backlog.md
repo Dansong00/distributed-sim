@@ -1,8 +1,8 @@
 # Autonomous learning stack backlog
 
-Status is local source coverage, not a claim of quality. All stacks require the new eval before being called approved. Existing source currently has Client / Server Model, API Server, Database Overview, CAP, Replication, PostgreSQL, SQLite, MySQL, Caching Fundamentals, Message Queues and Background Workers, Load Balancing, and API Gateways. Caching, messaging, load balancing and API gateways have current passing evaluation reports; prior code-review and browser passes do not retroactively count as learning-quality evaluations.
+Status is local source coverage, not a claim of quality. All stacks require the new eval before being called approved. Existing source currently has Client / Server Model, API Server, Database Overview, CAP, Replication, PostgreSQL, SQLite, MySQL, Caching Fundamentals, Message Queues and Background Workers, Load Balancing, API Gateways, and DNS. Caching, messaging, load balancing, API gateways and DNS have current passing evaluation reports; prior code-review and browser passes do not retroactively count as learning-quality evaluations.
 
-Default order is shared foundations first, then named technologies. The user approved continuing to API gateways after load balancing; future scope corrections override this order.
+Default order is shared foundations first, then named technologies. The user approved continuing to DNS after API gateways; future scope corrections override this order.
 
 ## Shared foundations
 
@@ -12,9 +12,11 @@ Load Balancing is implemented and evaluated for its component, with connection/r
 
 API Gateways is implemented for API Gateway components, covering shared routing/policies, identity and resource access, traffic-limit scope, deadline and retry responsibility, aggregation and availability. See releases/api-gateways/REPORT.md for release evidence.
 
+DNS is implemented for DNS components, covering discovery, delegation, record types, cache changes, negative answers, steering, availability and DNSSEC/HTTPS boundaries. See releases/dns/REPORT.md for current evidence.
+
 Next, in prerequisite order:
 
-1. DNS; CDN and HTTP caching.
+1. CDN and HTTP caching.
 2. Object storage; block storage; shared file storage.
 3. Sharding and partition keys; document databases; key-value data access.
 4. Wide-column, graph, geospatial, time-series, search, analytics, and vector retrieval foundations.
