@@ -12,6 +12,7 @@ import { CAPDiagram } from "./CAPDiagram";
 import { ReplicationDiagram } from "./ReplicationDiagram";
 
 import { ApiGatewayDiagram } from "./ApiGatewayDiagram";
+import { DnsDiagram } from "./DnsDiagram";
 import { LoadBalancingDiagram } from "./LoadBalancingDiagram";
 import { QueueDiagram } from "./QueueDiagram";
 import { CachingDiagram } from "./CachingDiagram";
@@ -29,6 +30,7 @@ const diagrams = {
   queues: QueueDiagram,
   "load-balancing": LoadBalancingDiagram,
   "api-gateways": ApiGatewayDiagram,
+  dns: DnsDiagram,
 } satisfies Record<LessonId, typeof LessonDiagram>;
 
 export function LessonDialog({ lessonId, onClose }: { lessonId: LessonId; onClose: () => void }) {

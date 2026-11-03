@@ -29,7 +29,7 @@ export const queuesLesson = {
         "A worker commits its database changes, then crashes before acknowledging. With at-least-once delivery, the broker can deliver the job again. Acknowledging first instead risks losing the work if the worker crashes before saving it.",
         { label: "Idempotency", text: "Repeating the same operation has the same effect as doing it once. Reuse a stable business-operation ID across retries, not a new ID per attempt." },
         "In one database transaction, insert that ID into a durable processed-jobs table with a unique constraint and apply the receipt changes. Commit both or neither. A duplicate ID skips the effect. A separate check followed by a write can race or crash between steps.",
-        "That transaction protects its database effects. It does not make an external email or payment atomic, or turn delivery into a universal exactly-once guarantee.",
+        "That transaction makes the database effect safe to repeat. It does not make delivery of the message exactly once.",
       ],
       remember: "Expect repeated delivery; make the effect duplicate-safe at its own boundary.",
       source: "https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/",
@@ -37,18 +37,18 @@ export const queuesLesson = {
     {
       section: "Failures", title: "Retry a temporary problem; isolate a broken job",
       paragraphs: [
-        "A temporary storage outage may recover. Retry with increasing delays and a finite attempt or time budget; immediate retries can deepen the outage.",
-        "An unsupported receipt format will not improve with waiting. Isolate it, or any job that exhausts its budget, in a dead-letter queue for investigation and expose failed status.",
+        "A temporary storage outage may recover. Give that message a higher maxReceiveCount and enough time to process so a short outage can clear. Immediate endless receives can exhaust the count and deepen the outage.",
+        "An unsupported receipt format will not improve if it is received again unchanged. Do not give it the transient retry budget. A maxReceiveCount of one moves that message to the dead-letter queue after a single failure. The dead-letter queue isolates it for investigation and makes the failure visible, so other jobs can continue.",
         "Healthy jobs can continue. Before deliberately replaying a failed job, fix its cause and check whether an earlier attempt already applied an effect. Replay still needs duplicate safety.",
       ],
       remember: "A dead-letter queue contains failure; it does not repair the job.",
-      source: "https://learn.microsoft.com/en-us/azure/architecture/patterns/retry",
+      source: "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html",
     },
     {
       section: "Ordering", title: "Starting first does not mean finishing first",
       paragraphs: [
         "Two updates change one receipt's address: old, then new. Workers receive them in order, but the slower old update finishes last and overwrites new.",
-        "Serialize effects per receipt ID: keep later updates waiting while an earlier one runs or retries. Different receipts can still run in parallel. A busy receipt becomes a throughput bottleneck.",
+        "Serialize effects per receipt ID: keep later updates waiting while an earlier one runs or retries. Different receipts can still run in parallel. Adding more workers does not remove that per-receipt dependency. A busy receipt becomes a throughput bottleneck.",
         "Moving the earlier job to a dead-letter queue does not resolve the dependency. Decide how to repair or cancel it before releasing dependent updates.",
       ],
       remember: "Ordered delivery alone does not guarantee ordered effects.",

@@ -12,8 +12,9 @@ import { apiGatewaysLesson } from "./api-gateways";
 import { loadBalancingLesson } from "./load-balancing";
 import { queuesLesson } from "./queues";
 import { cachingLesson } from "./caching";
+import { dnsLesson } from "./dns";
 
-export const lessons = { "client-server": clientServerLesson, "api-server": apiServerLesson, databases: databasesLesson, cap: capLesson, replication: replicationLesson, caching: cachingLesson, queues: queuesLesson, "load-balancing": loadBalancingLesson, "api-gateways": apiGatewaysLesson, postgresql: postgresqlLesson, sqlite: sqliteLesson, mysql: mysqlLesson };
+export const lessons = { "client-server": clientServerLesson, "api-server": apiServerLesson, databases: databasesLesson, cap: capLesson, replication: replicationLesson, caching: cachingLesson, queues: queuesLesson, "load-balancing": loadBalancingLesson, "api-gateways": apiGatewaysLesson, dns: dnsLesson, postgresql: postgresqlLesson, sqlite: sqliteLesson, mysql: mysqlLesson };
 export type LessonId = keyof typeof lessons;
 
 export function lessonsFor(node: DiagramNode): LessonId[] {
@@ -23,6 +24,7 @@ export function lessonsFor(node: DiagramNode): LessonId[] {
   const technology = node.technology?.trim().toLowerCase();
   if (node.componentType === "network" && technology === "api gateway") return ["api-gateways"];
   if (node.componentType === "network" && technology === "load balancer") return ["load-balancing"];
+  if (node.componentType === "network" && technology === "dns") return ["dns"];
   if (node.category === "Databases" || node.componentType === "database") {
     if (technology === "postgresql") return ["databases", "cap", "replication", "postgresql"];
     if (technology === "sqlite") return ["databases", "cap", "replication", "sqlite"];

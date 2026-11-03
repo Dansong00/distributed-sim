@@ -1,11 +1,11 @@
 {
-  "lessonHash": "fa729dcc882190fcd744b686abc96347c566342b4a4df4324397df1fd6a1280f",
+  "lessonHash": "b4f3a77ae1ce803305ec0aef1f26bae010dc4d6e17db46faef118876e1a041a9",
   "rubricHash": "ed37f36c145a03c0cb0091704b8051e5da831a7aa097a491b6394b73bb915af4",
-  "respondent": "/root/gateway_learner_r5",
+  "respondent": "queues-learner-r4",
   "answers": [
     {
       "id": "stack-request-boundary",
-      "answer": "The API produces a message with the export job ID and inputs, publishes it, and waits for confirmed broker handoff before truthfully returning accepted with that ID. The broker holds work for the worker; broker acceptance is not file completion. The worker renders and saves the required file and ready status, then acknowledges processing so the broker can retire the delivery. The user checks pending, ready or failed status; ready means the saved file can be used, and later terminal failure must be exposed as failed. A login decision required before granting access must finish synchronously because granting access before the decision would use a result not yet available. One added cost is operating broker and workers; status tracking is another.",
+      "answer": "A successful export crosses three actors, and the user learns the outcome only from later status. The producer API publishes a message carrying the job ID and the render inputs, then confirms the handoff before it tells the user the job was accepted. The broker holds that message; publisher confirmation means broker acceptance under the configured durability rules, not a finished file. The worker receives the message, saves the rendered file and ready status, then acknowledges processing so the broker can retire that delivery. Neither acknowledgement is the user's proof that the file exists. The user checks the job ID for pending, ready, or failed. The event that permits a truthful accepted response is the confirmed handoff, broker acceptance of the publish. An accepted response is not the file. The file is ready only after the worker has saved the required result and the status is ready. If processing later fails, the user needs failed status, and that terminal failure must stay visible after the original request ends. Login stays synchronous because access may be granted only after the decision is final. Queueing the decision and granting access immediately would use a result that does not exist yet. Work leaves the request only when the caller can continue without its result; the export caller can continue with a job ID and a later check, but the login caller cannot. One operating cost the queue adds is operating the broker and workers, alongside tracking status, duplicates, retries, and backlog.",
       "evidence": [
         {
           "slide": 2,
@@ -13,29 +13,45 @@
         },
         {
           "slide": 2,
-          "quote": "Holds work for consumers. A publisher confirmation means broker acceptance under the configured durability rules, not a completed receipt."
+          "quote": "A publisher confirmation means broker acceptance under the configured durability rules, not a completed receipt."
         },
         {
           "slide": 2,
           "quote": "Receives the message, saves the receipt and ready status, then acknowledges processing to the broker. A consumer acknowledgement lets the broker retire that delivery."
         },
         {
+          "slide": 2,
+          "quote": "The client observes completion through status."
+        },
+        {
           "slide": 1,
           "quote": "The client checks that ID for pending, ready, or failed status. Only ready means the receipt can be used; an accepted response is not the receipt."
+        },
+        {
+          "slide": 1,
+          "quote": "failures that must remain visible after the request ends."
+        },
+        {
+          "slide": 8,
+          "quote": "Confirm the handoff before acceptance; report ready only after the required result is saved, and expose terminal failure."
         },
         {
           "slide": 8,
           "quote": "Authorization must finish before showing a private receipt. Queueing the decision and granting access immediately would use a result we do not yet have."
         },
         {
+          "slide": 1,
+          "quote": "Move work out of the request only when the caller can continue without its result."
+        },
+        {
           "slide": 8,
-          "quote": "The tradeoff includes operating the broker and workers, tracking status, handling duplicates and retries, and watching backlog. A queue does not solve sustained overload."
+          "quote": "The tradeoff includes operating the broker and workers, tracking status, handling duplicates and retries, and watching backlog."
         }
       ]
     },
     {
       "id": "stack-duplicate-effect",
-      "answer": "With at-least-once delivery, the broker may deliver the credit job again because the acknowledgement was not received. Acknowledging before crediting risks losing the credit if the worker crashes after acknowledgement but before saving it. Reuse one stable business-operation ID on all retries. In a single database transaction, insert the ID in a durable processed-jobs table with a unique constraint and apply the balance credit; commit both or neither. An already processed ID skips the credit. Do not split duplicate checking and crediting into separate steps, which can race or crash between them. This protects the database effect from duplication, not universal exactly-once message delivery or external effects.",
+      "answer": "The credit is already committed, and the crash happens before the consumer acknowledgement, so the broker does not treat that delivery as finished. With at-least-once delivery, the broker may deliver the same job again. Acknowledging before the credit is unsafe because the opposite crash loses the work: if the worker acknowledges first and then crashes before saving the credit, the broker retires the delivery and will not present the job again. Make the credit idempotent by reusing one stable business-operation ID across retries, not a new ID per attempt. Repeating that operation must have the same effect as doing it once. In one database transaction, insert that ID into a durable processed-jobs table with a unique constraint and apply the balance credit, then commit both or neither. A duplicate ID skips the credit. The detection row and the credit have to share that commit; a separate check followed by a later write can race or crash between the steps. The transaction makes the database credit safe to repeat. It does not make delivery of the message exactly once, so it does not establish universal exactly-once message delivery.",
       "evidence": [
         {
           "slide": 3,
@@ -51,21 +67,25 @@
         },
         {
           "slide": 3,
-          "quote": "That transaction protects its database effects. It does not make an external email or payment atomic, or turn delivery into a universal exactly-once guarantee."
+          "quote": "That transaction makes the database effect safe to repeat. It does not make delivery of the message exactly once."
+        },
+        {
+          "slide": 3,
+          "quote": "Expect repeated delivery; make the effect duplicate-safe at its own boundary."
         }
       ]
     },
     {
       "id": "stack-failed-jobs",
-      "answer": "Retry the temporarily unavailable image store with increasing delays and a finite attempt or time budget, avoiding immediate repeated retries that deepen the outage. If the budget is exhausted, move the job to a dead-letter queue for investigation and expose failed status. The unsupported format will not recover merely through waiting, so isolate it rather than repeatedly retrying it. Isolating broken or exhausted jobs lets healthy jobs continue. Before deliberately replaying one, fix the cause and check whether a prior attempt already applied an effect; keep duplicate safety on replay. Isolation does not itself repair the job.",
+      "answer": "The unreachable image store is a temporary outage that may recover, so give that message the transient retry budget: a higher maxReceiveCount and enough time to process for a short outage to clear. The attempt budget is that higher receive count, and the delay is enough processing time rather than another receive immediately. Immediate endless receives can exhaust the count and deepen the outage. The unsupported format will not improve if it is received again unchanged, so it does not get that transient budget or a string of delayed retries. Give it a maxReceiveCount of one so that, after a single failure, it moves to the dead-letter queue. That queue isolates the broken job for investigation and makes the failure visible, which is also where a message goes once its receive budget is spent. Healthy jobs keep moving because the isolated message is no longer competing with them. A dead-letter queue contains the failure and does not repair the job. Before deliberately replaying isolated work, fix the cause, check whether an earlier attempt already applied an effect, and keep the replay duplicate-safe.",
       "evidence": [
         {
           "slide": 4,
-          "quote": "A temporary storage outage may recover. Retry with increasing delays and a finite attempt or time budget; immediate retries can deepen the outage."
+          "quote": "A temporary storage outage may recover. Give that message a higher maxReceiveCount and enough time to process so a short outage can clear. Immediate endless receives can exhaust the count and deepen the outage."
         },
         {
           "slide": 4,
-          "quote": "An unsupported receipt format will not improve with waiting. Isolate it, or any job that exhausts its budget, in a dead-letter queue for investigation and expose failed status."
+          "quote": "An unsupported receipt format will not improve if it is received again unchanged. Do not give it the transient retry budget. A maxReceiveCount of one moves that message to the dead-letter queue after a single failure. The dead-letter queue isolates it for investigation and makes the failure visible, so other jobs can continue."
         },
         {
           "slide": 4,
@@ -79,29 +99,33 @@
     },
     {
       "id": "stack-order",
-      "answer": "The final quantity could incorrectly be 5: the later set-to-2 write finishes first, then the slower earlier set-to-5 overwrites it. Receiving events in order does not ensure their effects finish in order. Serialize effects per item ID, keeping later updates waiting while an earlier update runs or retries. Different items can execute concurrently. A single busy item becomes a throughput bottleneck. If an earlier job is isolated, repair or cancel it before releasing its dependent updates.",
+      "answer": "The possible wrong final quantity is 5. The workers received set-quantity-to-5 and then set-quantity-to-2 in that order, but the second write finished first. The slower first update can finish last and overwrite 2 with 5. Starting first does not mean finishing first, so ordered delivery alone does not guarantee ordered effects. Serialize effects per item: keep the later update waiting while the earlier one runs or retries. Different items can still run in parallel. If the earlier job is moved to a dead-letter queue, that does not resolve the dependency; repair or cancel it before releasing the dependent update. The throughput cost is that one busy item becomes a bottleneck, and adding more workers does not remove that per-item dependency.",
       "evidence": [
+        {
+          "slide": 5,
+          "quote": "Starting first does not mean finishing first"
+        },
         {
           "slide": 5,
           "quote": "Two updates change one receipt's address: old, then new. Workers receive them in order, but the slower old update finishes last and overwrites new."
         },
         {
           "slide": 5,
-          "quote": "Serialize effects per receipt ID: keep later updates waiting while an earlier one runs or retries. Different receipts can still run in parallel. A busy receipt becomes a throughput bottleneck."
+          "quote": "Ordered delivery alone does not guarantee ordered effects."
+        },
+        {
+          "slide": 5,
+          "quote": "Serialize effects per receipt ID: keep later updates waiting while an earlier one runs or retries. Different receipts can still run in parallel. Adding more workers does not remove that per-receipt dependency. A busy receipt becomes a throughput bottleneck."
         },
         {
           "slide": 5,
           "quote": "Moving the earlier job to a dead-letter queue does not resolve the dependency. Decide how to repair or cancel it before releasing dependent updates."
-        },
-        {
-          "slide": 5,
-          "quote": "Ordered delivery alone does not guarantee ordered effects."
         }
       ]
     },
     {
       "id": "stack-overload",
-      "answer": "Backlog grows by about 120 minus 80, or 40 jobs per second. Growing oldest-job age indicates increasing wait for unfinished work and possible violation of the promised client delay. Bound worker concurrency to the image store's safe limit, and throttle or reject new producer requests with a visible busy response, or explicitly defer within an agreed limit. A queue only buffers a burst until capacity catches up; storage, retention and allowed delay are finite, so sustained excess arrivals cannot be hidden indefinitely. More workers would help if workers were the bottleneck and downstream services had spare capacity. With this image store already at its limit, additional worker pressure does not solve the bottleneck.",
+      "answer": "If these rates continue, unfinished work grows by 40 jobs per second, because 120 arrivals minus 80 completions leaves 40. The same subtraction shows 100 arrivals and 70 completions growing a backlog by 30 jobs per second. A growing oldest-job age means the wait is growing and can violate the promise to the client, so watch backlog and oldest-job age together. The image store is already at its safe concurrency limit, so bound worker concurrency to protect it. Apply producer backpressure by throttling or rejecting new requests with a visible busy response, or by explicitly deferring them within an agreed limit. Storage and retention are finite. The queue can absorb a burst only if capacity later catches up before those limits or the allowed delay; a steady surplus of about 40 jobs per second does not catch up. Do not hide that sustained overload in a growing queue. More workers would help only when workers are the bottleneck and the downstream store has spare capacity. Here the store is already saturated, so more workers increase contention instead.",
       "evidence": [
         {
           "slide": 6,
@@ -118,12 +142,16 @@
         {
           "slide": 6,
           "quote": "More workers help when workers are the bottleneck and downstream services have spare capacity. If the database is already saturated, more workers increase contention instead."
+        },
+        {
+          "slide": 6,
+          "quote": "Control arrivals and downstream work; do not hide sustained overload in a growing queue."
         }
       ]
     },
     {
       "id": "stack-log-choice",
-      "answer": "One work queue divides jobs among competing workers, so billing and analytics competing on that queue would share work rather than each independently receive every purchase; failed deliveries can repeat. A retained log with separate billing and analytics consumer groups lets each application process every event, with workers within each group sharing partitions. Each group tracks its own offset, its progress position for each partition. Recording progress by committing an offset does not delete the retained event. Replaying the last day requires all needed events for that day still to remain under the retention policy. Adding partitions or consumers does not create global ordering: order is only per partition. Retained history and offsets also do not themselves make external effects exactly once.",
+      "answer": "One work queue with competing workers divides each purchase job among workers, so one worker processes it. That queue does not give every independent application every job, and failed deliveries can still repeat. Billing and analytics would therefore not each be guaranteed every purchase. A retained log fits because both applications need every purchase event: put billing in one consumer group and analytics in another. Each group receives the events independently and tracks its own position, called an offset, for each partition. A partition is an ordered slice of the log. Workers within a group share that group's partitions rather than each keeping a separate full copy. Committing an offset records progress and does not delete the event, so the retained records stay available after progress is recorded. Analytics can rewind and replay the last day only while the required events remain under the retention policy; that is the retention condition for the one-day replay. Adding partitions or consumers does not create universal global ordering or exactly-once external effects. Ordering is per partition, not global across all partitions, and retained history and offsets do not by themselves make external effects exactly once.",
       "evidence": [
         {
           "slide": 7,
@@ -140,6 +168,10 @@
         {
           "slide": 7,
           "quote": "Ordering is per partition, not global across all partitions. Retained history and offsets do not by themselves make external effects exactly once."
+        },
+        {
+          "slide": 7,
+          "quote": "Choose job distribution for shared work, or independent group positions and retained history when applications need replay."
         }
       ]
     }

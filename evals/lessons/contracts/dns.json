@@ -1,0 +1,362 @@
+{
+  "audience": "HTTP/API engineers learning to reason about the DNS component of an interview-sized Notes architecture. The concrete operation is that a Notes app client must resolve the hostname api.notes.example before it can open a connection to the Notes API. Answers should say who answers a lookup, what resource records come back, and how a later HTTP call can still fail.",
+  "prerequisites": [
+    "A client eventually connects to an IP address and sends an HTTP request.",
+    "A hostname is not itself an IP address.",
+    "A response can be lost."
+  ],
+  "objectives": [
+    {
+      "id": "lookup-actors",
+      "description": "Trace a lookup of api.notes.example through the stub resolver, a recursive resolver, the authoritative name server, and a cached answer that can be reused without asking the authoritative server again."
+    },
+    {
+      "id": "lookup-then-http",
+      "description": "Separate that DNS lookup from the later HTTP request: DNS returns resource records and does not proxy the HTTP request, check backend health on each request, or store the HTTP response."
+    },
+    {
+      "id": "address-and-alias",
+      "description": "Explain that an A record carries one IPv4 address and an AAAA record carries one IPv6 address, while a CNAME is an alias to another domain name and requires the lookup to continue at that name before the client has an address."
+    },
+    {
+      "id": "address-set",
+      "description": "Explain that several address records for one name are a set of answers whose order is not significant, and that this set is not health-aware distribution of HTTP requests."
+    },
+    {
+      "id": "ttl-reuse",
+      "description": "Explain that a TTL is the time a cache is allowed to reuse its copy of an answer before the source should be consulted again, not a promise that every resolver discards the old answer at the same instant, so a change at the authoritative server can leave stale cached answers."
+    },
+    {
+      "id": "lookup-failure",
+      "description": "Distinguish a lookup failure, such as a timeout or SERVFAIL, from NXDOMAIN for a name that does not exist, including that a failed lookup can make a healthy API unreachable and that negative answers can be cached for a negative-caching TTL."
+    },
+    {
+      "id": "planned-cutover",
+      "description": "Explain a planned address cutover that lowers the TTL first, waits for answers cached under the previous TTL to age out, then changes the authoritative record, while still expecting stragglers because DNS remains an extra dependency."
+    },
+    {
+      "id": "name-versus-balancer",
+      "description": "Decide when a stable hostname is useful for Notes clients and when publishing multiple address records still does not replace a component that distributes HTTP requests with awareness of backend health."
+    }
+  ],
+  "questions": [
+    {
+      "id": "q1-cold-lookup",
+      "question": "A Notes client has never looked up api.notes.example, and the recursive resolver it uses has no cached answer for that name. The client asks its stub resolver for an address. Trace that first lookup: what does the stub resolver ask the recursive resolver to do, how does the recursive resolver obtain the answer from the authoritative name server, and what does the authoritative name server answer from? A second client then looks up the same name through the same recursive resolver before that cached answer expires. Who can answer the second lookup without contacting the authoritative name server again, and what is that answer a copy of? After a successful lookup, the first client sends GET /notes to an address it received. Which step is DNS and which step is HTTP? What did DNS return? Does that DNS result proxy the GET, check whether the Notes API is healthy on this request, or store the HTTP response? Name one failure that can still happen after the name has resolved.",
+      "criteria": [
+        "Identifies the stub resolver as asking a recursive resolver to resolve the name, rather than itself walking the DNS hierarchy to the authoritative server.",
+        "Explains that, with no cached answer, the recursive resolver obtains the answer from the authoritative name server, which answers from its zone data for the name.",
+        "Explains that the second lookup can be answered from the recursive resolver's cached copy without a new query to the authoritative name server.",
+        "Separates the DNS lookup, which returns resource records, from the later GET /notes, which is an HTTP request sent to an IP address.",
+        "States that this DNS result does not proxy that GET, does not check backend health for that request, and does not store the HTTP response.",
+        "Names a later failure that a successful lookup does not prevent, such as a lost response, a refused connection, or an HTTP error from the API."
+      ],
+      "criticalMisconceptions": [
+        "The stub resolver walks every DNS delegation and queries the authoritative name server itself.",
+        "The recursive resolver must contact the authoritative name server on every lookup, including one it can still answer from an unexpired cache.",
+        "A cached answer is a live read of the zone, so it cannot be a stored copy.",
+        "The DNS response proxies GET /notes, health-checks the Notes API, or stores the HTTP response."
+      ]
+    },
+    {
+      "id": "q2-alias-and-addresses",
+      "question": "api.notes.example is a CNAME alias of origin.notes.example. origin.notes.example has two A records, 192.0.2.10 and 192.0.2.20, and an AAAA record for 2001:db8::10. No relevant answers are cached. The Notes client needs an IP address. What does the CNAME contain, and why must the lookup continue at origin.notes.example? What does an A record contain, and what does an AAAA record contain? May the resolver follow the alias and include the CNAME together with an address record in what it returns? The resolver returns both A addresses. 192.0.2.20 accepts no connections, and 192.0.2.10 is healthy. Are these two A records an ordered health-aware assignment of HTTP requests, or a set of addresses whose order is not significant? Does this ordinary DNS answer check which address currently accepts the Notes API? If the client then connects to 192.0.2.20 and that connection fails, was DNS required to omit 192.0.2.20 from the answer?",
+      "criteria": [
+        "Explains that the CNAME contains the canonical name origin.notes.example and does not contain an IP address.",
+        "Explains that an address lookup must continue at the canonical name, because the alias alone does not give the client an address to connect to.",
+        "Explains that an A record contains an IPv4 address and an AAAA record contains an IPv6 address.",
+        "Accepts that the resolver can follow the alias, including by returning the CNAME together with the resulting address record, so the application does not replace that lookup with an HTTP request.",
+        "Treats the two A records as a set of addresses and explains that their order is not significant and is not health-aware distribution of HTTP requests.",
+        "Explains that this DNS answer does not check which address accepts the API, so a later connection failure to 192.0.2.20 does not mean DNS was required to omit that address."
+      ],
+      "criticalMisconceptions": [
+        "A CNAME record stores an IP address for the Notes API.",
+        "The application must send an HTTP request to the CNAME target instead of finishing the DNS lookup for an address.",
+        "Multiple A records make DNS health-check the Notes API and return only an address that accepts connections.",
+        "Rotating or randomizing address-record order assigns each HTTP request to a healthy or lightly loaded server."
+      ]
+    },
+    {
+      "id": "q3-stale-after-change",
+      "question": "Assume two cached copies are kept until their own TTL countdowns reach zero. At 12:00 a recursive resolver caches the A record origin.notes.example = 192.0.2.10 with a TTL of 3600 seconds, so that cached copy reaches zero at 13:00. A second recursive resolver caches the same old address at 12:05, so its copy reaches zero at 13:05. At 12:10 the authoritative server is updated to 192.0.2.30. Nobody flushes resolvers. At 12:20 the first resolver is asked again. Which address may it return, and what does the remaining TTL allow it to do? What does this TTL not promise about updating every resolver at 12:10, or about every resolver dropping 192.0.2.10 at the same instant? At 13:02, why can the first resolver need to consult the source while the second resolver may still reuse 192.0.2.10? If a resolver's TTL has reached zero and it cannot get a refresh from the authoritative server, is reuse of the expired address forbidden, required of every resolver, or allowed?",
+      "criteria": [
+        "States that at 12:20 the first resolver may return its cached 192.0.2.10 because that copy's TTL has not expired, even though the authoritative record changed at 12:10.",
+        "Explains that the TTL is the time that cache may reuse its copy before the source should be consulted again, and that the authoritative change does not itself rewrite other caches.",
+        "Explains that the TTL does not make every resolver drop the old address at the same instant, because resolvers that cached it at different times expire at different times.",
+        "Explains that at 13:02 the first resolver's copy has expired while the second resolver's copy, cached at 12:05, may still be reused until 13:05.",
+        "States that a resolver which cannot refresh an expired answer is allowed to reuse it, and that this stale reuse is not required of every resolver."
+      ],
+      "criticalMisconceptions": [
+        "Changing the authoritative record at 12:10 immediately replaces 192.0.2.10 in every resolver.",
+        "A 3600-second TTL means every resolver keeps the answer for exactly 3600 seconds and then all discard it together.",
+        "Once a TTL expires, no resolver is allowed to return the old address even if it cannot refresh.",
+        "Because stale reuse is sometimes allowed, resolvers ignore TTLs and do not need to refresh."
+      ]
+    },
+    {
+      "id": "q4-failure-versus-nxdomain",
+      "question": "Client A looks up api.notes.example. The lookup times out, and a retry receives SERVFAIL. The zone does publish that name, and the Notes API process is healthy. Client B looks up a name that is not in the zone and receives NXDOMAIN. A resolver caches that name error. The name is then added at the authoritative server, and Client B looks up again through the same resolver before the negative answer expires. What does the timeout mean about whether the name exists, and what does SERVFAIL mean? Why can Client A fail to reach the healthy API? What does NXDOMAIN mean, and how can the cached name error make Client B still treat the name as absent? What time limit allows that negative answer to be reused, and why is that limit not the TTL of an address record that was not returned? If a different name exists but has no A or AAAA record, is that NXDOMAIN, and can that negative answer be cached?",
+      "criteria": [
+        "Explains that a timeout means no DNS answer arrived and SERVFAIL means a server reported that it could not process the query, and that neither result proves the name does not exist.",
+        "Explains that Client A obtains no address, so it cannot open the API connection and the failed lookup makes the healthy API unreachable from that client.",
+        "Explains that NXDOMAIN means the queried name does not exist, and that a cached NXDOMAIN can still be returned after the name is added until that negative answer expires.",
+        "Identifies the reuse limit as the negative-caching TTL carried with the name-error answer, not the TTL of an address record.",
+        "Explains that a name which exists but has no record of the requested address type is a no-data answer rather than NXDOMAIN, and that this negative answer can also be cached."
+      ],
+      "criticalMisconceptions": [
+        "A timeout or SERVFAIL means api.notes.example does not exist.",
+        "A failed DNS lookup proves the Notes API process is down.",
+        "Negative answers are not cached, so the next lookup after a name is created always sees the new name immediately.",
+        "SERVFAIL is cached for the same negative-caching TTL as NXDOMAIN.",
+        "A browser or operating-system message that mentions NXDOMAIN is itself the DNS name-error response."
+      ]
+    },
+    {
+      "id": "q5-planned-cutover",
+      "question": "origin.notes.example is 192.0.2.10 with a TTL of 86400 seconds, and many recursive resolvers have already cached that answer. The team will move the API to 192.0.2.30. State the order of a planned DNS cutover: what should change first, how long to wait and why that wait follows the previously cached TTL, and when the address itself should change. Why does lowering the TTL at the same moment as the address change, or changing the address without waiting, leave existing caches on 192.0.2.10 for as long as their previously cached TTL? After the wait and the address change, why can the team not claim that every Notes client has stopped using 192.0.2.10? Why does a client that wants the new address still depend on DNS?",
+      "criteria": [
+        "Lowers the TTL first while the published address is still 192.0.2.10, so lookups made after a cache refreshes store the shorter lifetime.",
+        "Waits at least as long as the previously published 86400-second TTL so caches that stored the old answer under that lifetime can expire and observe the shorter TTL.",
+        "Changes the address to 192.0.2.30 only after that wait, and explains that editing the authoritative record does not rewrite answers already stored in caches.",
+        "Explains that changing the address without first waiting out the old TTL, or publishing the short TTL only at the moment of the address change, leaves holders of the old cached TTL on 192.0.2.10 until that cached lifetime ends.",
+        "Rejects a claim that every client has stopped using 192.0.2.10 after the procedure, because some caches can still retain or reuse a stale answer.",
+        "Explains that the client still depends on a DNS lookup to learn 192.0.2.30, so DNS remains an extra dependency in front of the new address."
+      ],
+      "criticalMisconceptions": [
+        "Lowering the TTL immediately rewrites the TTL stored with answers that resolvers have already cached.",
+        "Publishing the new address and the shorter TTL at the same moment limits every existing cache to the new short TTL.",
+        "Waiting out the old TTL and then changing the record guarantees that no resolver can still return 192.0.2.10.",
+        "Once the API is healthy at 192.0.2.30, clients no longer depend on DNS."
+      ]
+    },
+    {
+      "id": "q6-stable-name",
+      "question": "Notes clients are already installed on many devices and should keep working when the API address changes later. A teammate proposes deleting the hostname api.notes.example and shipping both 192.0.2.10 and 192.0.2.20 inside the app, arguing that two addresses already load-balance the API and health-check it. Should the clients keep a stable hostname? What benefit does that name give when the address must change, given that a cache can keep serving an old address until its TTL allows a refresh? Why do those two address records still fail to replace a component that distributes each HTTP request and avoids unhealthy backends? Name one job in this design that remains outside DNS.",
+      "criteria": [
+        "Recommends keeping a stable hostname for the installed Notes clients.",
+        "Explains that a later DNS change can make that same name return a new address without shipping a new IP address to every installed client, while each cache may continue serving the old address until its TTL allows a refresh.",
+        "Explains that the two address records are only a set of addresses and do not health-check backends or distribute each HTTP request.",
+        "Names a job that remains outside DNS, such as choosing a healthy backend for an HTTP request or proxying that HTTP request."
+      ],
+      "criticalMisconceptions": [
+        "Two A records are a load balancer: they health-check the Notes API and send each HTTP request to a healthy address.",
+        "A stable hostname is useless because every client can store the current IP address permanently.",
+        "Keeping the hostname removes the need to account for cached answers when the address changes."
+      ]
+    }
+  ],
+  "diagramFile": "src/learn/DnsDiagram.tsx",
+  "cards": [
+    {
+      "id": "lookup-actors",
+      "slide": 1,
+      "objective": "Trace a hostname lookup through the stub resolver, a recursive resolver, the authoritative name server, and a cached answer.",
+      "prerequisites": [],
+      "questions": [
+        {
+          "id": "card-1-who-answers",
+          "question": "The Notes app asks its local stub resolver for an address of api.notes.example. The stub is configured with the address of one recursive resolver. Nothing relevant is cached. What does the stub ask that recursive resolver to do, and why is the stub not the component that follows delegations to the authoritative server? How does the recursive resolver obtain this first answer, and what does the authoritative name server answer from? A second Notes client then uses the same recursive resolver before the cached answer expires. Who answers that second lookup without contacting the authoritative name server, and what kind of data is returned?",
+          "criteria": [
+            "Identifies the stub resolver as sending the query to a recursive resolver rather than walking the DNS hierarchy itself.",
+            "Explains that the recursive resolver, having no cached answer, obtains the answer from the authoritative name server.",
+            "Identifies the authoritative name server as answering from the zone data for api.notes.example.",
+            "Explains that the recursive resolver can return its cached copy for the second lookup without a new query to the authoritative name server."
+          ],
+          "criticalMisconceptions": [
+            "The stub resolver queries the authoritative name server by following every delegation.",
+            "A recursive resolver contacts the authoritative name server even when it can answer from an unexpired cached copy.",
+            "A cached answer is a fresh read of the authoritative zone rather than a stored copy."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lookup-then-http",
+      "slide": 2,
+      "objective": "Separate the DNS lookup from the later HTTP request, and state that DNS returns resource records rather than proxying HTTP, checking per-request health, or storing HTTP responses.",
+      "prerequisites": [
+        "lookup-actors"
+      ],
+      "questions": [
+        {
+          "id": "card-2-lookup-versus-get",
+          "question": "The Notes client has received address records for api.notes.example. It then opens a connection to one of those addresses and sends GET /notes. Which step is the DNS lookup, which step is the HTTP request, and what did DNS return? Does that DNS response proxy the GET, check whether the Notes API process is healthy on this request, or store the HTTP response? Name one thing that can still fail after the lookup succeeds.",
+          "criteria": [
+            "Separates the DNS lookup, which returns resource records such as address records, from the later HTTP request sent to an IP address.",
+            "States that the DNS response does not proxy the HTTP request, does not check backend health on that request, and does not store the HTTP response.",
+            "Explains that a successful lookup only supplies addressing data, so a later connection failure or HTTP failure can still occur."
+          ],
+          "criticalMisconceptions": [
+            "DNS forwards GET /notes to the API and returns the HTTP response.",
+            "A successful lookup means the Notes API was health-checked and is reachable for this request.",
+            "The HTTP response is stored in DNS and reused as the next API response."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "address-and-alias",
+      "slide": 3,
+      "objective": "Distinguish an A or AAAA address record from a CNAME alias that makes the lookup continue at another domain name.",
+      "prerequisites": [
+        "lookup-actors"
+      ],
+      "questions": [
+        {
+          "id": "card-3-cname-versus-address",
+          "question": "api.notes.example has a CNAME pointing at origin.notes.example. origin.notes.example has one A record and one AAAA record. No answers are cached, and the Notes client needs an address it can connect to. What does the CNAME contain, and why can the lookup not stop at the alias? What does the A record contain, and what does the AAAA record contain? Who continues the lookup at origin.notes.example, and what must have been obtained before the client connects? May that continued lookup show up as the CNAME plus an address record in the resolver's answer?",
+          "criteria": [
+            "Explains that the CNAME names origin.notes.example as the canonical name and does not contain an IP address.",
+            "Explains that an address query continues with a lookup of origin.notes.example.",
+            "Explains that the A record contains an IPv4 address and the AAAA record contains an IPv6 address.",
+            "Explains that the resolver continues the lookup at the canonical name, and that the client can connect only after an address record has been obtained; one returned answer may include both the CNAME and that address record."
+          ],
+          "criticalMisconceptions": [
+            "A CNAME record stores the IP address of the Notes API.",
+            "Finding the CNAME finishes address resolution, so the A and AAAA records are not consulted.",
+            "An A record and an AAAA record are the same address format under two names.",
+            "The Notes application follows a CNAME by sending an HTTP request rather than by receiving an address record."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "address-set",
+      "slide": 4,
+      "objective": "Explain that multiple address records are a set of answers, not health-aware distribution of HTTP requests.",
+      "prerequisites": [
+        "lookup-then-http",
+        "address-and-alias"
+      ],
+      "questions": [
+        {
+          "id": "card-4-two-addresses",
+          "question": "origin.notes.example has two A records, 192.0.2.10 and 192.0.2.20. The process at 192.0.2.20 is down, and the process at 192.0.2.10 is healthy. A recursive resolver returns both addresses. What kind of DNS answer is this pair of records? Why is their order not a promise about which server receives the next HTTP request? Does this ordinary multi-address answer check which address currently accepts the Notes API? The client connects to 192.0.2.20 and the connection fails. Does that failure mean DNS was required to remove 192.0.2.20 from the answer?",
+          "criteria": [
+            "Treats the two A records as a set of IPv4 addresses for the same name.",
+            "Explains that the order of records in that set is not significant and is not health-aware distribution of HTTP requests.",
+            "Explains that this DNS answer does not check whether either address accepts HTTP.",
+            "Explains that the later connection failure does not mean the DNS answer was required to omit 192.0.2.20, because the lookup and the connection attempt are separate."
+          ],
+          "criticalMisconceptions": [
+            "Multiple A records cause DNS to health-check the Notes API and return only addresses that accept connections.",
+            "Rotating the order of A records distributes HTTP requests according to server load or health.",
+            "If one address is down, the DNS lookup fails or every resolver removes that address from its answer."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ttl-reuse",
+      "slide": 5,
+      "objective": "Explain TTL as the interval for which one cache may reuse an answer, so an authoritative change can leave other caches holding the old answer.",
+      "prerequisites": [
+        "lookup-actors",
+        "address-and-alias"
+      ],
+      "questions": [
+        {
+          "id": "card-5-ttl-window",
+          "question": "Assume neither cached copy is removed before its TTL reaches zero. The A record for origin.notes.example is 192.0.2.10 with a TTL of 3600 seconds. Recursive resolver A caches it at 12:00, so that countdown reaches zero at 13:00. Recursive resolver B caches the same old address at 12:05, so its countdown reaches zero at 13:05. At 12:10 the authoritative server changes the record to 192.0.2.30, and nobody flushes caches. Which address may resolver A return at 12:20, and what does its remaining TTL allow? Why does that TTL not promise that the authoritative change reaches every resolver immediately, or that every resolver drops 192.0.2.10 at the same instant? At 13:02, which resolver may still reuse 192.0.2.10, and which one should consult the source again? If resolver A cannot refresh after 13:00, is reuse of the expired address forbidden, required of every resolver, or allowed?",
+          "criteria": [
+            "States that resolver A may return the cached 192.0.2.10 at 12:20 because its TTL has not expired, despite the authoritative change.",
+            "Explains that a TTL limits how long that cached copy may be reused before the source should be consulted again, and does not push the authoritative change into every cache.",
+            "Explains that at 13:02 resolver A's countdown has reached zero, so it should consult the source again, while resolver B may still reuse 192.0.2.10 until 13:05.",
+            "States that a resolver unable to refresh after expiry is allowed to reuse the expired address, and that this is not a promise that every resolver does so."
+          ],
+          "criticalMisconceptions": [
+            "At 12:10 every resolver replaces 192.0.2.10 with 192.0.2.30.",
+            "The TTL guarantees that the answer stays cached for the full 3600 seconds and then disappears from every resolver at once.",
+            "After a TTL expires, no resolver may return the old address for any reason.",
+            "Permission to serve an expired answer means resolvers never honor a TTL."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lookup-failure",
+      "slide": 6,
+      "objective": "Distinguish a timeout or SERVFAIL from NXDOMAIN, including a cached negative answer and a healthy API that the client still cannot address.",
+      "prerequisites": [
+        "lookup-actors",
+        "lookup-then-http",
+        "ttl-reuse"
+      ],
+      "questions": [
+        {
+          "id": "card-6-timeout-versus-name-error",
+          "question": "One Notes lookup of api.notes.example times out, and the next attempt receives SERVFAIL. The name is published and the API process is healthy. A different lookup receives NXDOMAIN, and the resolver caches that name error. The missing name is then created at the authoritative server, but a later lookup uses the same resolver before the negative answer expires. What do the timeout and SERVFAIL each say about whether the name exists? Why can the first client miss a healthy API? What does the cached NXDOMAIN allow the resolver to keep saying, and what time limit applies to reusing that name error? Why is that limit not an address-record TTL? If the name instead exists but has no address record of the requested type, is the result NXDOMAIN, and can it be cached?",
+          "criteria": [
+            "Distinguishes a timeout, where no answer arrived, and SERVFAIL, where a server reports that it could not process the query, from proof that the name is absent.",
+            "Explains that the client cannot open the API connection without an address, so the failed lookup makes the healthy API unreachable from that client.",
+            "Explains that a cached NXDOMAIN can still report that the name does not exist after the authoritative server adds it, until the negative-caching TTL expires.",
+            "Identifies that reuse limit as the negative answer's own TTL, not the TTL of an address record.",
+            "Explains that a name which exists without the requested record type is a no-data negative answer, not NXDOMAIN, and that it can be cached."
+          ],
+          "criticalMisconceptions": [
+            "SERVFAIL or a timeout means api.notes.example does not exist.",
+            "A failed lookup proves the Notes API process is down.",
+            "A negative answer cannot be cached, so creating the name is visible to every resolver on the next lookup.",
+            "A no-data answer for an existing name is the same result as NXDOMAIN."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planned-cutover",
+      "slide": 7,
+      "objective": "Explain a planned cutover that lowers the TTL, waits out previously cached answers, then changes the record, while still expecting stragglers.",
+      "prerequisites": [
+        "address-and-alias",
+        "ttl-reuse"
+      ],
+      "questions": [
+        {
+          "id": "card-7-cutover-order",
+          "question": "origin.notes.example points at 192.0.2.10 with a TTL of 86400 seconds, and resolvers have already cached that answer. The team wants 192.0.2.30 instead. What should change first, how long should the team wait, and why does that wait depend on the old TTL? When should 192.0.2.30 be published? Why would publishing the new address immediately, or lowering the TTL only in that same change, leave caches on 192.0.2.10? After the wait and the change, can every Notes client be assumed to have stopped using 192.0.2.10? Why does the client still depend on DNS to reach the new address?",
+          "criteria": [
+            "Changes the TTL to a shorter value first, while the address remains 192.0.2.10.",
+            "Waits at least the previous 86400-second TTL so caches that learned the long lifetime can expire before the address changes.",
+            "Publishes 192.0.2.30 after that wait, and explains that the authoritative edit does not rewrite an answer a resolver already cached.",
+            "Explains that an immediate address change, or a TTL cut made only together with the address change, leaves existing caches on 192.0.2.10 until their previously cached TTL ends.",
+            "Rejects the assumption that every client has dropped 192.0.2.10, because stragglers can keep a stale cached answer.",
+            "Explains that the client still has to learn 192.0.2.30 through DNS, so the lookup is an extra dependency in front of the healthy new address."
+          ],
+          "criticalMisconceptions": [
+            "Reducing the TTL rewrites the countdown inside resolvers that already hold the old record.",
+            "The new short TTL applies to every cache as soon as the authoritative address changes.",
+            "Completing this cutover procedure means no resolver can return 192.0.2.10.",
+            "A healthy process at the new address can be reached without another DNS lookup."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "name-versus-balancer",
+      "slide": 8,
+      "objective": "Decide when a stable hostname is useful and when several address records still do not replace health-aware HTTP distribution.",
+      "prerequisites": [
+        "lookup-then-http",
+        "address-set",
+        "planned-cutover"
+      ],
+      "questions": [
+        {
+          "id": "card-8-keep-the-name",
+          "question": "Widely deployed Notes clients should keep calling the API by name when its address changes. A teammate proposes deleting the hostname and configuring every client with both 192.0.2.10 and 192.0.2.20, because two addresses already load-balance and health-check the API. Should the clients keep a stable name? What benefit does the name give when the address changes, given the need to wait out cached answers? Why do the two address records still not replace a component that selects a healthy backend for each HTTP request? Name one job that remains outside DNS.",
+          "criteria": [
+            "Recommends keeping a stable hostname.",
+            "Explains that clients using the name can follow an address change through DNS without a new address being shipped to every client, subject to cached answers expiring.",
+            "Explains that two address records are a set of addresses and do not check health or distribute each HTTP request.",
+            "Names a remaining job outside DNS, such as per-request selection of a healthy backend or proxying the HTTP request."
+          ],
+          "criticalMisconceptions": [
+            "Publishing two address records health-checks the Notes API and balances each HTTP request across healthy servers.",
+            "Hard-coding the current addresses is equivalent to a stable name because those addresses will not need to change.",
+            "A stable name makes cached answers irrelevant during an address change."
+          ]
+        }
+      ]
+    }
+  ]
+}

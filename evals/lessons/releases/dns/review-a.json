@@ -1,0 +1,189 @@
+{
+  "reviewer": "dns-review-a",
+  "lessonHash": "7128a78e69778d6452d29cc4b3d54494d7464a41649979ad9c4f2722fc968df0",
+  "rubricHash": "49339e0b8b4bc4176a8562e88755b2ab3e784e60f54a1755d959969a81a4d046",
+  "learnerHash": "5e4a43ee808b2defe0cb8e34cc9ee7d86530d82ced93b55f3635fa5b54ca6ac9",
+  "dimensions": {
+    "accuracy": {
+      "score": 4,
+      "reason": "Checked claims match the linked sources. RFC 1034 supports the stub handing the query to a recursive resolver, an unordered address set, and lowering a TTL before an anticipated change. RFC 8767 allows expired reuse only when an authoritative refresh fails and does not require every resolver to do it. RFC 2308 separates NXDOMAIN, no-data, and the optional five-minute SERVFAIL cache, and sets the negative-caching TTL to the lesser of the SOA TTL and the SOA MINIMUM. The Cloudflare page keeps a CNAME on a domain name, and the Route 53 simple-routing page says multiple addresses are not health checked. The lookup diagram’s caption is broad, while its resolver label and the TTL diagram keep the cached copy and the 12:10 change on separate timelines.",
+      "evidence": [
+        {
+          "slide": 5,
+          "quote": "If a resolver cannot get an authoritative refresh when the TTL expires, it is allowed to reuse the expired address. That reuse is not required of every resolver. It does not mean resolvers ignore a TTL while a refresh is possible."
+        },
+        {
+          "slide": 7,
+          "quote": "After the wait and the change, do not claim that every Notes client has stopped using 192.0.2.10. Some caches can still retain or reuse a stale answer."
+        }
+      ]
+    },
+    "mechanisms": {
+      "score": 3,
+      "reason": "The deck names the stub, one recursive resolver, the authoritative server’s zone data, and the stored copy that answers a second lookup before expiry. It also traces CNAME continuation, independent TTL countdowns, and the timeout, SERVFAIL, NXDOMAIN, and no-data results that leave the client without a usable address. The cold-lookup hop is still a single assertion that the recursive resolver obtains the answer from the authoritative server, so a reader can trace who is asked and what is stored, and cannot trace how that resolver follows delegations to find the server.",
+      "evidence": [
+        {
+          "slide": 1,
+          "quote": "On this first lookup nothing relevant is cached, so the recursive resolver obtains the answer from the authoritative name server."
+        },
+        {
+          "slide": 1,
+          "quote": "When a second client asks the same recursive resolver before the copy expires, the resolver answers from its cached copy and does not contact the authoritative name server again."
+        }
+      ]
+    },
+    "coherence": {
+      "score": 4,
+      "reason": "The same Notes lookup runs through every slide, and each later rule uses a distinction the earlier slides already established: who answers, then the separate GET, then alias versus address, then an address set, then per-cache TTLs, then negative caching and the cutover that waits out the previously stored 86400-second TTL. The stable-name decision comes after the reader has seen both cached stragglers and the failure of multiple addresses as a health check.",
+      "evidence": [
+        {
+          "slide": 7,
+          "quote": "For a planned cutover, lower the TTL first while the published address is still 192.0.2.10. Wait at least 86400 seconds, so caches that stored the old answer under that lifetime can expire and observe the shorter TTL. Only then change the authoritative address to 192.0.2.30."
+        }
+      ]
+    },
+    "decisions": {
+      "score": 4,
+      "reason": "The cutover states the benefit of a shorter TTL, the cost of the wait, the consequence of changing the address while old countdowns remain, and the residual chance that a cache still serves 192.0.2.10. Keeping api.notes.example is paired with the cache delay and with an explicit remaining job, choosing a healthy backend or proxying the HTTP request, because two address records neither health-check backends nor distribute each HTTP request. Lookup failure is handled as loss of an address for a client, including when the API process is healthy.",
+      "evidence": [
+        {
+          "slide": 8,
+          "quote": "Two address records, such as 192.0.2.10 and 192.0.2.20, are only a set of addresses. They do not health-check backends, and they do not distribute each HTTP request. Choosing a healthy backend for an HTTP request, or proxying that request, remains outside DNS."
+        },
+        {
+          "slide": 8,
+          "quote": "When the address must change, that same name can return a new address without shipping a new IP address to every installed client. Each cache may still serve the old address until its TTL allows a refresh."
+        }
+      ]
+    },
+    "clarity": {
+      "score": 3,
+      "reason": "Actors, A and AAAA, CNAME, TTL, timeout, SERVFAIL, and NXDOMAIN are explained in ordinary sentences tied to concrete addresses and clock times. The negative-caching rule then uses “SOA” and “MINIMUM” without saying what either field is, so the formula is precise and the two names are unexplained jargon on first use.",
+      "evidence": [
+        {
+          "slide": 6,
+          "quote": "The reuse limit is the negative-caching TTL carried with that name-error answer: the lesser of the zone SOA record's TTL and its MINIMUM field."
+        }
+      ]
+    }
+  },
+  "outcomes": [
+    {
+      "id": "q1-cold-lookup",
+      "score": 2,
+      "reason": "Slides 1 and 2 teach every criterion, and the learner’s quotes support each one: the stub sends the query to one recursive resolver and does not follow delegations; with nothing cached, that resolver obtains the answer from the authoritative server’s zone data; the same resolver answers the second client from its stored copy; the lookup returns resource records and GET /notes is the later HTTP step; that DNS response does not proxy the GET, check health, or store the HTTP response; a refused connection can still follow a successful lookup."
+    },
+    {
+      "id": "q2-alias-and-addresses",
+      "score": 2,
+      "reason": "Slides 3 and 4, and the quotes the learner cites, cover the CNAME holding origin.notes.example and no IP address, continuation of the lookup at that name, an A record as one IPv4 address and an AAAA record as one IPv6 address, the resolver returning the CNAME with the address record it found, the two A records as an unordered set, and no requirement that this answer omit 192.0.2.20 when that address accepts no connections."
+    },
+    {
+      "id": "q3-stale-after-change",
+      "score": 2,
+      "reason": "Slide 5 and the learner’s quotes support the whole chain: at 12:20 resolver A may return cached 192.0.2.10 because its TTL has not expired; a TTL limits that copy and an authoritative change does not rewrite other caches; resolvers that stored the old address at different times expire at different times; at 13:02 resolver A should consult the source while resolver B may reuse 192.0.2.10 until 13:05; expired reuse when refresh fails is allowed and is not required of every resolver."
+    },
+    {
+      "id": "q4-failure-versus-nxdomain",
+      "score": 2,
+      "reason": "Slide 6 and the cited quotes teach every criterion. A timeout means no answer arrived and SERVFAIL means the server could not process the query, and neither proves the name is absent. Client A has no address, so the healthy API is unreachable from that client. A cached NXDOMAIN can still be returned after the name is added until the negative-caching TTL expires. That limit is the lesser of the SOA TTL and the SOA MINIMUM, not an address-record TTL. A name that exists without the requested address type is a cacheable no-data answer."
+    },
+    {
+      "id": "q5-planned-cutover",
+      "score": 2,
+      "reason": "Slide 7 and the learner’s quotes give the full order and the reasons: lower the TTL while the address is still 192.0.2.10, wait at least 86400 seconds so caches that stored the old lifetime can expire and observe the shorter TTL, then publish 192.0.2.30, because an authoritative edit does not rewrite stored answers. Changing the address without that wait, or publishing the short TTL only with the address change, leaves holders of the old cached TTL on 192.0.2.10. Afterward, some caches can still retain or reuse a stale answer, and a client still depends on a lookup to learn 192.0.2.30."
+    },
+    {
+      "id": "q6-stable-name",
+      "score": 2,
+      "reason": "Slide 8 and the quotes support keeping api.notes.example, using that name to return a new address without shipping a new IP to every installed client while each cache may serve the old address until its TTL allows a refresh, treating 192.0.2.10 and 192.0.2.20 as a set that does not health-check backends or distribute each HTTP request, and leaving healthy-backend selection or proxying outside DNS."
+    }
+  ],
+  "hardFailures": [],
+  "sourceChecks": [
+    {
+      "slide": 1,
+      "url": "https://www.rfc-editor.org/rfc/rfc1034",
+      "claim": "The stub sends the query to one recursive resolver and does not itself follow delegations; the authoritative server answers from its zone data.",
+      "verified": true
+    },
+    {
+      "slide": 1,
+      "url": "https://www.rfc-editor.org/rfc/rfc1034",
+      "claim": "A cached answer is a stored copy, and a later lookup through the same resolver can be answered from that copy without contacting the authoritative server again.",
+      "verified": true
+    },
+    {
+      "slide": 2,
+      "url": "https://www.rfc-editor.org/rfc/rfc1035",
+      "claim": "A DNS response returns resource records, each with an owner name, a type, and data, and the message format has no HTTP request, health check, or stored HTTP response.",
+      "verified": true
+    },
+    {
+      "slide": 3,
+      "url": "https://www.cloudflare.com/learning/dns/dns-records/dns-cname-record/",
+      "claim": "A CNAME contains a canonical domain name and must not contain an IP address, so the lookup continues at that name; an A record is for IPv4 and an AAAA record is for IPv6.",
+      "verified": true
+    },
+    {
+      "slide": 3,
+      "url": "https://www.cloudflare.com/learning/dns/dns-records/dns-cname-record/",
+      "claim": "The resolver follows the alias and can return the CNAME together with the address record it found.",
+      "verified": true
+    },
+    {
+      "slide": 4,
+      "url": "https://www.rfc-editor.org/rfc/rfc1034",
+      "claim": "The order of resource records in a set is not significant and need not be preserved, and that set does not describe which address accepts an application connection.",
+      "verified": true
+    },
+    {
+      "slide": 5,
+      "url": "https://www.rfc-editor.org/rfc/rfc8767",
+      "claim": "A TTL is the maximum time one cache may reuse its copy before the source should be consulted again, and a cache may discard the copy sooner.",
+      "verified": true
+    },
+    {
+      "slide": 5,
+      "url": "https://www.rfc-editor.org/rfc/rfc8767",
+      "claim": "If a resolver cannot get an authoritative refresh when the TTL expires, it is allowed to reuse the expired record; that reuse is not required, and stale data is for the case where refresh has failed.",
+      "verified": true
+    },
+    {
+      "slide": 6,
+      "url": "https://www.rfc-editor.org/rfc/rfc2308",
+      "claim": "The negative-caching TTL carried with an NXDOMAIN answer is the lesser of the SOA record's TTL and its MINIMUM field, and it is not the TTL of an address record.",
+      "verified": true
+    },
+    {
+      "slide": 6,
+      "url": "https://www.rfc-editor.org/rfc/rfc2308",
+      "claim": "A name that exists with no record of the requested type is a no-data answer, distinct from NXDOMAIN, and that negative answer can be cached.",
+      "verified": true
+    },
+    {
+      "slide": 6,
+      "url": "https://www.rfc-editor.org/rfc/rfc2308",
+      "claim": "Caching a server failure is optional; if cached, it is tied to the specific query and server and must not last longer than five minutes.",
+      "verified": true
+    },
+    {
+      "slide": 7,
+      "url": "https://www.rfc-editor.org/rfc/rfc1034",
+      "claim": "When a change is anticipated, the TTL can be reduced before the change, and caches that already stored the old record keep the TTL they stored until that copy expires.",
+      "verified": true
+    },
+    {
+      "slide": 7,
+      "url": "https://www.rfc-editor.org/rfc/rfc1034",
+      "claim": "Authoritative updates are not applied to every stored copy at once, so a cache can still answer with old information after the published record changes.",
+      "verified": true
+    },
+    {
+      "slide": 8,
+      "url": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy-simple.html",
+      "claim": "Simple routing can return multiple IP addresses, and those addresses are not health checked.",
+      "verified": true
+    }
+  ]
+}

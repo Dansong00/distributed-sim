@@ -1,56 +1,108 @@
 {
-  "lessonHash": "b4b15c0e818b9c421e215042122396c723a5bb973fd64d178a5be15420b73036",
+  "reviewer": "load-balancing-review-r3-a",
+  "lessonHash": "3ea42883121a3b3c75d3d9d6a985bed23f55c2bd4ad8742ffbccdb9d1357e97d",
   "rubricHash": "338513cb85781ad0f087b381e652913b1f1b83dd1ac06313c76936cb82694d09",
-  "reviewer": "/root/gateway_review_a",
-  "learnerHash": "6c595ab139088aa96d41b2ce3e4decb91b2870f0d4fea0d128bf0d71175f7993",
+  "learnerHash": "c669c24b2eb4a6b8e3199a5f51246ae656e9acc151ba956cc0d53744c88bfc26",
   "dimensions": {
     "accuracy": {
-      "score": 4,
-      "reason": "All eight card objectives are correct for the explicitly described reverse proxy. Sources support routing policy, sampled health including fail-open behavior, shared state, draining and atomic retry boundaries. Both diagrams preserve selection versus already accepted work.",
+      "score": 3,
+      "reason": "The cited pages support the core claims: a load balancer distributes traffic across targets, Layer-7 routing uses the HTTP path and TLS offload while Layer-4 does not, nginx round-robin and least-connected and weights behave as described, Application Load Balancer checks are periodic and fail open when every target is unhealthy, a web-farm node cannot use another node's local session, and Network Load Balancer deregistration stops new connections, keeps sending on a healthy non-idle connection, and defaults to 300 seconds. The same Network Load Balancer page closes remaining connections after the delay only when connection termination is enabled. The Builders Library article does not state that extra retries deepen overload, the Azure overview does not state the saturated shared-database limit, and the ASP.NET farm article does not state that affinity skews load.",
       "evidence": [
+        {
+          "slide": 6,
+          "quote": "The deregistration delay bounds the wait. The default is 300 seconds, and you can change it. At the end of that delay, remaining connections can be closed."
+        },
+        {
+          "slide": 7,
+          "quote": "Bound retry attempts and delay them: extra requests consume capacity and can deepen overload."
+        },
         {
           "slide": 4,
           "quote": "Some balancers send traffic to unhealthy targets when every target fails its checks, rather than refusing all traffic."
+        },
+        {
+          "slide": 5,
+          "quote": "It can keep ordinary requests on A, but skew load and restrict placement."
         }
       ]
     },
     "mechanisms": {
       "score": 4,
-      "reason": "The cards trace both request directions, connection versus request selection, state loss, delayed failure detection, bounded draining and atomic retry storage. The learner applies those operations to ticketing with supporting quotes.",
+      "reason": "Each slide names the actors and the state change. A client hits one entry, the balancer selects a backend, and the response returns through the proxy. Layer 4 keeps later requests on the connection it already chose; Layer 7 can read the path only after it terminates TLS. Deregistration stops new connections, an existing non-idle connection can still carry HTTP requests, and closing at the delay can interrupt work without moving it to B. A lost response leaves the commit unknown; one shared transaction records the idempotency key and the note together, and a repeat returns that recorded result.",
       "evidence": [
         {
+          "slide": 1,
+          "quote": "The balancer forwards the request to a selected backend. That server reads the note from the database and returns a response through the balancer to the client."
+        },
+        {
           "slide": 6,
-          "quote": "Stopping new L4 connections does not stop new HTTP requests on existing connections."
+          "quote": "If A stays healthy and an existing connection is not idle, the balancer can still send traffic, including further HTTP requests, on that connection."
+        },
+        {
+          "slide": 6,
+          "quote": "The drain has to manage the open connection's lifetime. A balancer that selects per HTTP request likewise has to manage requests it has already accepted."
+        },
+        {
+          "slide": 7,
+          "quote": "In one transaction, insert a key that the database allows only once, create the note and record its result; commit all or none."
         }
       ]
     },
     "coherence": {
       "score": 4,
-      "reason": "The Notes example and declared HTTP/database prerequisites support each card. Selection precedes health, routing unit precedes draining, and state scope prepares the shared retry record; capacity closes the same serving path.",
+      "reason": "One Notes API, servers A and B, and a shared database connect the path, the slow export, A's memory, the deployment, and the lost write. The routing unit is chosen before any balancing policy. Local session memory is defined before the retry slide uses a key stored only in A's memory. Health removal and draining both act on the set of backends eligible for new work.",
       "evidence": [
         {
           "slide": 2,
-          "quote": "Many note requests can reuse that connection."
+          "quote": "Choose the routing unit and required HTTP visibility before choosing a balancing policy."
+        },
+        {
+          "slide": 5,
+          "quote": "Session state is information kept between a user's requests. If the Notes API keeps a user's session only in A's memory, B cannot read it."
+        },
+        {
+          "slide": 7,
+          "quote": "A new key per retry, or a key remembered only in A's memory, cannot reliably protect a retry on B."
         }
       ]
     },
     "decisions": {
       "score": 4,
-      "reason": "Policy choice is conditional on unequal work and capacity, and omission is allowed for one adequate server. Affinity/shared-state costs, drain interruption, retry load and entry/backend headroom constrain availability decisions.",
+      "reason": "The deck gives the benefit, the cost, and the failure response for the balancer and for each policy. Distribution and redundant serving are weighed against an extra hop, and one adequate server can stand without a balancer. Least connections is tied to long uneven work and weights to unequal capacity, with measurement required because no policy always wins. Health routing, affinity, draining, retries, and redundancy each name what they do not guarantee, including fail-open routing, lost local state, interrupted in-flight work, overload from extra attempts, and a single regional entry.",
       "evidence": [
         {
+          "slide": 1,
+          "quote": "One adequate server may be enough if the service does not need traffic distribution or redundant serving. A balancer is not automatically useful in front of it."
+        },
+        {
+          "slide": 3,
+          "quote": "For long, uneven work, consider least connections; for unequal server capacity, consider weights. Check actual latency and resource use before deciding: no policy is universally best."
+        },
+        {
           "slide": 8,
-          "quote": "Otherwise redirecting traffic can overload them."
+          "quote": "After one backend fails, the survivors need enough capacity for the remaining load. Otherwise redirecting traffic can overload them."
+        },
+        {
+          "slide": 8,
+          "quote": "One regional entry used for every request is a single point of failure. Clients need a reachable surviving path, such as another healthy zone, not merely another balancer that clients cannot reach."
         }
       ]
     },
     "clarity": {
       "score": 4,
-      "reason": "Terms are defined when used and consequences are concrete. Diagrams clearly avoid moving unfinished work between backends; prose explains the limitations of counts, probes, affinity and retries without requiring hidden infrastructure knowledge.",
+      "reason": "The prose is plain and defines unfamiliar terms at first use: backend, readiness, session state, affinity, headroom, idempotency key, and deduplication. TLS is introduced as encryption that the proxy ends so it can read the request. The sentences stay short, and each remember line restates the decision in the same vocabulary.",
       "evidence": [
         {
-          "slide": 5,
-          "quote": "Session state is information kept between a user's requests."
+          "slide": 4,
+          "quote": "Readiness means it can accept useful new work: a process can answer /health while the note handler cannot reach its required database."
+        },
+        {
+          "slide": 2,
+          "quote": "TLS encrypts the connection; an HTTPS proxy normally ends, or terminates, that TLS connection to inspect requests."
+        },
+        {
+          "slide": 7,
+          "quote": "A stable ID for one logical operation, reused on every attempt. Deduplication means recognizing a repeat."
         }
       ]
     }
@@ -59,32 +111,32 @@
     {
       "id": "http-routing",
       "score": 2,
-      "reason": "Traces proxy request and response, selects HTTP-aware L7 with decryption, explains connection-pinned L4 requests and allows omission when an adequate server needs neither distribution nor redundant serving."
+      "reason": "Slide 1 traces client to entry to selected backend and the response back through the balancer, and it states that distribution or redundant serving is what justifies the extra hop while one adequate server without those needs may not need a balancer. Slide 2 chooses Layer 7 for path splits, requires readable HTTP after TLS termination, and shows that Layer 4 selects the connection so further requests on it do not force new selections. The learner quotes those passages."
     },
     {
       "id": "selection-and-capacity",
       "score": 2,
-      "reason": "Explains each policy signal and limitation, conditionally favors weights for measured capacity and connection counts for uneven durations, rejects extra API capacity as a database fix, and requires tested alternate entry plus surviving headroom."
+      "reason": "Slide 3 teaches turns that count a fast read and a slow export equally, least connections as an active-connection count that can hide unequal work, and weights as a configured share that is not a live performance guarantee, then conditions the choice on uneven work or unequal capacity and says no policy always wins. Slide 8 teaches that more API servers do not remove a saturated shared database, that survivors need spare capacity, and that clients need a reachable path when one regional entry fails. The learner quotes those passages."
     },
     {
       "id": "readiness-gap",
       "score": 2,
-      "reason": "Distinguishes a responding endpoint from usable database-dependent service, covers intervals/coverage/post-check failure, limits removal to new selections and denies automatic completion, undo or safe replay of underway work. Also notes fail-open exceptions."
+      "reason": "Slide 4 separates a /health response from readiness to do the database work, then states intervals, failure thresholds, limited coverage, and failure just after a pass. Removal after detection stops new selections, with the all-unhealthy fail-open limit, and requests already underway can still fail because removal does not complete, undo, or safely replay them. The learner quotes those passages."
     },
     {
       "id": "session-failover",
       "score": 2,
-      "reason": "Explains inaccessible A-only state from B and loss when A fails. Affinity helps placement but neither copies nor saves state; shared storage enables both backends at access/coordination cost and shared availability risk."
+      "reason": "Slide 5 says B cannot read A's memory-only session and losing A can lose the only copy. Affinity keeps ordinary requests on A, skews load, restricts placement, and neither copies the session nor preserves it when A fails. Shared storage lets either backend read it and adds access or coordination work plus a shared dependency whose availability matters. The learner quotes those passages."
     },
     {
       "id": "deployment-drain",
       "score": 2,
-      "reason": "Orders cutoff before bounded completion and shutdown, distinguishes accepted work, admits deadline interruption, explains more HTTP work on existing L4 connections and addresses actual connection lifetimes or request acceptance."
+      "reason": "Slide 6 orders deregistration before close: stop new connections, let already open connections finish within the deregistration delay, then remaining connections can be closed and an unfinished request may be interrupted and is not moved. It separates that in-flight work from new connections, and it says a healthy non-idle connection can still carry further HTTP requests so the drain must manage the connection lifetime or, for per-request selection, requests already accepted. The learner quotes those passages."
     },
     {
       "id": "purchase-retry",
       "score": 2,
-      "reason": "Preserves unknown committed outcome and duplicate risk; reuses a stable key across durable shared records, atomically coordinates uniqueness/result/effect, rejects new keys and A-only memory, and bounds delayed retries to avoid overload without claiming success."
+      "reason": "Slide 7 says a lost response leaves the commit unknown and a blind retry on B can create a second note. One reused idempotency key and a shared durable record let every backend recognize the repeat; the key and the note commit in one transaction, while a separate check-then-write can race or leave a crash gap. A new key or A-only memory cannot protect a retry on B, and attempts are bounded and delayed because extra requests can deepen overload and still do not guarantee success. The learner quotes those passages."
     }
   ],
   "hardFailures": [],
@@ -92,49 +144,49 @@
     {
       "slide": 1,
       "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/what-is-load-balancing.html",
-      "claim": "AWS describes distributing incoming traffic across targets, health monitoring and TLS offload. The lesson explicitly limits the shown bidirectional path to a reverse-proxy example and does not require a balancer for one adequate server.",
+      "claim": "A load balancer distributes incoming traffic across multiple compute targets such as virtual servers.",
       "verified": true
     },
     {
       "slide": 2,
       "url": "https://learn.microsoft.com/en-us/azure/architecture/guide/technology-choices/load-balancing-overview",
-      "claim": "Azure distinguishes transport L4 from HTTP-aware L7, including path routing and TLS offload. The reused-connection consequence and separate backend encryption correctly follow that routing boundary.",
+      "claim": "Layer-7 HTTP load balancing can route on a URL path and offload TLS, while a Layer-4 passthrough balancer selects the backend for the client connection and does not provide Layer-7 path routing.",
       "verified": true
     },
     {
       "slide": 3,
       "url": "https://nginx.org/en/docs/http/load_balancing.html",
-      "claim": "NGINX defines round robin, least connections and weighted shares, including varying request duration and combining weights with other policies. The lesson correctly treats these signals as imperfect workload estimates.",
+      "claim": "nginx round-robin distributes requests in turn, least-connected sends the next request to the server with the fewest active connections when some requests take longer, and a configured weight changes how many requests each server receives.",
       "verified": true
     },
     {
       "slide": 4,
       "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health-checks.html",
-      "claim": "AWS health-check documentation confirms periodic intervals, failure thresholds and all-unhealthy fail-open routing. The lesson preserves sample limitations and does not claim checks rescue existing work.",
+      "claim": "Health checks run on an interval, a target is taken out of service after consecutive failed checks, and if every registered target is unhealthy the load balancer fails open and still routes to those targets.",
       "verified": true
     },
     {
       "slide": 5,
       "url": "https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/web-farm?view=aspnetcore-10.0",
-      "claim": "Microsoft web-farm guidance explains that per-node state requires shared storage for cross-node use. NGINX session persistence and AWS target attributes support affinity routing; routing alone does not replicate process memory.",
+      "claim": "App or session state kept on one web-farm node is unavailable on another node, so a later request can lose it; a shared cache or database shares that state, and always routing to the same node is an alternative to sharing it.",
       "verified": true
     },
     {
       "slide": 6,
-      "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/edit-target-group-attributes.html",
-      "claim": "AWS deregistration-delay guidance stops new requests and waits for in-flight work, with early connection termination causing errors. The lesson correctly distinguishes this request-aware example from merely stopping new L4 connections.",
+      "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/edit-target-group-attributes.html",
+      "claim": "Deregistration stops new connections and drains in-flight traffic on existing connections; if the target stays healthy and a connection is not idle, the load balancer can keep sending traffic. The default deregistration delay is 300 seconds and can be changed.",
       "verified": true
     },
     {
       "slide": 7,
       "url": "https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/",
-      "claim": "AWS idempotent-API guidance supports stable operation identifiers, stored equivalent results and ACID coordination of token and mutation. Shared durable uniqueness closes the cross-backend retry gap; a key alone does not.",
+      "claim": "A lost response leaves the caller unsure the operation succeeded, and a blind retry can duplicate it. Reusing one client request identifier, recorded atomically with the mutation, lets the service recognize the repeat and return a semantically equivalent result.",
       "verified": true
     },
     {
       "slide": 8,
-      "url": "https://sre.google/sre-book/handling-overload/",
-      "claim": "Google SRE explains that balancing cannot prevent all overload, request counts hide different resource costs, and load must fit serving capacity or be degraded/rejected. Reachable alternate entry and downstream capacity remain explicit design requirements.",
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/guide/technology-choices/load-balancing-overview",
+      "claim": "One regional load-balancing entry used to reach distributed backends is a regional single point of failure, and a surviving zone can keep a reachable data path.",
       "verified": true
     }
   ]
