@@ -1,7 +1,7 @@
 # Frozen DNS contract
 
-Independent contract session `bc-faa4bc2b-89d2-57ca-9eb5-3813149b27d3` wrote `evals/lessons/contracts/dns.json` before lesson prose on 2026-11-03, without inspecting lesson source. SHA-256: `ffe8eded698e01dff24ba596b2d595cceb7ab282fdb92f572e30ecb2861ebfd2`.
+Independent author `/root/dns_contract` wrote `evals/lessons/contracts/dns.json` before prose, without inspecting lesson source. SHA-256: `5a32447dc5f68465c06e1d92f5fbf4f22ab9dbee156c443d0c5c5e47c55f00b1`. Structural card, question and objective-order validation passed before authoring.
 
-Eight ordered objectives: lookup actors, lookup versus HTTP, address records versus a CNAME, an address set, TTL reuse, lookup failure versus NXDOMAIN, planned cutover, and a stable name versus health-aware request distribution. Six whole-stack transfer scenarios cover all objectives. The audience, prerequisites, criteria, and critical misconceptions stay in the contract.
+Eight ordered objectives cover name discovery, recursive resolution/delegation, records/aliases, TTL changes, negative answers, steering/failover, availability/diagnosis and DNSSEC versus HTTPS. Six transfer scenarios assess all objectives. The .example hierarchy is explicitly illustrative. Audience, prerequisites, detailed criteria and misconceptions live in the contract rather than a duplicate specification here.
 
-Implementation follows one Notes hostname lookup, the existing dialog and styles, and normalized DNS network components. Two diagrams explain the resolver path and two caches expiring at different times. CDN, load balancing, and API gateway components keep their own decks. No resolver, simulator, or evaluator change is included.
+Implementation reuses the existing lesson display/styles, with resolver and cache-transition diagrams. Only normalized DNS technology on network components receives the deck. No DNS server, simulator or new infrastructure is implemented.

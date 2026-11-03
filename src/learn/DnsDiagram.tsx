@@ -3,17 +3,17 @@ import "./database-lessons.css";
 
 export function DnsDiagram({ slide }: { slide: number }) {
   switch (slide) {
-    case 0:
-      return <figure className="lesson-diagram database-flow" aria-label="The Notes client asks its stub resolver. The stub asks one recursive resolver and does not walk to the authoritative server itself. With no cached copy, the recursive resolver asks the authoritative name server, which answers from zone data. A later lookup can use the resolver's stored copy.">
-        <div className="database-flow-step"><div className="lesson-node">Client stub<small>Asks one recursive resolver</small></div><ArrowUpDown aria-hidden="true" /></div>
-        <div className="database-flow-step"><div className="lesson-node">Recursive resolver<small>May answer from its stored copy</small></div><ArrowUpDown aria-hidden="true" /></div>
-        <div className="database-flow-step"><div className="lesson-node">Authoritative name server<small>Answers from zone data</small></div></div>
-        <figcaption>Records come back up this path. GET /notes is a later step.</figcaption>
+    case 1:
+      return <figure className="lesson-diagram database-flow" aria-label="In the illustrative hierarchy with empty relevant caches, the stub asks the recursive resolver. That resolver asks root for a referral to .example, then .example for a referral to notes.example, then the notes.example authority for records. It returns the result to the stub.">
+        <div className="database-flow-step"><div className="lesson-node">Client's stub resolver</div><ArrowUpDown aria-hidden="true" /></div>
+        <div className="database-flow-step"><div className="lesson-node">Recursive resolver<small>Follows referrals on the client's behalf</small></div><ArrowUpDown aria-hidden="true" /></div>
+        <div className="database-flow-step"><div className="lesson-node">Asks root, then .example, then notes.example<small>Referrals first; final authority supplies records</small></div></div>
+        <figcaption>Teaching hierarchy. Cached answers or delegations can skip visits.</figcaption>
       </figure>;
-    case 4:
-      return <figure className="lesson-diagram lesson-variants" aria-label="Resolver A cached 192.0.2.10 at 12:00 and may keep returning it until 13:00. Resolver B cached the same old address at 12:05 and may keep it until 13:05. The authoritative change to 192.0.2.30 at 12:10 does not rewrite either copy.">
-        <div><h4>Resolver A</h4><div className="lesson-node">Cached 192.0.2.10 at 12:00</div><ArrowDown className="lesson-down" aria-hidden="true" /><div className="lesson-node">Countdown reaches zero at 13:00</div><figcaption>At 12:20 it may still return 192.0.2.10</figcaption></div>
-        <div><h4>Resolver B</h4><div className="lesson-node">Cached 192.0.2.10 at 12:05</div><ArrowDown className="lesson-down" aria-hidden="true" /><div className="lesson-node">Countdown reaches zero at 13:05</div><figcaption>At 13:02 it may still reuse 192.0.2.10</figcaption></div>
+    case 3:
+      return <figure className="lesson-diagram lesson-variants" aria-label="The authority changes to a new address with TTL 30 at 10:01. A resolver that cached the old address at 10:00 with TTL 300 can ordinarily reuse it until 10:05. The edit does not push a replacement into that cache or move existing connections.">
+        <div><h4>Authority at 10:01</h4><div className="lesson-node">New address, TTL 30</div><ArrowDown className="lesson-down" aria-hidden="true" /><div className="lesson-node">New answers use new values</div><figcaption>No push into existing caches</figcaption></div>
+        <div><h4>Resolver cached at 10:00</h4><div className="lesson-node">Old address, TTL 300</div><ArrowDown className="lesson-down" aria-hidden="true" /><div className="lesson-node">Ordinary reuse until 10:05</div><figcaption>Connections have their own lifetimes</figcaption></div>
       </figure>;
     default:
       return null;

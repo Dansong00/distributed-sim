@@ -59,12 +59,12 @@ export const loadBalancingLesson = {
     {
       section: "Planned Removal", title: "Drain before stopping a backend",
       paragraphs: [
-        "During a deployment, deregistering A makes the balancer stop creating new connections to A. Connection draining lets in-flight traffic finish on connections that are already open. If A stays healthy and an existing connection is not idle, the balancer can still send traffic, including further HTTP requests, on that connection.",
-        "Stopping new connections does not stop those requests. The drain has to manage the open connection's lifetime. A balancer that selects per HTTP request likewise has to manage requests it has already accepted.",
-        "The deregistration delay bounds the wait. The default is 300 seconds, and you can change it. At the end of that delay, remaining connections can be closed. Closing them may interrupt an unfinished request. That work is not moved to B.",
+        "During a deployment, draining stops new assignments to A while allowing in-flight work, meaning requests already underway, to finish within a deadline. Shut A down after completion or when that deadline expires.",
+        "Stopping new L4 connections does not stop new HTTP requests on existing connections. A drain must also manage those connection lifetimes or stop accepting further requests. L7 request-aware draining must still track already accepted work.",
+        "Give a running note export time to finish, but bound the wait. Forced termination at the deadline may interrupt unfinished requests. Their work is not automatically moved to B.",
       ],
-      remember: "Stop new connections, let open connections finish or hit the delay, then close them. Draining cannot promise zero interrupted work.",
-      source: "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/edit-target-group-attributes.html",
+      remember: "Remove new assignments, handle existing connections and requests, then stop. Draining cannot promise zero interrupted work.",
+      source: "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/edit-target-group-attributes.html",
     },
     {
       section: "Retries", title: "No response does not mean no saved note",
@@ -82,11 +82,11 @@ export const loadBalancingLesson = {
       paragraphs: [
         "Balancing distributes existing capacity. More API servers can help when API processing is the bottleneck; they do not remove a saturated shared database bottleneck.",
         "Headroom is spare capacity. After one backend fails, the survivors need enough capacity for the remaining load. Otherwise redirecting traffic can overload them. Limit or reject excess work visibly instead of assuming redistribution solves it.",
-        "One regional entry used for every request is a single point of failure. Clients need a reachable surviving path, such as another healthy zone, not merely another balancer that clients cannot reach. Test that failover path.",
+        "A lone balancer is itself a possible failure point. If it fails, clients need a reachable alternate entry path, not just another disconnected balancer box. Use an available managed entry or redundant frontends with working failover, and test that path.",
         "Measure request latency, errors and backend and database resource use under representative traffic, including a failure. Redundant components alone do not guarantee an available service.",
       ],
       remember: "Choose balancing for distribution or redundant serving; verify both entry-path availability and surviving capacity.",
-      source: "https://learn.microsoft.com/en-us/azure/architecture/guide/technology-choices/load-balancing-overview",
+      source: "https://sre.google/sre-book/handling-overload/",
     },
   ],
 };

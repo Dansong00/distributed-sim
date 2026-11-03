@@ -1,46 +1,38 @@
 {
-  "reviewer": "caching-review-r2-b",
-  "lessonHash": "bb2836bec126d01914fc8a3665beaca30155a08df0845a47e1db8f4f622e9011",
+  "lessonHash": "9e86cb4a0c5470dd113bf074281faffaef4379c26385257e0110012d2aef3e4b",
   "rubricHash": "22d141fd62713be0cd6556368577c9a534b1e625946859fdcc569836303dc984",
-  "learnerHash": "336f74e44e117b543d6c19f46086d965fd2a5950cdea6b65cadd5aca726342b7",
+  "reviewer": "/root/cdn_review_b",
+  "learnerHash": "8a93d896ec081d4bbbcd907860f97e12da3dc04859246f4dce85c385208e93c0",
   "dimensions": {
     "accuracy": {
       "score": 4,
-      "reason": "The load-bearing claims match the four cited pages. Hits can be stale, cache-aside does not guarantee consistency, TTL expiration is not a refresh, eviction can remove a key before it expires, local copies diverge, a shared outage is a load problem, and invalidation is not a freshness guarantee. The deck does not promise that a hit is current, that delete-after-write stops an in-flight refill, or that losing the cache makes every request fail.",
+      "reason": "Live Microsoft, Redis and AWS sources support cache-aside, staleness, eviction, local/shared failure and coalescing claims. Diagrams correctly depict hit/miss work and independent stale copy; no freshness/availability guarantee.",
       "evidence": [
         {
-          "slide": 2,
-          "quote": "A hit can still return an old price. Finding a value does not prove it matches the database."
-        },
-        {
           "slide": 4,
-          "quote": "Invalidation alone does not guarantee freshness."
+          "quote": "Saving the price and removing the copy are separate steps. A reader can fetch $20 before the update, pause, then refill $20 after removal. The next cache hit still returns $20. Removal can also fail."
         },
         {
           "slide": 5,
-          "quote": "A 60-second TTL does not refresh the product every minute; a later miss must load it again."
+          "quote": "A product can be evicted before its TTL ends. Some configurations reject new entries when full instead of evicting existing ones."
         },
         {
           "slide": 6,
-          "quote": "It does not automatically keep the cache current with the database."
+          "quote": "Restarting one API process discards its local cache; other processes keep their copies. If the shared cache is unreachable, every API server using it loses access to those cached entries."
         }
       ]
     },
     "mechanisms": {
       "score": 4,
-      "reason": "Each operation names the actor and the resulting state. The API checks and fills a cache-aside entry; a miss reads the database, stores a copy, and returns it. The stale-refill race is a concrete order: fetch the old value, pause across the save and delete, write that old value back, and the next hit returns it. Expiration and eviction only remove the entry; a later miss is what loads. Coalescing is one shared in-progress lookup, and an unreachable cache cannot be read.",
+      "reason": "Reader traces both read paths, late stale refill, expiration/eviction, local/shared visibility and duplicate source-work collapse. Failure responses actually bound database work.",
       "evidence": [
         {
-          "slide": 3,
-          "quote": "The API checks and fills the cache explicitly. The cache does not fetch the product from the database on its own."
+          "slide": 2,
+          "quote": "The entry is absent. The API reads the database, stores a copy in the cache, and returns the details."
         },
         {
           "slide": 4,
-          "quote": "A reader can fetch $20 before the update, pause, then refill $20 after removal. The next cache hit still returns $20."
-        },
-        {
-          "slide": 5,
-          "quote": "A product can be evicted before its TTL ends."
+          "quote": "Saving the price and removing the copy are separate steps. A reader can fetch $20 before the update, pause, then refill $20 after removal. The next cache hit still returns $20. Removal can also fail."
         },
         {
           "slide": 7,
@@ -50,37 +42,33 @@
     },
     "coherence": {
       "score": 4,
-      "reason": "The product page is introduced before hit and miss, cache-aside keys, the $20 to $25 write, per-process price divergence, and the closing decision. Stampede follows the miss path and TTL expiry. Shared-cache failure is taught before the outage response that may use a local copy. Nothing required later is used before it is defined.",
+      "reason": "One product/price example introduces reusable copy, application/key, updates, disappearance, placement and load before deciding. Declared concurrent-instance and commit prerequisites enable transfer without hidden infrastructure.",
       "evidence": [
         {
           "slide": 1,
-          "quote": "A popular product page keeps asking the API for the same name, description, and price."
+          "quote": "In this example, the database owns the product record. Losing the cached copy must not lose the product."
+        },
+        {
+          "slide": 3,
+          "quote": "The API checks and fills the cache explicitly. The cache does not fetch the product from the database on its own."
         },
         {
           "slide": 4,
           "quote": "A seller changes the price from $20 to $25. The cached $20 is now stale."
-        },
-        {
-          "slide": 8,
-          "quote": "For our product page, propose caching frequently read descriptions that tolerate a brief delay after edits."
         }
       ]
     },
     "decisions": {
       "score": 4,
-      "reason": "Benefits and costs stay paired: a hit can save database work and shorten the wait, while the copy costs memory and a write, and a shared cache adds a network lookup and a service to operate. Failure responses are specific: coalesce a stampede, cap database fallback and reject the rest, and serve an older copy only from storage that is still reachable. The closing rule withholds the cache when reuse is rare or freshness is too hard to maintain, and it keeps checkout price checks on the authoritative record.",
+      "reason": "Checkout uses authority; descriptions may tolerate delay. Keys, shared/local choice, rejection under outage and when to avoid caching have explicit reasons and costs.",
       "evidence": [
         {
-          "slide": 1,
-          "quote": "Reading that copy can save database work and shorten the wait for the page."
-        },
-        {
-          "slide": 1,
-          "quote": "Storing that copy uses memory and adds a cache write."
-        },
-        {
           "slide": 7,
-          "quote": "Falling back to the database is a load decision, not a free recovery path."
+          "quote": "A cache outage can turn most reads into database traffic. Limit fallback work to what the database can handle; reject excess requests or serve older data only where the product rules permit it."
+        },
+        {
+          "slide": 8,
+          "quote": "For our product page, propose caching frequently read descriptions that tolerate a brief delay after edits. Keep checkout price validation tied to the order's authoritative data."
         },
         {
           "slide": 8,
@@ -90,23 +78,15 @@
     },
     "clarity": {
       "score": 4,
-      "reason": "Hit, miss, cache-aside, key, invalidation, TTL, eviction, local cache, shared cache, and stampede are defined in ordinary sentences at first use. Coalescing is explained as sharing one in-progress lookup rather than left as a name. The product, price, and key examples carry the limits without extra protocol detail.",
+      "reason": "Short labelled definitions and concrete old/new prices keep all eight objectives understandable. Numerical learner transfers are supported; advanced limiter/coherence implementation is not silently assumed.",
       "evidence": [
         {
-          "slide": 2,
-          "quote": "The API finds product:42 in the cache and returns its stored details."
+          "slide": 3,
+          "quote": "Identifies the result to reuse. product:42 works for shared product details; prices in different currencies need distinct keys, such as product:42:USD."
         },
         {
           "slide": 5,
-          "quote": "Time to live, or TTL"
-        },
-        {
-          "slide": 5,
-          "quote": "Removes entries to make room. A least-recently-used policy favors removing entries that have not been accessed recently."
-        },
-        {
-          "slide": 7,
-          "quote": "Many requests miss the same product together and repeat its database lookup."
+          "quote": "Sets how long an entry may remain before it expires. A 60-second TTL does not refresh the product every minute; a later miss must load it again."
         }
       ]
     }
@@ -115,32 +95,32 @@
     {
       "id": "q1-station-guides",
       "score": 2,
-      "reason": "All five criteria are taught and quoted. Slide 1 ties repeated reads to a reusable copy that can cut database work and shorten the wait, and it keeps the first lookup plus memory and a cache write. Slide 3 puts every input that changes the answer in the key, with product:42:USD as the pattern for station plus language. Slide 2 is the hit that returns the stored guide without the database, and the miss on which the API reads the database, stores the copy, and returns it. Slide 3 names the API as the component that checks and fills. The answer uses those sentences and does not treat a station-only key as safe, make the cache fetch on its own, or claim every request becomes faster."
+      "reason": "C1: slide 1 and learner connect reuse to avoided database work/latency with first-read and copy costs. C2: slide 3 teaches all result-changing key inputs, transferred to station+language. C3-5: slides 2-3 explicitly place cache-aside hit/miss/fill in API. Cards 1-3 teach each criterion, including successive hit after first fill."
     },
     {
       "id": "q2-opening-hours-race",
       "score": 2,
-      "reason": "All four criteria are taught and quoted. Slide 4's order is fetch the old value, pause, refill after removal, and the next hit still returns that old value, so Reader C gets the old hours. Save and delete are separate steps, so the delete cannot erase a value written afterward. The remember line rejects a freshness guarantee from invalidation alone. When a stale value must not be used, that line says to check the authoritative data; the answer applies that quote by reading the database for this endpoint instead of returning the cached hours. The quotes support that response and do not add a locking protocol."
+      "reason": "C1-3: slide 4 gives the exact capture-update-delete-late-fill race, transferred correctly to hours; deletion cannot prevent later old refill. C4: authoritative price validation plus stated commit/read prerequisite supports bypassing cache for latest-value endpoint. No invented coherence protocol is needed; card 4 criteria supplied."
     },
     {
       "id": "q3-weather-expiration",
       "score": 2,
-      "reason": "All four criteria are taught and quoted. Slide 5 says a TTL is how long an entry may remain, that it does not refresh the source, and that a later miss must load again; the remember line separates that lifetime from the age of the data used to fill it. With slide 2, the 12:03 lookup is a hit that can return the stored stale forecast, and 12:11 is a miss that reads the source. Eviction before the TTL ends makes 12:05 a miss. Expiration is time elapsed; eviction is removal to make room. The TTL sentence says expiry does not refresh, and the eviction quotes only describe removal, so the fetch is the later miss, not either removal event."
+      "reason": "C1-2: slide 5 plus hit/miss mechanism supports stale 12:03 hit, expired 12:11 miss and evicted 12:05 miss. C3-4: TTL is entry lifetime rather than source freshness or retention guarantee; eviction differs from expiration, neither refreshes. Learner explains rather than relying on term recognition."
     },
     {
       "id": "q4-event-room-map",
       "score": 2,
-      "reason": "All five criteria are taught and quoted. Slide 6 says each process updates its own copy, one can hold $20 while another holds $25, and other processes keep their copies when one local cache is discarded, so the other instances can still serve the old map. One shared service whose entries those servers reuse is the fit for a single deletion, and the remember line says sharing does not track the database by itself. Local reads are inside the process and avoid a network call; each shared lookup adds one. The unreachable-cache sentence covers all four instances losing cache access, contrasts that with one local loss, names the network and outage cost, and says that loss does not by itself decide that requests fail."
+      "reason": "C1-2: slide 6 teaches independent local copies versus one shared entry; question excludes overlapping refills so shared deletion meets goal. C3-5: local versus network access, operations/common outage, unaffected other local copies and no database-synchronization guarantee taught and reproduced. Loss of cache access is not conflated with inevitable request failure."
     },
     {
       "id": "q5-tournament-burst",
       "score": 2,
-      "reason": "All five criteria are taught and quoted. Slide 7 separates simultaneous misses that repeat one database lookup from a later outage, so the expiry flood happens while the cache process is still up. Coalescing is concurrent readers sharing one in-progress lookup; the answer uses that sentence to cut the group from one database read per request to one shared read. The outage paragraph says most reads can become database traffic and that fallback is a load decision, which the answer applies to 10,000 requests against a 500-read limit. The taught response is to limit fallback and reject the excess. An older copy is allowed only when product rules permit it and a copy remains reachable outside the failed cache; the answer quotes that condition and does not read the unreachable cache."
+      "reason": "C1-2: slide 7 explains simultaneous duplicate misses and coalescing one in-progress read. C3-4: bounded fallback and reject-excess transfers to 10000 demand/500 capacity. C5: learner provides a complete non-stale bounded-fallback solution; its optional accessible-old-copy suggestion is explicitly conditional and admits the deck lacks a storage location, so that unimplemented variant receives no additional credit. Card 7 does not require stale fallback."
     },
     {
       "id": "q6-single-use-results",
       "score": 2,
-      "reason": "All five criteria are taught and quoted. Slide 1 limits the benefit to repeated work worth avoiding, and a fill still leaves the first database read in place while adding memory and a cache write. Slide 8 says rare reuse can make the cache cost more than it saves and says to compare response time and database load, which is the basis for using the 2 ms read, 100 ms budget, and 10 versus 1,000 reads per second. The answer recommends not adding the cache because the single read has no later hit. The reconsideration it gives is repeated reads of the same result together with capacity or latency pressure, and it says a heavier load of still-unique reads would not create that hit. Slide 8 also treats freshness that is too hard to maintain as a reason not to cache, so repetition alone is not taught as sufficient."
+      "reason": "C1-2: slides 1 and 8 teach reuse-based value; one read per key leaves no later benefit. C3-4: learner uses cheap source/headroom and concrete cache-write/memory costs. C5: repeated reads with meaningful latency/capacity pressure trigger measured reconsideration. Card 8 freshness-sensitive choice is also taught by checkout authoritative validation."
     }
   ],
   "hardFailures": [],
@@ -148,49 +128,49 @@
     {
       "slide": 1,
       "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
-      "claim": "A cache copy of repeatedly read data can shorten later responses and spare the database, while the first read still uses the database and the database remains the store that must not lose the record.",
+      "claim": "Microsoft caching guidance supports reuse benefits, initial source cost and copy-management tradeoffs.",
       "verified": true
     },
     {
       "slide": 2,
       "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
-      "claim": "On a miss the application reads the data store, adds the item to the cache, and returns it; a hit can still return data that no longer matches the store.",
+      "claim": "Microsoft cache-aside shows application lookup, source fetch, fill and return; cached state can diverge.",
       "verified": true
     },
     {
       "slide": 3,
       "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
-      "claim": "Cache-aside is application code that checks the cache and, on a miss, loads the data store and stores the result; distinct values need distinct structured keys, and cached data has to be protected from unintended disclosure.",
+      "claim": "Microsoft caching guidance supports result-specific keys and explicit application-managed copies; private sharing must preserve user distinctions.",
       "verified": true
     },
     {
       "slide": 4,
       "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
-      "claim": "Writing the data store and then deleting the cache entry does not guarantee the next read is fresh: the pattern does not keep the cache consistent, and a reader can put an outdated value back into the cache.",
+      "claim": "Microsoft cache-aside disclaims consistency guarantees; the overlapping stale-refill trace is a valid counterexample.",
       "verified": true
     },
     {
       "slide": 5,
       "url": "https://redis.io/docs/latest/develop/reference/eviction/",
-      "claim": "TTL expiration and memory eviction are different events; a key can be evicted before its TTL ends, least-recently-used eviction removes keys that were not accessed recently, and noeviction rejects commands that add data when memory is full.",
+      "claim": "Redis documents expiry and memory-pressure eviction, including noeviction rejection; neither is automatic source refresh.",
       "verified": true
     },
     {
       "slide": 6,
       "url": "https://aws.amazon.com/builders-library/caching-challenges-and-strategies/",
-      "claim": "In-process caches can hold different values on different servers, while a shared Redis or Memcached fleet adds network access and operational load; if that fleet is unreachable, servers can fall back, shed load, or use a remaining local copy, so cache loss does not by itself decide that requests fail.",
+      "claim": "AWS contrasts process-local and external caches with network, consistency and fleet-wide failure tradeoffs.",
       "verified": true
     },
     {
       "slide": 7,
       "url": "https://aws.amazon.com/builders-library/caching-challenges-and-strategies/",
-      "claim": "Many clients missing the same key repeat the downstream read, request coalescing keeps a single pending lookup, and an unreachable cache must be handled by capping downstream reads or shedding load rather than by reading that cache.",
+      "claim": "AWS explicitly recommends request coalescing and throttled dependency traffic to withstand empty/unavailable caches.",
       "verified": true
     },
     {
       "slide": 8,
       "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
-      "claim": "Caching fits data that is read often and changes infrequently; when values must be current, read the source store, and when data changes so often that the copy is stale or expensive to synchronize, caching is less effective.",
+      "claim": "Microsoft says repeated costly reads favor caching; low reuse or correctness demands can outweigh its costs.",
       "verified": true
     }
   ]

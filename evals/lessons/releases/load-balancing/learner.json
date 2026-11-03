@@ -1,43 +1,15 @@
 {
-  "lessonHash": "3ea42883121a3b3c75d3d9d6a985bed23f55c2bd4ad8742ffbccdb9d1357e97d",
+  "lessonHash": "d6e4939a9cf6f700f4d43ec592c116afca25418d6dc2a3a5ca169e4edc7c4c3d",
   "rubricHash": "338513cb85781ad0f087b381e652913b1f1b83dd1ac06313c76936cb82694d09",
-  "respondent": "load-balancing-learner-r3",
+  "respondent": "/root/cdn_learner_m4",
   "answers": [
     {
       "id": "http-routing",
-      "answer": "The client contacts one service entry point. The load balancer forwards the request to a selected backend, and that backend performs the application work. In the lesson's traced reverse-proxy example, the selected server reads from the database and returns the response through the balancer to the client. Clients need not choose an instance themselves. The deck does not name a ticketing /search or /purchase route; the path below is the proxy path it does trace.\n\nPath-based routing to different server pools is Layer 7. L7 understands HTTP requests and can route different paths to different backend groups; the lesson's paths are /notes and /exports. It can also select a backend for each request, though rules that keep a user on one backend can override independent selection. L4 is the wrong unit for this split: it routes at the transport level and chooses a backend for a connection using network information, not HTTP paths.\n\nPath routing needs readable HTTP contents. TLS encrypts the connection, so an HTTPS proxy normally terminates that TLS connection to inspect requests. Encryption onward to the backend is a separate configuration choice. The routing unit and this HTTP visibility are chosen before a balancing policy.\n\nOne reused L4 connection does not distribute its individual requests. L4 has already chosen the backend for that connection. Many requests can reuse the connection, they can all reach the same backend, and adding requests on that connection does not force new selections.\n\nA balancer is unnecessary when one adequate server is enough because the service does not need traffic distribution or redundant serving. A balancer is not automatically useful in front of that server. Distribution can use spare capacity and support redundant serving, but the proxy adds a network hop and another component to operate.",
+      "answer": "The client contacts the proxy entry point; the proxy selects a backend in the appropriate pool and forwards the request. The application server performs the application/database work, then its response travels through the proxy to the client. Choose L7 to distinguish /search from /purchase: it needs readable HTTP paths. For HTTPS, the proxy normally terminates client TLS to inspect HTTP; backend encryption is separately configured. L4 typically selects per TCP connection using network information, so many requests reused on one connection can stay on the same backend without a new selection. One adequate server can suffice when neither distribution nor redundant serving is needed.",
       "evidence": [
         {
           "slide": 1,
           "quote": "In this reverse-proxy example, the client contacts one service entry point. The balancer forwards the request to a selected backend. That server reads the note from the database and returns a response through the balancer to the client."
-        },
-        {
-          "slide": 1,
-          "quote": "Clients need not choose an instance themselves. Distribution can use spare server capacity and support redundant serving, but the proxy adds a network hop and another component to operate."
-        },
-        {
-          "slide": 1,
-          "quote": "One adequate server may be enough if the service does not need traffic distribution or redundant serving. A balancer is not automatically useful in front of it."
-        },
-        {
-          "slide": 1,
-          "quote": "The backend performs the work; the balancer chooses where traffic goes."
-        },
-        {
-          "slide": 2,
-          "quote": "Layer 4, or L4"
-        },
-        {
-          "slide": 2,
-          "quote": "Routes at the transport level. For TCP traffic, it typically chooses a backend for a connection using network information, not HTTP paths."
-        },
-        {
-          "slide": 2,
-          "quote": "Many note requests can reuse that connection. They can all reach the same backend; adding requests on that connection does not force new selections."
-        },
-        {
-          "slide": 2,
-          "quote": "Layer 7, or L7"
         },
         {
           "slide": 2,
@@ -49,33 +21,29 @@
         },
         {
           "slide": 2,
-          "quote": "Choose the routing unit and required HTTP visibility before choosing a balancing policy."
+          "quote": "Routes at the transport level. For TCP traffic, it typically chooses a backend for a connection using network information, not HTTP paths."
+        },
+        {
+          "slide": 2,
+          "quote": "Many note requests can reuse that connection. They can all reach the same backend; adding requests on that connection does not force new selections."
+        },
+        {
+          "slide": 1,
+          "quote": "One adequate server may be enough if the service does not need traffic distribution or redundant serving. A balancer is not automatically useful in front of it."
         }
       ]
     },
     {
       "id": "selection-and-capacity",
-      "answer": "Round robin takes turns across eligible backends. The count it uses is the turn: each request counts as one. It is a simple starting point for similar servers and similar work. These backends are not similar, and the work is not similar. A cheap seat lookup and a long request match the lesson's quick note read and slow export: they still each count as one request, so equal turns do not mean equal work. Round robin also does not use the fact that one backend is twice as capable as the other.\n\nLeast connections prefers the backend with fewer active connections. That connection count can help when connection durations vary, and the lesson says to consider least connections for long, uneven work. The limitation is that one connection may carry far more work than another, so the count can hide the difference between a cheap lookup and a long request.\n\nWeights bias the share of traffic. For unequal capacity, a server with twice the measured capacity might start with twice the weight. The limitation is that configured weights are not a live measurement or a performance guarantee. No policy is universally best; actual latency and resource use have to be checked. The lesson's summary is to count requests or connections to select traffic, then measure the work those counts hide.\n\nAnother API backend alone may not raise throughput once the shared database is saturated. Balancing distributes existing capacity. More API servers can help when API processing is the bottleneck; they do not remove a saturated shared database bottleneck.\n\nAfter one machine fails, the entry path and the surviving capacity both have to keep the service usable. One regional entry used for every request is a single point of failure. Clients need a reachable surviving path, such as another healthy zone, not merely another balancer that clients cannot reach, and that failover path has to be tested. Headroom is spare capacity. The survivors need enough capacity for the remaining load; otherwise redirecting traffic can overload them. Excess work is limited or rejected visibly instead of assuming redistribution solves it. Redundant components alone do not guarantee an available service. The lesson says to measure request latency, errors, and backend and database resource use under representative traffic, including a failure, and to verify both entry-path availability and surviving capacity.",
+      "answer": "Round robin takes turns across eligible backends, but counts a cheap lookup and long request equally, so equal turns need not balance work. Least connections prefers fewer active connections and may help uneven long work, but connections can carry different amounts of work. Weights control traffic share: twice measured capacity suggests starting with twice the weight, but configured weights are neither live capacity measurements nor a performance guarantee. Validate latency and resource use. Another application backend does not remove a saturated shared database bottleneck, so it may not raise throughput. Availability also requires a reachable alternate entry path if the balancer fails, using an available managed entry or redundant frontends with working, tested failover. Surviving backends need spare capacity for the redistributed load; otherwise redirecting traffic can overload them, and excess work should be visibly limited or rejected.",
       "evidence": [
-        {
-          "slide": 3,
-          "quote": "Round robin"
-        },
         {
           "slide": 3,
           "quote": "Takes turns across eligible backends. It is a simple starting point for similar servers and similar work; a quick note read and a slow export still each count as one request."
         },
         {
           "slide": 3,
-          "quote": "Least connections"
-        },
-        {
-          "slide": 3,
           "quote": "Prefers the backend with fewer active connections. This can help when connection durations vary, but one connection may carry far more work than another."
-        },
-        {
-          "slide": 3,
-          "quote": "Weights"
         },
         {
           "slide": 3,
@@ -84,10 +52,6 @@
         {
           "slide": 3,
           "quote": "For long, uneven work, consider least connections; for unequal server capacity, consider weights. Check actual latency and resource use before deciding: no policy is universally best."
-        },
-        {
-          "slide": 3,
-          "quote": "Count requests or connections to select traffic, then measure the work those counts hide."
         },
         {
           "slide": 8,
@@ -99,26 +63,14 @@
         },
         {
           "slide": 8,
-          "quote": "One regional entry used for every request is a single point of failure. Clients need a reachable surviving path, such as another healthy zone, not merely another balancer that clients cannot reach. Test that failover path."
-        },
-        {
-          "slide": 8,
-          "quote": "Measure request latency, errors and backend and database resource use under representative traffic, including a failure. Redundant components alone do not guarantee an available service."
-        },
-        {
-          "slide": 8,
-          "quote": "Choose balancing for distribution or redundant serving; verify both entry-path availability and surviving capacity."
+          "quote": "A lone balancer is itself a possible failure point. If it fails, clients need a reachable alternate entry path, not just another disconnected balancer box. Use an available managed entry or redundant frontends with working failover, and test that path."
         }
       ]
     },
     {
       "id": "readiness-gap",
-      "answer": "A check that reflects readiness matters because readiness means the backend can accept useful new work. A health check only periodically probes a backend. The lesson's sample gap is this ticketing case: a process can answer /health while the handler cannot reach its required database. A health response of 200 can therefore appear while the purchase handler cannot use the database it needs. The check has to reflect the capabilities needed to serve the requests. A green check is a sample, not a promise.\n\nEven a check aimed at those capabilities cannot detect every failure immediately. Checks have limited coverage, intervals, and failure thresholds. A backend can fail just after passing, and detection takes time.\n\nOnce the failure is detected and the backend is removed from eligible backends, it stops receiving new selections. That is what changes for new traffic. The lesson also says to check the product's all-unhealthy policy: some balancers send traffic to unhealthy targets when every target fails its checks, rather than refusing all traffic.\n\nRemoval cannot repair requests already underway. Those requests can still fail. Removal does not complete, undo, or safely replay them. Health-based routing reduces exposure to failure; it cannot guarantee every request succeeds.",
+      "answer": "A 200 from the health endpoint establishes that endpoint answered, not that the purchase handler can do useful work. A readiness check should reflect its required database capability. Even that check has limited coverage, intervals, and failure thresholds, and failure can occur immediately after a successful probe. Removing a detected failed backend from eligibility stops new selections to it. It does not finish, undo, or safely replay accepted requests; they can still fail. Also verify the product behavior when all backends are unhealthy, since some continue sending traffic to unhealthy targets.",
       "evidence": [
-        {
-          "slide": 4,
-          "quote": "A green check is a sample, not a promise"
-        },
         {
           "slide": 4,
           "quote": "A health check periodically probes a backend. Readiness means it can accept useful new work: a process can answer /health while the note handler cannot reach its required database."
@@ -134,16 +86,12 @@
         {
           "slide": 4,
           "quote": "Check the product's all-unhealthy policy too. Some balancers send traffic to unhealthy targets when every target fails its checks, rather than refusing all traffic."
-        },
-        {
-          "slide": 4,
-          "quote": "Health-based routing reduces exposure to failure; it cannot guarantee every request succeeds."
         }
       ]
     },
     {
       "id": "session-failover",
-      "answer": "The cart is session state, information kept between a user's requests. If it lives only in server A's memory, B cannot read it. A later request that goes to B therefore cannot read the cart. If A fails, losing A can lose the only copy, so the cart can disappear with A.\n\nSticky routing, called affinity, prefers the same backend for that user's requests. It can keep ordinary requests on A. Its cost is that it skews load and restricts placement. It does not copy the session or preserve it when A fails. Stickiness does not copy the cart, and it does not guarantee that the cart survives A's failure.\n\nShared session storage lets either backend read the session, so B can read the cart and another server can read it if A is gone. Its cost is that it adds access or coordination work and a shared dependency whose availability matters too.\n\nRouting a user consistently and making their state available on another server are separate responsibilities.",
+      "answer": "B cannot read a cart held only in A memory, and losing A can lose its only copy. Stickiness prefers A for that customer, keeping ordinary requests near the cart, but can skew load and restrict placement. It neither copies the cart nor guarantees survival when A fails. Shared session storage lets A and B read the cart, at the cost of access or coordination work and a shared dependency whose own availability matters. Consistent routing and state availability on a replacement server are separate responsibilities.",
       "evidence": [
         {
           "slide": 5,
@@ -151,15 +99,7 @@
         },
         {
           "slide": 5,
-          "quote": "Affinity, or stickiness"
-        },
-        {
-          "slide": 5,
           "quote": "Prefers the same backend for that user's requests. It can keep ordinary requests on A, but skew load and restrict placement. It does not copy the session or preserve it when A fails."
-        },
-        {
-          "slide": 5,
-          "quote": "Shared session storage"
         },
         {
           "slide": 5,
@@ -173,45 +113,29 @@
     },
     {
       "id": "deployment-drain",
-      "answer": "Drain A in this order: stop new connections, let open connections finish or hit the delay, then close them. Deregistering A makes the balancer stop creating new connections to A. Connection draining lets in-flight traffic finish on connections that are already open. The deregistration delay bounds that wait. The default is 300 seconds, and it can be changed.\n\nNew connection assignments stop when A is deregistered. The accepted 20-second request is already-accepted work, so stopping new connections does not stop it. The deck does not give a separate duration rule for 20 seconds. That request is in-flight work on an already open connection and can finish during the drain. Draining cannot promise zero interrupted work.\n\nWhen the drain deadline expires, remaining connections can be closed. Closing them may interrupt an unfinished request. That work is not moved to B. The deck's steps end with that close; it does not describe a further shutdown action.\n\nMerely stopping new L4 connections can still allow more HTTP requests on the reused client connection. If A stays healthy and an existing connection is not idle, the balancer can still send traffic, including further HTTP requests, on that connection. L4 chooses a backend for the connection. Many requests can reuse that connection and all reach the same backend; adding requests on that connection does not force new selections. Stopping new connections does not stop those requests.\n\nDraining has to follow the routing unit. The drain has to manage the open connection's lifetime. A balancer that selects per HTTP request likewise has to manage requests it has already accepted.",
+      "answer": "First stop new assignments to A, manage existing connections so they cannot introduce further requests, and track already accepted work. Allow the accepted 20-second request to finish within a bounded drain deadline, then shut A down after completion or on deadline expiry. New assignments are future work to prevent; the accepted request is already underway and needs time to finish. Forced termination at expiry may interrupt it if unfinished; its work is not automatically moved to B. Stopping new L4 connections alone leaves the reused connection able to carry further HTTP requests, so manage that connection lifetime or stop accepting further requests. L7 request-aware draining can stop request assignments, but must still track previously accepted work. Thus the drain must account for whether routing selects connections or requests.",
       "evidence": [
         {
-          "slide": 2,
-          "quote": "Many note requests can reuse that connection. They can all reach the same backend; adding requests on that connection does not force new selections."
+          "slide": 6,
+          "quote": "During a deployment, draining stops new assignments to A while allowing in-flight work, meaning requests already underway, to finish within a deadline. Shut A down after completion or when that deadline expires."
         },
         {
           "slide": 6,
-          "quote": "During a deployment, deregistering A makes the balancer stop creating new connections to A. Connection draining lets in-flight traffic finish on connections that are already open. If A stays healthy and an existing connection is not idle, the balancer can still send traffic, including further HTTP requests, on that connection."
+          "quote": "Stopping new L4 connections does not stop new HTTP requests on existing connections. A drain must also manage those connection lifetimes or stop accepting further requests. L7 request-aware draining must still track already accepted work."
         },
         {
           "slide": 6,
-          "quote": "Stopping new connections does not stop those requests. The drain has to manage the open connection's lifetime. A balancer that selects per HTTP request likewise has to manage requests it has already accepted."
-        },
-        {
-          "slide": 6,
-          "quote": "The deregistration delay bounds the wait. The default is 300 seconds, and you can change it. At the end of that delay, remaining connections can be closed. Closing them may interrupt an unfinished request. That work is not moved to B."
-        },
-        {
-          "slide": 6,
-          "quote": "Stop new connections, let open connections finish or hit the delay, then close them. Draining cannot promise zero interrupted work."
+          "quote": "Give a running note export time to finish, but bound the wait. Forced termination at the deadline may interrupt unfinished requests. Their work is not automatically moved to B."
         }
       ]
     },
     {
       "id": "purchase-retry",
-      "answer": "The purchase transaction commits on A, and the response is lost. A committed write can remain stored even when the caller does not receive a response. The client cannot tell whether the write committed, so the timeout leaves the result uncertain. No response does not mean the saved purchase is absent.\n\nA blind retry can create a duplicate because a blind retry on B can create a second note. The same gap applies to this purchase: B can create another purchase. The balancer does not make an arbitrary write idempotent. The application makes the effect safe to repeat.\n\nUse the same idempotency key on every attempt: a stable ID for one logical operation. Deduplication means recognizing a repeat. All backends use a shared durable database record of the key and result, so the record is visible to B as well as A. Coordinate that record with the purchase in one transaction: insert a key that the database allows only once, create the purchase, and record its result; commit all or none. A repeat returns the recorded result without creating another purchase. Separate check-then-write steps can race or leave a crash gap, so those separate steps are not the coordination the lesson gives. The deck states the created record as a note; it does not use the word purchase.\n\nA fresh key per retry, or a key remembered only in A's memory, cannot reliably protect a retry on B. The new key does not identify the same operation, and B cannot read a key stored only in A's memory.\n\nRetries should have limits and delay during overload. Bound retry attempts and delay them, because extra requests consume capacity and can deepen overload. Retry policy does not replace duplicate protection or guarantee success.",
+      "answer": "The committed purchase can remain stored even though no response reaches the client. The timeout therefore cannot establish whether it committed, and blindly executing the purchase again on B can duplicate the effect. Use one stable idempotency key for the logical purchase on every attempt and a shared durable database record of that key and its result. In one transaction, insert the key under a database uniqueness constraint, create the purchase, and record its result, committing all or none. A repeat recognizes the key and returns the recorded result without another purchase. Separate checking and writing can race or leave a crash gap. A fresh retry key fails to identify a repeat, while an A-only memory record cannot reliably protect a retry at B. Bound attempts and delay them because extra requests consume capacity and can worsen overload; retry policy alone neither protects against duplicates nor guarantees success.",
       "evidence": [
         {
           "slide": 7,
-          "quote": "No response does not mean no saved note"
-        },
-        {
-          "slide": 7,
           "quote": "A saves a new note, but its response is lost. The client cannot tell whether the write committed. A blind retry on B can create a second note."
-        },
-        {
-          "slide": 7,
-          "quote": "Idempotency key"
         },
         {
           "slide": 7,
@@ -224,10 +148,6 @@
         {
           "slide": 7,
           "quote": "Bound retry attempts and delay them: extra requests consume capacity and can deepen overload. Retry policy does not replace duplicate protection or guarantee success."
-        },
-        {
-          "slide": 7,
-          "quote": "The application makes the effect safe to repeat; the balancer does not make an arbitrary write idempotent."
         }
       ]
     }
