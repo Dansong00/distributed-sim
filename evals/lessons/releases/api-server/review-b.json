@@ -1,0 +1,26 @@
+{
+  "lessonHash": "34fcad208344adb6f1d927ac1d731a8f24e40c2ed30353e4122530dce0fa57cb",
+  "rubricHash": "5fbc4fe2927c0df74ff139e53da4825e687f191dd9c52c57213af293e1f956f1",
+  "reviewer": "/root/concept_review_foundations_b",
+  "learnerHash": "23b4ee8150a7f26c8c61d32ca7d67445666d05f5196684aafa4aea35638577d7",
+  "dimensions": {
+    "accuracy": {"score":4,"reason":"Primary MDN, OWASP and Azure guidance supports API boundaries, security checks, asynchronous outcomes and duplicate-risk claims; there is no completion or exactly-once guarantee.","evidence":[{"slide":3,"quote":"Accepted work can still fail, so an acceptance response is not a finished result."}]},
+    "mechanisms": {"score":4,"reason":"Every card objective has actors and causal effects: routing and checks gate work, queues separate execution, and lost acknowledgements motivate duplicate handling. Diagrams preserve optional database use and acceptance versus completion.","evidence":[{"slide":2,"quote":"Invalid input and denied permission must prevent the protected side effects."}]},
+    "coherence": {"score":4,"reason":"Boundary definition precedes request processing and execution alternatives; subsequent costs feed the final response-promise decision. Prerequisites are sufficient.","evidence":[{"slide":5,"quote":"Choose the response promise before the execution path"}]},
+    "decisions": {"score":4,"reason":"Immediate-result requirements and tolerated later completion determine a concrete choice, with waiting, status, infrastructure and duplicate costs taught.","evidence":[{"slide":4,"quote":"It does not automatically reduce the total work or completion time."}]},
+    "clarity": {"score":4,"reason":"New terms including routing, middleware, authentication, authorization, queue, worker, idempotency and deduplication are explained in place without unnecessary story repetition.","evidence":[{"slide":2,"quote":"A known identity does not imply permission."}]}
+  },
+  "outcomes": [
+    {"id":"boundary-and-request","score":2,"reason":"All six criteria met: actual learner distinguishes API/client/database, optional storage, routing and validation, identity versus resource permission, and protected-effects gating. Quotes directly entail the explanation."},
+    {"id":"deferral-and-cost","score":2,"reason":"All six criteria met: actual learner traces queue/worker acceptance and terminal outcomes, job identity and status, acceptance latency versus completion, visible later failures, and retries with uncertain prior effects."},
+    {"id":"execution-choice","score":2,"reason":"All three criteria met: actual learner chooses immediate for a required quick result and deferred for tolerated long completion, traces checks/dependencies and distinguishes immediate errors from tracked failure, including coordination costs. The inference that failed arrangement cannot honestly promise acceptance follows the taught acceptance definition."}
+  ],
+  "hardFailures": [],
+  "sourceChecks": [
+    {"slide":1,"url":"https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Server-side/First_steps/Introduction","claim":"MDN introduction verifies server application processing, client consumption and optional database-backed dynamic work.","verified":true},
+    {"slide":2,"url":"https://cheatsheetseries.owasp.org/cheatsheets/REST_Security_Cheat_Sheet.html","claim":"OWASP REST Security verifies endpoint access controls and input validation before protected API work; authentication and authorization are distinct.","verified":true},
+    {"slide":3,"url":"https://learn.microsoft.com/en-us/azure/architecture/patterns/asynchronous-request-reply","claim":"Azure asynchronous request-reply verifies acceptance followed by queue/worker execution and job-status completion tracking.","verified":true},
+    {"slide":4,"url":"https://learn.microsoft.com/en-us/azure/architecture/patterns/asynchronous-request-reply","claim":"Live Azure page verifies status/result retention, later error persistence and idempotency-key deduplication for lost-response retries.","verified":true},
+    {"slide":5,"url":"https://learn.microsoft.com/en-us/azure/architecture/patterns/asynchronous-request-reply","claim":"Azure pattern conditions verify long-running use cases and extra notification/status complexity; supports choosing deferred work based on required completion semantics.","verified":true}
+  ]
+}

@@ -1,6 +1,6 @@
 # Autonomous learning stack backlog
 
-Status is local source coverage, not a claim of quality. All stacks require the new eval before being called approved. Existing source currently has Client / Server Model, API Server, Database Overview, CAP, Replication, PostgreSQL, SQLite, MySQL, Caching Fundamentals, Message Queues and Background Workers, Load Balancing, API Gateways, DNS, and CDN and HTTP Caching. Caching, messaging, load balancing, API gateways, DNS and CDN/HTTP caching have current passing evaluation reports; prior code-review and browser passes do not retroactively count as learning-quality evaluations.
+Status is local source coverage, not a claim of quality. All stacks require the new eval before being called approved. Existing source currently has Client / Server Model, API Server, Database Overview, CAP, Replication, PostgreSQL, SQLite, MySQL, Caching Fundamentals, Message Queues and Background Workers, Load Balancing, API Gateways, DNS, and CDN and HTTP Caching. All fourteen have current passing evaluation reports from the concept-first revision; see [shared evidence](CONCEPT-FIRST-RELEASE.md). This assesses content readiness, not human learning.
 
 Default order is shared foundations first, then named technologies. The user approved continuing to CDN and HTTP caching after DNS; future scope corrections override this order.
 
@@ -24,11 +24,11 @@ Next, in prerequisite order:
 5. Embeddings; retrieval; reranking; model serving; feature stores; model registries.
 6. Serverless execution and client-specific topics where the shared client/server foundation leaves meaningful gaps.
 
-Use one concrete operation per stack; separate topics only when each has a distinct learning outcome. Do not create repetitive decks merely to fill an icon count. Generic database coverage does not complete specialist database topics.
+Connect each stack through its concepts, mechanisms or decisions. Use concrete examples only where they clarify the idea; no example is required on every card, and no application should be the default story across modules. Separate topics only when each has a distinct learning outcome. Do not create repetitive decks merely to fill an icon count. Generic database coverage does not complete specialist database topics.
 
 ## Product-specific layer
 
-Add Redis and Memcached after caching; Kafka, RabbitMQ and SQS after messaging; MongoDB and DynamoDB after data-model foundations; then the remaining named technologies in catalog order within their prerequisites. Existing PostgreSQL, SQLite and MySQL still need eval contracts and reviews. A shared foundation does not by itself certify product-specific knowledge.
+Add Redis and Memcached after caching; Kafka, RabbitMQ and SQS after messaging; MongoDB and DynamoDB after data-model foundations; then the remaining named technologies in catalog order within their prerequisites. Existing PostgreSQL, SQLite and MySQL have their own contracts and passing reviews. A shared foundation does not by itself certify product-specific knowledge.
 
 ## Per-topic record
 

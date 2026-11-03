@@ -1,13 +1,13 @@
 export const databasesLesson = {
   title: "Database Overview",
-  reviewed: "2026-10-26",
+  reviewed: "2026-11-03",
   slides: [
     {
       section: "What Is It?", title: "Your database shapes how the system works",
       paragraphs: [
-        "A database stores and organizes the data your application needs. Its design affects how you read, update, protect, and grow that data.",
-        "Consider a store: customers place orders, products have different details, and stock must not fall below zero. These needs affect the data model, the rules you enforce, and the queries you run.",
-        "Changing databases later can mean moving data and rewriting queries. Start with the work your system must do, then evaluate the products that fit.",
+        "A database manages stored data and operations for retrieving and changing it. Persistent data can outlive the application process that wrote it.",
+        "Its data layout affects how applications express queries, perform updates and enforce correctness rules. Moving to another database can require moving data and rewriting those operations.",
+        "Persistence still depends on storage and recovery configuration. Hardware failures and accidental changes require appropriate backups, recovery procedures and testing.",
       ],
       remember: "Keep the requirements in view: what do we store, what do we ask, and what must stay correct?",
       source: "https://www.postgresql.org/docs/current/tutorial-concepts.html",
@@ -15,9 +15,9 @@ export const databasesLesson = {
     {
       section: "Database Choice", title: "Choose around your data, queries, and rules",
       paragraphs: [
-        "The data model describes how you organize information: tables, documents, keys and values, or connected nodes. It helps determine which queries are natural to express.",
-        "Database choice means finding a product that supports your main queries and protects your data rules. For our store, that includes finding orders and preventing sales when stock runs out.",
-        "A relational database can store JSON. A document database can support transactions. Check what each product offers, how much traffic it can handle, and the work it takes to run.",
+        "The data model describes how information is organized: tables, documents, keys and values, or connected nodes. An access pattern describes how the application finds, filters, combines or updates that information.",
+        "Identify records and relationships, main queries, rules that must hold across updates, expected data and traffic growth, and latency requirements. Also consider whether the team can operate and recover the system.",
+        "Categories describe common strengths, not exclusive capabilities. A relational database can store JSON; a document database can support transactions. Check the actual product, deployment and operation rather than assuming a category supplies the required guarantee.",
       ],
       remember: "Start with the data, the questions you ask, and the rules that must hold. Then compare database products.",
       source: "https://www.postgresql.org/docs/current/datatype-json.html",
@@ -25,10 +25,10 @@ export const databasesLesson = {
     {
       section: "Models: Records", title: "Tables, documents, and direct lookups",
       paragraphs: [
-        { label: "Relational", text: "Store customers, orders, and products in tables, then join related records when needed. Constraints can enforce references and valid values. Examples include PostgreSQL, MySQL, and SQLite." },
-        { label: "Document", text: "Often organize a record around an embedded document, such as a product with its specifications and sizes. Reading related details together can be convenient. Copying shared details into many documents creates more places to update. MongoDB is one example." },
-        { label: "Key-value", text: "Retrieve a value using a known key, such as session:123. This fits direct lookups. Queries on other fields depend on the product's extra capabilities or additional data structures. Redis is one example." },
-        "These are modeling choices, not exclusive abilities. The same product can be represented in relational tables or a JSON column. Compare the queries and updates each layout requires.",
+        {"label": "Relational", "text": "Rows represent records and columns represent fields. Relationships connect records; joins combine matching records for a query. Constraints can enforce valid values and references."},
+        {"label": "Document", "text": "A document groups fields and nested data into one record. Embedding related details can simplify reading them together; copying shared details into many documents creates more places to update."},
+        {"label": "Key-value", "text": "Retrieve a value using a known key. This fits direct lookups; queries on other fields depend on additional capabilities or data structures."},
+        "The diagram represents the same product using different layouts. Compare the resulting read and update work, not just the label attached to the database.",
       ],
       remember: "A flexible document still needs rules. A table can hold flexible fields. Compare the data layout and supported guarantees, not just the label.",
       source: "https://www.mongodb.com/docs/manual/data-modeling/",
@@ -36,9 +36,9 @@ export const databasesLesson = {
     {
       section: "Models: Specialized Queries", title: "Choose a structure that fits the question",
       paragraphs: [
-        { label: "Wide-column", text: "In Cassandra-style systems, choose partition keys around known queries. Device readings can be grouped by device and day. Poor key choices can overload one partition; a new query can need a new table." },
-        { label: "Graph", text: "Store entities as nodes and connections as relationships. This supports following paths, such as a person connected to a company connected to an account. Neo4j is one example. Related records alone do not require a graph store." },
-        { label: "Vector", text: "Index lists of numbers called embeddings to find similar items. This supports tasks such as semantic search, which searches by meaning. Approximate search can trade some result accuracy for speed. A vector index does not determine the system's CAP behavior." },
+        {"label": "Wide-column", "text": "In Cassandra-style layouts, a partition key groups records for targeted access. Design that grouping around known queries. Poor keys can overload a partition; a new query may need a new table. This data partition is distinct from a network partition, which is a communication failure."},
+        {"label": "Graph", "text": "Entities are nodes and relationships are edges. Traversal follows these connections to answer path questions. Merely having related records does not require a graph store."},
+        {"label": "Vector", "text": "An embedding represents an item as a list of numbers. Similarity search finds nearby vectors under a chosen measure; it can support retrieval by meaning. Approximate search trades some result accuracy for speed. Similarity does not prove exact equality or factual correctness."},
       ],
       remember: "Partition lookups, relationship paths, and similarity searches are different workloads. Name the query before choosing a specialized store.",
       source: "https://cassandra.apache.org/doc/latest/cassandra/developing/data-modeling/data-modeling_logical.html",
@@ -56,19 +56,21 @@ export const databasesLesson = {
     {
       section: "Trade-offs", title: "Each useful choice brings a cost",
       paragraphs: [
-        "Keeping shared facts in one place reduces duplicate updates. But reading related details can require joins. Embedding copies can simplify a read, but keeping those copies correct takes work.",
-        "Organizing data for a known query can make that query efficient. But a new query can require another layout, index, or copy of the data.",
-        "Adding a specialized database can help one workload, but it adds backups, monitoring, and data synchronization. There is no rule that SQL always favors correctness or NoSQL always favors availability.",
+        "An index is an extra access structure that can locate relevant rows without examining every record for suitable queries. It consumes storage and needs maintenance when data changes.",
+        "Keeping shared facts in one place reduces duplicate updates but can require joins at read time. Embedding copies can simplify reads while adding updates to coordinate. A new access pattern may need another layout or index.",
+        "Distributing data can add capacity or resilience, but introduces remote communication, partial failures and coordination. Adding a specialized store also adds backups, monitoring and synchronization.",
+        "No model eliminates these costs. Evaluate actual queries and failure behavior before adding another index, copy or database.",
       ],
       remember: "Explain both the benefit and the cost. Check the actual product, deployment, and operation before claiming a guarantee.",
-      source: "https://apple.github.io/foundationdb/cap-theorem.html",
+      source: "https://www.postgresql.org/docs/current/indexes-intro.html",
     },
     {
       section: "Trade-offs: CAP", title: "When does CAP matter?",
       paragraphs: [
-        "CAP applies to distributed systems, where data is handled across multiple servers. You do not need multiple database copies for every application.",
-        "Consistency means every read sees the latest completed write. Availability means every request to a working server gets a successful response, even if the data is stale.",
-        "A network partition means some servers cannot communicate. During a partition, a distributed database cannot guarantee both consistency and availability. It must either wait or reject some requests, or allow results that may be out of date.",
+        "Replication maintains copies of data on multiple servers. A network partition prevents some servers from communicating while they may remain running and reachable by clients.",
+        "CAP consistency means operations behave as one current copy, with completed writes reflected in later reads. CAP availability requires requests to non-failing nodes to complete with the operation's response.",
+        "An isolated reader cannot learn a completed write from an unreachable copy. Returning old data sacrifices consistency; waiting indefinitely or refusing the affected operation sacrifices availability.",
+        "That conflict applies during the partition. Guarantees depend on the operation and configuration, not a universal relational, document, SQL or NoSQL label.",
       ],
       remember: "CAP is a trade-off during network failures. A database type, such as relational or document, does not determine its CAP guarantees.",
       source: "https://apple.github.io/foundationdb/cap-theorem.html",
@@ -76,11 +78,12 @@ export const databasesLesson = {
     {
       section: "Interview Tip", title: "Connect the requirement to the choice",
       paragraphs: [
-        "Start with the records and main queries. Then name which updates must succeed together, how much traffic you expect, and what older or missing data would mean to users.",
-        'For example: "Our orders reference customers and products, and stock must stay valid when people buy at the same time. I will evaluate a relational database and define the transaction that reserves stock."',
-        "If the design uses distributed copies, explain what happens when they cannot communicate. Use CAP to discuss that failure case, rather than using it as the only reason to select a database.",
+        "Start with records, relationships and main queries. State which changes must succeed together, acceptable staleness, expected load and recovery needs.",
+        "Connect each requirement to a data layout or capability, then name its write, storage, coordination or operating cost. If copies are distributed, explain behavior when they cannot communicate.",
+        "Measure representative queries and updates. Changed access patterns, traffic or recovery requirements can change the choice; popularity and product names are not substitutes for this reasoning.",
       ],
-      remember: "Requirements lead to a model, queries, and guarantees. Product names come after that reasoning.", source: "",
+      remember: "Requirements lead to a model, queries, and guarantees. Product names come after that reasoning.",
+      source: "https://www.postgresql.org/docs/current/tutorial-concepts.html",
     },
   ],
 };

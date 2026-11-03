@@ -1,0 +1,32 @@
+{
+"lessonHash": "dd547fd05cdddde4d4e5a0151eec1cd3c51219d76aabb15cbc0943cb950d479d",
+"rubricHash": "1ff4d8e53a3291ec089ebc241913c4260f76607c10d5b0cc05dc7618e0071a5f",
+"reviewer": "/root/concept_review_foundations_a",
+"learnerHash": "6277ad78dcc75004103d6897845c7dcfa842e854255f7eada6290a8ddfeca5a1",
+"dimensions": {
+"accuracy": {"score":4,"reason":"Constraints including null semantics, Read Committed update behavior, WAL and configured replica guarantees agree with primary documentation; diagrams correctly bound transactions and stale copies.","evidence":[{"slide":2,"quote":"CHECK rejects values for which its expression is false."}]},
+"mechanisms": {"score":4,"reason":"Traces two stale stock observations into a conditional update, waiting/rechecking, result inspection and same-transaction order creation; also connects log propagation to loss and staleness.","evidence":[{"slide":4,"quote":"At Read Committed, a competing update waits and rechecks its condition after the other update commits."}]},
+"coherence": {"score":4,"reason":"All eight objectives form a causal sequence: fit, rules, atomic boundary, concurrency, query access, distributed copies, operating costs and synthesis.","evidence":[{"slide":8,"quote":"Protect concurrent decisions with conditional updates or appropriate locking and isolation."}]},
+"decisions": {"score":4,"reason":"Compares embedded local needs and primary write limits, index measurement, weaker versus stronger acknowledgement, freshness and recovery targets.","evidence":[{"slide":7,"quote":"Choose which reads may be old, how much confirmed data loss is acceptable, and the required write latency and recovery time."}]},
+"clarity": {"score":3,"reason":"Explains key unfamiliar terms and uses a useful last-item race. Replication card is dense and acknowledgement stages remain abstract, but enough is taught for the stated criteria.","evidence":[{"slide":6,"quote":"A standby can lag in receipt or replay, so reads may be old."}]}
+},
+"outcomes": [
+{"id":"reason-relational-fit","score":2,"reason":"All seven criteria supported by slides 1-2: learner explains client/server relational fit and alternatives, primary/unique/not-null/foreign/check rules including null behavior, invalid-write rejection and business/concurrency boundaries."},
+{"id":"reason-acid-guarantees","score":2,"reason":"All eight criteria supported by slides 3-4: learner distinguishes each ACID property and external actions, defines MVCC/snapshots and statement-level visibility, explains the race and fully traces conditional decrement, result checking, rollback and retry limits. A locking implementation is optional."},
+{"id":"reason-query-access-paths","score":2,"reason":"All nine criteria supported by slides 5-6: learner adapts filter/order index and EXPLAIN measurement, permits scans, names costs, defines WAL/primary/standby, explains async loss and sync cost, partition tradeoff and policy-dependent promotion. Transport implementation is not a criterion."},
+{"id":"reason-operational-costs","score":2,"reason":"All eight criteria supported by slides 2,4-8: learner bounds connections, preserves historical recovery, explains write/replica costs, applies constraints and conditional transactions, validates listing indexes, and asks for freshness/loss/latency/recovery/workload targets before choosing deployment."}
+],
+"hardFailures": [
+
+],
+"sourceChecks": [
+{"slide":1,"url":"https://www.postgresql.org/docs/current/tutorial-concepts.html","claim":"PostgreSQL concepts and connection documentation establish relational tables and separate clients/server; local embedded alternatives are a bounded deployment choice.","verified":true},
+{"slide":2,"url":"https://www.postgresql.org/docs/current/ddl-constraints.html","claim":"PostgreSQL constraints confirms primary-key uniqueness/non-null, configurable UNIQUE null behavior, foreign references and CHECK accepting null, hence NOT NULL for required quantity.","verified":true},
+{"slide":3,"url":"https://www.postgresql.org/docs/current/tutorial-transactions.html","claim":"PostgreSQL transactions explains grouped commit/rollback; transaction-isolation and WAL documentation bound concurrency and persistence. External HTTP effects are outside that database boundary.","verified":true},
+{"slide":4,"url":"https://www.postgresql.org/docs/current/transaction-iso.html","claim":"PostgreSQL transaction isolation explicitly states default per-statement snapshots, waiting competing updates and WHERE re-evaluation after commit, plus serialization retry needs.","verified":true},
+{"slide":5,"url":"https://www.postgresql.org/docs/current/indexes-intro.html","claim":"PostgreSQL indexes and Using EXPLAIN explain chosen plans, selective access, potential scans and maintenance overhead.","verified":true},
+{"slide":6,"url":"https://www.postgresql.org/docs/current/warm-standby.html","claim":"PostgreSQL warm standby and WAL introduction confirm receive/replay lag, asynchronous loss, configured synchronous stages and waits; Failover confirms separate authority protection and routing.","verified":true},
+{"slide":7,"url":"https://www.postgresql.org/docs/current/continuous-archiving.html","claim":"PostgreSQL continuous archiving explains historical recovery; connection configuration confirms max_connections affects resource allocation. Replica read scaling does not bypass primary writes.","verified":true},
+{"slide":8,"url":"https://www.postgresql.org/docs/current/tutorial-concepts.html","claim":"PostgreSQL concepts supports relational layout; constraints, isolation, EXPLAIN and standby references corroborate the integrated requirement-based recommendations.","verified":true}
+]
+}

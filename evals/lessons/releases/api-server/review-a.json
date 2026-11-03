@@ -1,0 +1,28 @@
+{
+"lessonHash": "34fcad208344adb6f1d927ac1d731a8f24e40c2ed30353e4122530dce0fa57cb",
+"rubricHash": "5fbc4fe2927c0df74ff139e53da4825e687f191dd9c52c57213af293e1f956f1",
+"reviewer": "/root/concept_review_foundations_a",
+"learnerHash": "23b4ee8150a7f26c8c61d32ca7d67445666d05f5196684aafa4aea35638577d7",
+"dimensions": {
+"accuracy": {"score":4,"reason":"Application and storage roles, protected side effects, acceptance versus completion and duplicate effects match primary references. Diagrams preserve optional storage and separate job acceptance from work.","evidence":[{"slide":3,"quote":"Accepted work can still fail, so an acceptance response is not a finished result."}]},
+"mechanisms": {"score":4,"reason":"Traces routing and checks into application work, then pending work, worker execution, visible outcomes and uncertain retry effects.","evidence":[{"slide":2,"quote":"Invalid input and denied permission must prevent the protected side effects."}]},
+"coherence": {"score":4,"reason":"Boundary definition supports request processing; processing supports the immediate/deferred contrast, whose costs support the final choice. All five card objectives are covered.","evidence":[{"slide":4,"quote":"Deferral shortens the wait for acceptance and separates execution from that request."}]},
+"decisions": {"score":4,"reason":"Result timing determines execution choice; the deck explains waiting benefits alongside queue, worker, status and duplicate-processing costs.","evidence":[{"slide":5,"quote":"Use deferred work when its waiting and workload benefits justify the extra queue, worker, status and duplicate-processing coordination."}]},
+"clarity": {"score":4,"reason":"API, routing, authentication, authorization, middleware, queue, worker and idempotent handling are defined where needed; short plain paragraphs keep the causal flow visible.","evidence":[{"slide":3,"quote":"A queue holds pending work; a worker processes it separately from the original request."}]}
+},
+"outcomes": [
+{"id":"boundary-and-request","score":2,"reason":"All six criteria: learner defines API implementation and client/storage separation, permits operations without database access, and traces routing, validation, identity, resource permission and allowed work. Slides 1-2 support the required sequencing and distinctions."},
+{"id":"deferral-and-cost","score":2,"reason":"All six criteria: learner distinguishes acceptance/result, defines queue/worker, names job identity and visible terminal outcomes, limits time benefits, and explains uncertain retries and duplicate control using slides 3-4."},
+{"id":"execution-choice","score":2,"reason":"All three criteria: learner chooses immediate handling for required results and deferred work for tolerated delay; connects checks, dependencies and response promises; makes failures visible and names coordination cost. Slide 5 plus slides 2-4 support its conclusions."}
+],
+"hardFailures": [
+
+],
+"sourceChecks": [
+{"slide":1,"url":"https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Server-side/First_steps/Introduction","claim":"MDN server-side introduction distinguishes application request code from client presentation, database use and non-database results.","verified":true},
+{"slide":2,"url":"https://cheatsheetseries.owasp.org/cheatsheets/REST_Security_Cheat_Sheet.html","claim":"OWASP REST Security requires per-endpoint/resource authorization and input validation; authenticated identity alone does not permit arbitrary methods/resources.","verified":true},
+{"slide":3,"url":"https://learn.microsoft.com/en-us/azure/architecture/patterns/asynchronous-request-reply","claim":"Azure asynchronous request-reply describes acceptance, queued processing, status polling and distinct completion; accepted is not completed.","verified":true},
+{"slide":4,"url":"https://learn.microsoft.com/en-us/azure/architecture/patterns/asynchronous-request-reply","claim":"Azure guidance names queue/status/result overhead and idempotency-key duplicate handling after lost responses; RFC 9110 section 9.2.2 corroborates intended-effect idempotency.","verified":true},
+{"slide":5,"url":"https://learn.microsoft.com/en-us/azure/architecture/patterns/asynchronous-request-reply","claim":"Azure guidance connects long-running work to asynchronous response and extra completion coordination, with explicit unsuitable cases and later error tracking.","verified":true}
+]
+}

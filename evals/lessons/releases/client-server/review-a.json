@@ -1,0 +1,28 @@
+{
+"lessonHash": "b552044e34639f766e47d1018473e517f2b22f53aef66b27bcc7250116671d40",
+"rubricHash": "101ae2e6c6bf860eb9dad0bd2cc22d3282e2b649613d41fad92360850b895442",
+"reviewer": "/root/concept_review_foundations_a",
+"learnerHash": "dc39a2b27d85f4118a57f7f594e6dbcac5ea3f95b84c6cadb111b542d1951698",
+"dimensions": {
+"accuracy": {"score":4,"reason":"Roles, message semantics, local session dependency and uncertain outcomes are correct; diagram arrows and state placement match the prose without availability guarantees.","evidence":[{"slide":1,"quote":"These are roles in an interaction, not types of computer."}]},
+"mechanisms": {"score":4,"reason":"Names client, handler and storage; traces checks, allowed work and response, then explains both local-session loss and lost-response uncertainty.","evidence":[{"slide":5,"quote":"No response leaves the outcome uncertain: processing may have failed, or processing may have succeeded and only the response was lost."}]},
+"coherence": {"score":4,"reason":"Roles precede protocol, protocol precedes retained context, and context and network dependencies feed the final request explanation. All five card objectives are taught.","evidence":[{"slide":3,"quote":"Moving state to shared storage helps replace handlers but leaves a storage dependency."}]},
+"decisions": {"score":4,"reason":"Connects central control to network and capacity costs; client-side responsiveness/offline work and server-side trusted checks give usable placement criteria.","evidence":[{"slide":4,"quote":"Client-side work can make local actions responsive and support offline use."}]},
+"clarity": {"score":4,"reason":"Defines protocol, API and session state when introduced; compact diagrams reinforce distinctions. Generic flow supports the stated audience without requiring prior distributed-systems expertise.","evidence":[{"slide":2,"quote":"A protocol defines the structure and interaction rules that let independently written programs exchange messages."}]}
+},
+"outcomes": [
+{"id":"roles-protocol-flow","score":2,"reason":"All five criteria: learner correctly traces initiator/handler roles, same-machine and dual-role operation, protocol agreement, every HTTP field and application error meaning. Slides 1-2 explicitly supply the reasoning."},
+{"id":"state-and-failure","score":2,"reason":"All six criteria: learner defines session context, explains local-memory affinity/loss and shared-state replacement, retains database/authentication dependency, and connects shared rules, latency, unreachable services and overload to finite capacity. Slides 3-4 support each."},
+{"id":"request-explanation","score":2,"reason":"All three criteria: learner supplies operation/input, checks and permitted data work, locates persistent and session state separately, and distinguishes reported failure from uncertain delivery. Its illustrative shared-storage placement follows slides 2-5 rather than an unexplained guarantee."}
+],
+"hardFailures": [
+
+],
+"sourceChecks": [
+{"slide":1,"url":"https://www.rfc-editor.org/rfc/rfc9110.html#section-3.3","claim":"RFC 9110 section 3.3 explicitly defines per-connection client/server roles and permits one program to occupy both.","verified":true},
+{"slide":2,"url":"https://www.rfc-editor.org/rfc/rfc9110.html#section-1.3","claim":"RFC 9110 sections 1.3 and 3.4 confirm message and semantic fields; its status semantics permit errors. OWASP REST Security additionally confirms per-resource server access control.","verified":true},
+{"slide":3,"url":"https://learn.microsoft.com/en-us/azure/architecture/best-practices/auto-scaling","claim":"Azure autoscaling guidance explicitly warns against instance affinity and recommends stateless services; replacing handlers does not remove dependent storage capacity/availability.","verified":true},
+{"slide":4,"url":"https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Server-side/First_steps/Introduction","claim":"MDN server-side introduction confirms shared information, centralized presentation and distinct client/server responsibilities; Azure autoscaling confirms workload capacity and dependency constraints.","verified":true},
+{"slide":5,"url":"https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2.2","claim":"RFC 9110 section 9.2.2 explicitly allows a request to have succeeded before connection loss and limits automatic non-idempotent retries.","verified":true}
+]
+}

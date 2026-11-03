@@ -1,0 +1,32 @@
+{
+  "lessonHash": "3628512803ca6d5c232618c0ff3f9e08eb23092fb4e9102035e065ad9d3fe9a8",
+  "rubricHash": "df748405146f0d3088aded7c68412119feded45b47cbe6ad1f0038602d7a5d5d",
+  "reviewer": "/root/concept_review_foundations_b",
+  "learnerHash": "3efea0f76f05de513a71b154d8d423c94adda442fdc037ddcbf2f9ce159a3a22",
+  "dimensions": {
+    "accuracy": {"score":4,"reason":"Gilbert-Lynch definitions/proof, Raft majority behavior, Brewer recovery discussion and DynamoDB read modes support the claims. Overlap ordering, unbounded eventual completion and reconciliation limits are precise.","evidence":[{"slide":3,"quote":"Overlapping operations may be placed in either order, provided the resulting order is valid for one copy."}]},
+    "mechanisms": {"score":4,"reason":"Every card objective is causally supported. The 10-to-12 partition trace exposes missing information, guessing is ruled out, CP/AP behaviors and recovery consequences follow. Diagrams accurately show isolated knowledge and a qualified majority protocol.","evidence":[{"slide":5,"quote":"Guessing the new value cannot guarantee correctness across possible unseen writes."}]},
+    "coherence": {"score":4,"reason":"Distributed communication precedes each guarantee, then the impossibility trace, alternative behaviors, convergence and operation-level choice. Introduced definitions are reused rather than assuming outside knowledge.","evidence":[{"slide":5,"quote":"The obstacle is missing information, not a particular database product."}]},
+    "decisions": {"score":4,"reason":"Strict and stale-tolerant operations have explicit user-visible waits/failure or old data; conflict-resolution and lost-intent costs are explicit. CAP is separated from normal latency/cost decisions.","evidence":[{"slide":7,"quote":"Selecting one conflicting value can lose another user's intent, and cross-record rules require their own protection."}]},
+    "clarity": {"score":4,"reason":"Precise terms are immediately explained, small examples clarify the impossibility and selective design consequences, and no unnecessary recurring story is imposed.","evidence":[{"slide":4,"quote":"The theorem requires eventual per-request completion and sets no practical response-time target."}]}
+  },
+  "outcomes": [
+    {"id":"scope-and-partition","score":2,"reason":"All six criteria satisfied: actual learner explains networked copies, conditional limit, live-but-separated nodes, partition tolerance and why ignoring communication failures does not remove them."},
+    {"id":"precise-guarantees","score":2,"reason":"All six criteria satisfied: real-time single-copy ordering including overlap, later-read rule, distinction from ACID/eventual convergence, eventual per-request completion without latency bound, refusal/error failure and uptime distinction. Exact quotes entail reasoning."},
+    {"id":"derive-the-limit","score":2,"reason":"All three criteria satisfied: learner correctly transfers 10/12 teaching to 0/1, identifies B knowledge and required read, and rejects stale return, indefinite refusal and lucky guessing as simultaneous guarantees."},
+    {"id":"partition-behaviors","score":2,"reason":"All six criteria satisfied: safe-order restrictions and affected waits, continued majority operations, local old reads, conflicting accepted writes, explicit reconciliation and lack of automatic intent/business-rule preservation."},
+    {"id":"convergence-and-design","score":2,"reason":"All six criteria satisfied: conditional convergence, no deadline/read-your-writes promise, policy-defined surviving intent, strict versus stale-tolerant operation behavior during and after split, and operation-specific guarantees separated from normal latency/cost."}
+  ],
+  "hardFailures": [],
+  "sourceChecks": [
+    {"slide":1,"url":"https://www.comp.nus.edu.sg/~gilbert/pubs/BrewersConjecture-SigAct.pdf","claim":"Gilbert-Lynch theorem verifies impossibility of atomic consistency plus availability when messages can be lost.","verified":true},
+    {"slide":2,"url":"https://www.comp.nus.edu.sg/~gilbert/pubs/BrewersConjecture-SigAct.pdf","claim":"Gilbert-Lynch partition model permits messages between components to be lost while nodes continue executing.","verified":true},
+    {"slide":3,"url":"https://www.comp.nus.edu.sg/~gilbert/pubs/BrewersConjecture-SigAct.pdf","claim":"Gilbert-Lynch atomic data-object definition verifies total order respecting completed-write/later-read relationships; overlap ordering is the corresponding linearizability consequence.","verified":true},
+    {"slide":4,"url":"https://www.comp.nus.edu.sg/~gilbert/pubs/BrewersConjecture-SigAct.pdf","claim":"Gilbert-Lynch availability definition requires eventual termination for every request at non-failing nodes with no response-time bound; refusal is not a successful read.","verified":true},
+    {"slide":5,"url":"https://www.comp.nus.edu.sg/~gilbert/pubs/BrewersConjecture-SigAct.pdf","claim":"Gilbert-Lynch proof partitions two sets, completes a write in one and later reads in the other; missing information prevents guaranteed correct response.","verified":true},
+    {"slide":6,"url":"https://raft.github.io/raft.pdf","claim":"Raft paper section 2 verifies safety through partitions and functionality for a communicating majority; supports qualified two-of-three example.","verified":true},
+    {"slide":7,"url":"https://www.infoq.com/articles/cap-twelve-years-later-how-the-rules-have-changed/","claim":"Brewer authored CAP retrospective verifies operation-level partition choices and explicit recovery/reconciliation, including invariant repair.","verified":true},
+    {"slide":8,"url":"https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadConsistency.html","claim":"DynamoDB read-consistency page verifies eventual reads can miss recent writes and distinct operation read modes; Brewer reconciliation discussion supplies convergence and conflict-policy limits.","verified":true},
+    {"slide":9,"url":"https://www.infoq.com/articles/cap-twelve-years-later-how-the-rules-have-changed/","claim":"Brewer retrospective explicitly rejects universal two-of-three framing and permits choices per operation/data; CAP does not itself calculate normal latency or cost.","verified":true}
+  ]
+}

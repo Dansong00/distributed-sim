@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "dimensions": [
     "accuracy",
     "mechanisms",
@@ -20,9 +20,9 @@
   "dimensionGuidance": {
     "accuracy": "Primary-source-supported claims; no false guarantees or material omissions. Check the actual sources, not only URLs.",
     "mechanisms": "Names actors, state changes and cause/effect. Could the reader trace an operation and a failure?",
-    "coherence": "Prerequisites appear before use; a concrete scenario connects the cards instead of unrelated facts.",
+    "coherence": "Prerequisites appear before use; cards build a connected explanation of mechanisms or decisions rather than unrelated facts. A recurring scenario is optional, not required for coherence.",
     "decisions": "Explains benefits AND costs, failure responses, and when not to use the component.",
-    "clarity": "Plain English; unfamiliar terms explained at first use; useful detail without repetition or unexplained jargon."
+    "clarity": "Plain English; unfamiliar terms explained at first use; useful detail without repetition or unexplained jargon. Examples are included when they clarify a mechanism, distinction, trade-off or failure; repeated story setup without explanatory value counts against clarity."
   },
   "outcomes": {
     "0": "Unsupported, wrong, or contradicts a critical criterion.",
