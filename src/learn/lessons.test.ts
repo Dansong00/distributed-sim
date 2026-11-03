@@ -39,7 +39,7 @@ it("orders the overview before MySQL after renaming and normalizes technology", 
   expect(lessonsFor(node)).toEqual(["databases", "cap", "replication"]);
 });
 it("hides lessons on unrelated components and annotations", () => {
-  const node = createComponent("api-gateway", { x: 0, y: 0 });
+  const node = createComponent("dns", { x: 0, y: 0 });
   expect(lessonsFor(node)).toEqual([]);
   expect(lessonsFor({ ...node, kind: "sticky", category: "Databases" })).toEqual([]);
 });
@@ -94,5 +94,20 @@ it("offers load balancing after renaming and normalizes its technology", () => {
 it.each(["api-gateway", "cdn", "dns"])("does not give %s the load-balancing stack", preset => {
   const node = createComponent(preset, { x: 0, y: 0 });
   node.name = "Load Balancer";
-  expect(lessonsFor(node)).toEqual([]);
+  expect(lessonsFor(node)).not.toContain("load-balancing");
+});
+
+it("offers API gateways only for gateway technology after renaming", () => {
+  const node = createComponent("api-gateway", { x: 0, y: 0 });
+  node.name = "Notes entrance";
+  node.technology = " API Gateway ";
+  expect(lessonsFor(node)).toEqual(["api-gateways"]);
+  expect(lessonsFor({ ...node, category: undefined })).toEqual(["api-gateways"]);
+  expect(lessonsFor({ ...node, kind: "sticky" })).toEqual([]);
+  expect(lessonsFor({ ...node, componentType: "client" })).toEqual(["client-server"]);
+  for (const preset of ["load-balancer", "dns", "cdn", "api-server"]) {
+    const other = createComponent(preset, { x: 0, y: 0 });
+    other.name = "API Gateway";
+    expect(lessonsFor(other)).not.toContain("api-gateways");
+  }
 });
