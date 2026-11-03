@@ -1,0 +1,141 @@
+{
+  "lessonHash": "cdb4126a5433d37b6dc3026e309c9da064b248343844a0332139053c5f03fc2f",
+  "rubricHash": "77bb703ca8a696a5e358f5fea1f801f1dd16968e5b3f10a64ef422bc1c99459b",
+  "reviewer": "/root/gateway_review_b",
+  "learnerHash": "cc5d4a185c3db9678d1f43d55dabb871828f10d44343c3965f0c210e1289cdf6",
+  "dimensions": {
+    "accuracy": {
+      "score": 4,
+      "reason": "Correct trust, accounting and retry boundaries; primary sources support the critical claims. No diagram adds a security or availability guarantee.",
+      "evidence": [
+        {
+          "slide": 3,
+          "quote": "Verified identity is input to the permission check, not permission to read every note."
+        }
+      ]
+    },
+    "mechanisms": {
+      "score": 4,
+      "reason": "Actors, shared state and the transaction explain both successful creation and crash/concurrent-repeat behavior. The learner transfers the mechanism without relying on a magic header.",
+      "evidence": [
+        {
+          "slide": 6,
+          "quote": "In one transaction, reserve that key uniquely, create the note and record the result; commit all or none."
+        }
+      ]
+    },
+    "coherence": {
+      "score": 4,
+      "reason": "All eight card objectives and card-question criteria are supported in order: entry and policies, identity, limits, deadlines, retries, aggregation and fit. The declared HTTP/transaction prerequisites suffice; both diagrams agree with the prose.",
+      "evidence": [
+        {
+          "slide": 1,
+          "quote": "The client requests /notes through the gateway. The gateway routes it to Notes, which reads the database. The response travels back through the gateway to the client."
+        }
+      ]
+    },
+    "decisions": {
+      "score": 4,
+      "reason": "Supports choosing against a gateway as well as adding one, and specifies capacity, failure and partial-response tradeoffs.",
+      "evidence": [
+        {
+          "slide": 8,
+          "quote": "A separate gateway may be unnecessary."
+        }
+      ]
+    },
+    "clarity": {
+      "score": 4,
+      "reason": "Introduces rate, burst, quota and scope before applying them. Plain examples expose guarantees and limitations with manageable detail.",
+      "evidence": [
+        {
+          "slide": 4,
+          "quote": "Scope specifies which callers and gateway instances share a limit."
+        }
+      ]
+    }
+  },
+  "outcomes": [
+    {
+      "id": "routing-and-role",
+      "score": 2,
+      "reason": "Traces both directions, distinguishes service choice from replica selection, permits combined products, requires decrypted HTTP and early rejection, and retains data-dependent validation. The shared policy evidence supports avoiding repeated configuration."
+    },
+    {
+      "id": "identity-and-bypass",
+      "score": 2,
+      "reason": "Distinguishes validated identity from resource permission, replaces forged claims, requires a verifiable identity and authenticated gateway path, closes or equivalently checks the bypass, and assigns denial of unauthorized note access to Notes."
+    },
+    {
+      "id": "distributed-limits",
+      "score": 2,
+      "reason": "Specifies combined per-user scope, computes 200 with independent counters, distinguishes bursts and best-effort control from exact allowance, explains coordination cost, honors delayed bounded retries, and retains unequal query cost and database limits."
+    },
+    {
+      "id": "create-note-timeout",
+      "score": 2,
+      "reason": "Reserves response time in one overall budget, treats outcome as unknown without cancellation, computes nine attempts, assigns one bounded delayed retry owner, reuses a stable key, and coordinates shared durable recognition atomically with creation; gateway-only or fresh keys cannot supply that protection."
+    },
+    {
+      "id": "overview-partial-failure",
+      "score": 2,
+      "reason": "Explains fan-out and reduced client calls with remaining work and dependencies, sets explicit overall and optional-data deadlines, labels absent names, and fails when required notes are missing."
+    },
+    {
+      "id": "gateway-fit-and-failure",
+      "score": 2,
+      "reason": "Justifies omission for one adequate API and addition for shared policies, accounts for hop and operations, requires reachable failover and survivor capacity, and preserves shared configuration, database, and authorization limitations."
+    }
+  ],
+  "hardFailures": [],
+  "sourceChecks": [
+    {
+      "slide": 1,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/microservices/design/gateway",
+      "claim": "Azure defines a reverse-proxy entry point with cross-cutting policies; its routing material permits both service routing and balancing. The depicted return path is consistent.",
+      "verified": true
+    },
+    {
+      "slide": 2,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/gateway-offloading",
+      "claim": "Azure describes central TLS termination, backend certificate validation and re-encryption, and reduced duplicated configuration. The bounded body check is an explicitly chosen entrance policy, not an automatic guarantee.",
+      "verified": true
+    },
+    {
+      "slide": 3,
+      "url": "https://cheatsheetseries.owasp.org/cheatsheets/Microservices_Security_Cheat_Sheet.html",
+      "claim": "OWASP requires verifiable propagated identity, separate caller-service authentication, bypass prevention and service-level object authorization. These support the stated trust boundary.",
+      "verified": true
+    },
+    {
+      "slide": 4,
+      "url": "https://learn.microsoft.com/en-us/azure/api-management/rate-limit-by-key-policy",
+      "claim": "Azure warns distributed limits are inexact, documents independently scoped counters, 429 and Retry-After. The 200 example and coordinated strict allowance are reasoned consequences of the explicitly independent-counter scenario.",
+      "verified": true
+    },
+    {
+      "slide": 5,
+      "url": "https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/",
+      "claim": "AWS distinguishes waiting limits from side effects and warns retries consume capacity and caller time. The two-second allocation is an illustrative design budget, not a vendor default.",
+      "verified": true
+    },
+    {
+      "slide": 6,
+      "url": "https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/",
+      "claim": "AWS requires caller operation identifiers and atomic coordination of token recording with mutation, with equivalent repeat responses. The shared transaction is a concrete implementation of that requirement.",
+      "verified": true
+    },
+    {
+      "slide": 7,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/gateway-aggregation",
+      "claim": "Azure supports fewer client calls, multiple downstream dependencies, and explicit partial-versus-failed responses. The optional 500-millisecond wait is a declared example contract.",
+      "verified": true
+    },
+    {
+      "slide": 8,
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/gateway-routing",
+      "claim": "Azure identifies gateway failure and bottleneck risks and says simple one- or two-service applications may not need it. Reachable failover and spare downstream capacity are consistent design requirements.",
+      "verified": true
+    }
+  ]
+}
