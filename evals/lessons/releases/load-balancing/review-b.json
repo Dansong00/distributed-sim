@@ -1,56 +1,56 @@
 {
-  "lessonHash": "b4b15c0e818b9c421e215042122396c723a5bb973fd64d178a5be15420b73036",
+  "lessonHash": "169743f31fee0b226feb3e2705ecc52af00943903a10c7b5e9d81c5559aab6a2",
   "rubricHash": "338513cb85781ad0f087b381e652913b1f1b83dd1ac06313c76936cb82694d09",
-  "reviewer": "/root/gateway_review_b",
-  "learnerHash": "6c595ab139088aa96d41b2ce3e4decb91b2870f0d4fea0d128bf0d71175f7993",
+  "reviewer": "/root/dns_review_b",
+  "learnerHash": "8b9d65008435c25f771996713988e569d05dcefd791c79c753782ee8685803e3",
   "dimensions": {
     "accuracy": {
       "score": 4,
-      "reason": "Accurately scopes connection/request routing, health samples, session affinity and duplicate-safe effects. Sources and both diagrams support the claims, including the all-unhealthy exception.",
+      "reason": "All eight card objectives are accurate with scoped reverse-proxy example, L4/L7 distinction, policy signal limits, health sampling, state placement, drain limits, atomic retry safety and surviving capacity. Fail-open caveat matches AWS; diagrams make no migration guarantee.",
       "evidence": [
         {
           "slide": 4,
-          "quote": "Check the product's all-unhealthy policy too."
+          "quote": "Check the product's all-unhealthy policy too. Some balancers send traffic to unhealthy targets when every target fails its checks, rather than refusing all traffic."
         }
       ]
     },
     "mechanisms": {
       "score": 4,
-      "reason": "Names the selected actor, routing unit, accepted-work boundary and shared durable transaction. The learner can trace loss, retry on another backend and deployment interruption.",
+      "reason": "Client/proxy/backend path and reusable connections explain routing; drain sequence and shared atomic operation record explain failures and safe repeats. Learner transfers these mechanisms to purchases.",
       "evidence": [
         {
           "slide": 7,
-          "quote": "In one transaction, insert a key that the database allows only once, create the note and record its result; commit all or none."
+          "quote": "All backends use a shared durable database record of the key and result. In one transaction, insert a key that the database allows only once, create the note and record its result; commit all or none. A repeat returns the recorded result without creating another note. Separate check-then-write steps can race or leave a crash gap."
         }
       ]
     },
     "coherence": {
       "score": 4,
-      "reason": "All eight card objectives and card-question criteria are supported: path, routing unit, policy, health, state, draining, retries and capacity. Declared HTTP/transaction prerequisites suffice; diagrams fit the request-aware example.",
+      "reason": "Notes request proceeds from routing to selection, failure detection, state, deployment and retries before whole-path capacity. Earlier connection distinction directly supports later drain reasoning.",
       "evidence": [
         {
-          "slide": 1,
-          "quote": "That server reads the note from the database and returns a response through the balancer to the client."
+          "slide": 6,
+          "quote": "Stopping new L4 connections does not stop new HTTP requests on existing connections. A drain must also manage those connection lifetimes or stop accepting further requests. L7 request-aware draining must still track already accepted work."
         }
       ]
     },
     "decisions": {
       "score": 4,
-      "reason": "Supports omitting unnecessary balancing, conditionally choosing algorithms, comparing state placement and preserving survivor capacity and an alternate entry path.",
+      "reason": "Conditional algorithm selection uses duration and capacity, names hidden work and requires measurement. Costs, optional adoption, failure headroom and shared-database limits are explicit.",
       "evidence": [
         {
-          "slide": 8,
-          "quote": "More API servers can help when API processing is the bottleneck; they do not remove a saturated shared database bottleneck."
+          "slide": 3,
+          "quote": "For long, uneven work, consider least connections; for unequal server capacity, consider weights. Check actual latency and resource use before deciding: no policy is universally best."
         }
       ]
     },
     "clarity": {
       "score": 4,
-      "reason": "Introduces routing, health, state and draining terminology where needed; concrete Notes examples expose uncertainty without relying on unexplained product internals.",
+      "reason": "Backend, L4/L7, readiness, session state, affinity, in-flight, idempotency and headroom are explained with concrete examples. Neither diagrams nor text require unseen protocol details.",
       "evidence": [
         {
-          "slide": 6,
-          "quote": "draining stops new assignments to A while allowing in-flight work, meaning requests already underway, to finish within a deadline."
+          "slide": 5,
+          "quote": "Session state is information kept between a user's requests. If the Notes API keeps a user's session only in A's memory, B cannot read it. Losing A can lose the only copy."
         }
       ]
     }
@@ -59,32 +59,32 @@
     {
       "id": "http-routing",
       "score": 2,
-      "reason": "Traces the reverse-proxy round trip, chooses HTTP-aware L7 with readable/decrypted paths, keeps reused L4 requests on one connection selection, and gives the single-server no-need condition."
+      "reason": "C1: client/proxy/backend/response traced. C2: L7 paths and readable decrypted HTTP. C3: L4 connection reused for many requests. C4: distribution/redundancy versus adequate single server; slides 1/2 support all."
     },
     {
       "id": "selection-and-capacity",
       "score": 2,
-      "reason": "Explains turns, active-connection counts and biased shares with their limitations; ties least connections and weights to uneven duration/capacity, retains the database bottleneck and requires reachable alternate entry plus surviving headroom."
+      "reason": "C1: turns, active counts and weights each explained with limits. C2: conditional least-connections for duration and initial capacity weighting, then measurement. C3: saturated database unchanged by more app servers. C4: reachable entry failover plus surviving headroom and visible overload handling; slides 3/8 support all."
     },
     {
       "id": "readiness-gap",
       "score": 2,
-      "reason": "Distinguishes endpoint response from serving readiness, explains intervals/thresholds and blind spots, limits removal to new selections, preserves in-flight failures, and notes all-unhealthy behavior."
+      "reason": "C1: health endpoint success differs from purchase readiness. C2: sample interval/threshold/coverage and after-pass failure. C3: removal only stops eligible new selections after detection, subject to all-unhealthy policy. C4: underway work can fail and is not rescued; slide 4 supports all."
     },
     {
       "id": "session-failover",
       "score": 2,
-      "reason": "Explains B cannot read A-only memory and A failure can lose the cart, compares sticky skew with shared access/dependency costs, and denies replication or failover guarantees from affinity."
+      "reason": "C1: B lacks A memory; A loss can lose sole cart. C2: affinity skew/restriction without copying/recovery guarantee. C3: shared store access and dependency cost; slide 5 supports all."
     },
     {
       "id": "deployment-drain",
       "score": 2,
-      "reason": "Stops new assignments first, tracks accepted work to completion or a bounded deadline, permits interruption at expiry, and handles reused L4 connections and L7 accepted requests without claiming automatic transfer."
+      "reason": "C1: stop assignments, bounded completion, then stop. C2: deadline can interrupt and does not move work. C3: old L4 connections carry new requests; manage connection/request acceptance and L7 accepted work; exact slide 6 plus diagram support all."
     },
     {
       "id": "purchase-retry",
       "score": 2,
-      "reason": "Treats timeout as unknown, identifies duplication, reuses one key with shared durable results and atomic uniqueness/effect coordination, rejects fresh keys and A-only memory, and bounds delayed retries to avoid overload."
+      "reason": "C1: unknown commit and duplicate purchase risk. C2: stable operation key/shared durable result. C3: unique key/effect/result atomic, new keys and A-only state insufficient. C4: bounded delayed retry prevents added overload without guaranteeing safety or success; slide 7 supports all."
     }
   ],
   "hardFailures": [],
@@ -92,49 +92,49 @@
     {
       "slide": 1,
       "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/what-is-load-balancing.html",
-      "claim": "AWS describes distribution across targets and adding/removing application capacity. The lesson explicitly scopes its illustrated round trip to a reverse proxy rather than every balancer architecture.",
+      "claim": "AWS ELB describes traffic distribution across backends; the scoped reverse-proxy diagram shows the backend doing work and response through proxy. Optional adoption is a workload decision.",
       "verified": true
     },
     {
       "slide": 2,
       "url": "https://learn.microsoft.com/en-us/azure/architecture/guide/technology-choices/load-balancing-overview",
-      "claim": "Azure distinguishes transport-level L4 and HTTP/path-aware L7, with TLS offload. The reused TCP connection consequence follows from the stated connection-level selection.",
+      "claim": "Microsoft load-balancing options separates L4 transport from L7 path routing/TLS offload; connection reuse explains why L4 cannot independently choose each HTTP request.",
       "verified": true
     },
     {
       "slide": 3,
       "url": "https://nginx.org/en/docs/http/load_balancing.html",
-      "claim": "NGINX documents round robin, least active connections and weights, including unequal durations and capacity. The lesson correctly avoids treating counts or weights as a performance guarantee.",
+      "claim": "NGINX defines round robin, least active connections and weighted traffic; configured signals do not measure arbitrary work or guarantee performance.",
       "verified": true
     },
     {
       "slide": 4,
       "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health-checks.html",
-      "claim": "AWS documents periodic checks, thresholds and routing to unhealthy targets when all are unhealthy. This supports detection delay and the explicit fail-open caveat.",
+      "claim": "AWS target health documents periodic checks, failure thresholds and all-unhealthy fail-open; lesson correctly limits health-based guarantees.",
       "verified": true
     },
     {
       "slide": 5,
       "url": "https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/web-farm?view=aspnetcore-10.0",
-      "claim": "Microsoft explains web-farm shared state and the need for distributed cache/database storage; instance-local memory cannot supply another instance or survive loss merely because routing is sticky.",
+      "claim": "Microsoft web-farm guidance requires shared state for cross-node access; local memory is independent. NGINX persistence does not replicate that state.",
       "verified": true
     },
     {
       "slide": 6,
       "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/edit-target-group-attributes.html",
-      "claim": "AWS documents stopping new requests during deregistration, waiting for in-flight work and connections, and errors when connections terminate early. The deadline interruption warning is consistent.",
+      "claim": "AWS deregistration stops new requests and gives a limited drain period; early termination may cause errors. Lesson correctly distinguishes existing connection reuse and does not claim unfinished work migrates.",
       "verified": true
     },
     {
       "slide": 7,
       "url": "https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/",
-      "claim": "AWS requires stable operation identifiers and atomic token/mutation coordination; durable shared recognition supports a retry reaching another backend, unlike local memory.",
+      "claim": "AWS idempotent APIs requires stable request identity and atomic record/mutation to prevent crash gaps; retries with new IDs or node-only memory do not recognize a cross-node repeat.",
       "verified": true
     },
     {
       "slide": 8,
       "url": "https://sre.google/sre-book/handling-overload/",
-      "claim": "Google SRE explains that balancing cannot prevent overload universally and advocates capacity-aware admission, degraded responses or errors. Surviving capacity and reachable entry are explicit whole-path design conditions.",
+      "claim": "Google SRE describes finite capacity despite load balancing and explicit overload rejection; redundant paths and surviving headroom are necessary, not availability guarantees.",
       "verified": true
     }
   ]

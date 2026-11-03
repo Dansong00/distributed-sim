@@ -8,12 +8,13 @@ import { mysqlLesson } from "./mysql";
 import { capLesson } from "./cap";
 import { replicationLesson } from "./replication";
 
+import { dnsLesson } from "./dns";
 import { apiGatewaysLesson } from "./api-gateways";
 import { loadBalancingLesson } from "./load-balancing";
 import { queuesLesson } from "./queues";
 import { cachingLesson } from "./caching";
 
-export const lessons = { "client-server": clientServerLesson, "api-server": apiServerLesson, databases: databasesLesson, cap: capLesson, replication: replicationLesson, caching: cachingLesson, queues: queuesLesson, "load-balancing": loadBalancingLesson, "api-gateways": apiGatewaysLesson, postgresql: postgresqlLesson, sqlite: sqliteLesson, mysql: mysqlLesson };
+export const lessons = { "client-server": clientServerLesson, "api-server": apiServerLesson, databases: databasesLesson, cap: capLesson, replication: replicationLesson, caching: cachingLesson, queues: queuesLesson, "load-balancing": loadBalancingLesson, "api-gateways": apiGatewaysLesson, dns: dnsLesson, postgresql: postgresqlLesson, sqlite: sqliteLesson, mysql: mysqlLesson };
 export type LessonId = keyof typeof lessons;
 
 export function lessonsFor(node: DiagramNode): LessonId[] {
@@ -21,6 +22,7 @@ export function lessonsFor(node: DiagramNode): LessonId[] {
   if (node.category === "Caches" || node.componentType === "cache") return ["caching"];
   if (node.category === "Messaging" || node.componentType === "queue") return ["queues"];
   const technology = node.technology?.trim().toLowerCase();
+  if (node.componentType === "network" && technology === "dns") return ["dns"];
   if (node.componentType === "network" && technology === "api gateway") return ["api-gateways"];
   if (node.componentType === "network" && technology === "load balancer") return ["load-balancing"];
   if (node.category === "Databases" || node.componentType === "database") {
