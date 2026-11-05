@@ -1,0 +1,32 @@
+{
+  "lessonHash": "4c22aa7bcd27b5e6dc497661e6ee13862072f61b6b1f8383f190b8ebb6d4ca9d",
+  "rubricHash": "df748405146f0d3088aded7c68412119feded45b47cbe6ad1f0038602d7a5d5d",
+  "reviewer": "/root/kv_refresh_review_a",
+  "learnerHash": "cd6ea9b97c63b5d528bf44964e61c7f84dc5d7cae8757724808bb9de5ad251f8",
+  "dimensions": {
+    "accuracy": {"score":4,"reason":"CAP-scope, network-partition, linearizable-consistency and cap-availability match Gilbert/Lynch formal definitions, including real-time order and unbounded eventual termination. No product-wide or error-response shortcut is claimed.","evidence":[{"slide":3,"quote":"Linearizability: operations behave as if they take effect in a single order that respects real time."}]},
+    "mechanisms": {"score":4,"reason":"Impossibility-mechanism derives the information barrier and rules out guessing or blocking the other operation as an escape. Favor-consistency and favor-availability explain allowed work and reconciliation consequences.","evidence":[{"slide":5,"quote":"Guessing the new value cannot guarantee correctness across possible unseen writes."}]},
+    "coherence": {"score":4,"reason":"All nine objectives progress from definitions to proof, operating alternatives, conditional convergence and per-operation choices. Diagram explicitly scopes majority behavior to a majority agreement protocol; no unsafe generic quorum guarantee. Shared presentation inspected, not executed.","evidence":[{"slide":6,"quote":"In a three-server system using a majority-based agreement protocol, two servers must agree before a write completes."}]},
+    "decisions": {"score":4,"reason":"Eventual-convergence and operation-level-decision cover staleness, lost conflicting intent, recovery and unaffected operations. The lesson separates normal latency/cost decisions from the theorem.","evidence":[{"slide":9,"quote":"It does not predict normal-operation latency, capacity or operating cost; evaluate those separately."}]},
+    "clarity": {"score":4,"reason":"Definitions, numerical counterexample and user-visible examples make the real-time and convergence distinctions accessible without assuming consensus implementation expertise.","evidence":[{"slide":8,"quote":"Eventually gives no fixed deadline or immediate read-your-writes guarantee."}]}
+  },
+  "outcomes": [
+    {"id":"scope-and-partition","score":2,"reason":"All scope criteria supported: learner explains networked copies, partition without crash, partition-tolerance scope and why choosing two universally or ignoring communication failures is invalid."},
+    {"id":"precise-guarantees","score":2,"reason":"All six criteria supported: single valid real-time order, later read and overlapping operations, eventual/ACID distinction, per-request eventual completion without latency bound, refusal/error consequence and uptime distinction."},
+    {"id":"derive-the-limit","score":2,"reason":"All three criteria supported: B lacks information, must reflect completed 1, old value breaks consistency, indefinite wait/refusal breaks availability, guessing cannot work across unseen values."},
+    {"id":"partition-behaviors","score":2,"reason":"All six criteria supported: restrict unsafe operations while coordinated ones continue, failure/delay cost, local stale replies, conflicting writes requiring resolution, and no automatic preservation of intent or cross-record rules."},
+    {"id":"convergence-and-design","score":2,"reason":"All six criteria supported: convergence conditions, no deadline/read-your-writes, intent-loss distinction, strict versus stale-tolerant choices, visible failure/staleness and recovery policy, per-operation configuration and separate normal performance evaluation."}
+  ],
+  "hardFailures": [],
+  "sourceChecks": [
+    {"slide":1,"url":"https://www.comp.nus.edu.sg/~gilbert/pubs/BrewersConjecture-SigAct.pdf","claim":"The linked Gilbert/Lynch PDF was downloaded live after web-reader timeouts and text-extracted. Section 3 theorem proves the consistency/availability limit with arbitrary message loss.","verified":true},
+    {"slide":2,"url":"https://www.comp.nus.edu.sg/~gilbert/pubs/BrewersConjecture-SigAct.pdf","claim":"Live downloaded paper section 2.3 models lost messages across components and explicitly separates this from stopping failures.","verified":true},
+    {"slide":3,"url":"https://www.comp.nus.edu.sg/~gilbert/pubs/BrewersConjecture-SigAct.pdf","claim":"Live downloaded paper section 2.1 defines a total linearizable order and requires reads after completed writes to return that value or a later write.","verified":true},
+    {"slide":4,"url":"https://www.comp.nus.edu.sg/~gilbert/pubs/BrewersConjecture-SigAct.pdf","claim":"Live downloaded paper section 2.2 requires every request at a non-failing node to terminate and gives no time bound; proof requires the read to return a value, not a refusal.","verified":true},
+    {"slide":5,"url":"https://www.comp.nus.edu.sg/~gilbert/pubs/BrewersConjecture-SigAct.pdf","claim":"Live downloaded paper section 3.1 constructs isolated write/read histories indistinguishable to the reader, verifying the missing-information argument.","verified":true},
+    {"slide":6,"url":"https://raft.github.io/raft.pdf","claim":"Live Raft paper sections 2 and 5 verify operational majority communication, election and log agreement; this supports the explicitly protocol-scoped 2-of-3 example.","verified":true},
+    {"slide":7,"url":"https://www.infoq.com/articles/cap-twelve-years-later-how-the-rules-have-changed/","claim":"Live Eric Brewer article discusses partition-mode operations, violated invariants and recovery merge/compensation. It supports continued local work with explicit reconciliation rather than automatic safe merge.","verified":true},
+    {"slide":8,"url":"https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadConsistency.html","claim":"Live DynamoDB ReadConsistency verifies that eventual reads can miss completed writes and read strength varies by operation. Brewer recovery discussion and Cassandra replica synchronization followups support conditional propagation/reconciliation and possible lost intent.","verified":true},
+    {"slide":9,"url":"https://www.infoq.com/articles/cap-twelve-years-later-how-the-rules-have-changed/","claim":"Live Brewer article states choices can vary by operation/data/user and rejects a universal two-of-three reading; its latency discussion treats healthy-operation cost separately.","verified":true}
+  ]
+}

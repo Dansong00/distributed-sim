@@ -39,7 +39,25 @@ jobs:
         run: npm run eval:lessons -- check-release dns evals/lessons/releases/dns
       - name: Verify CDN and HTTP caching release evidence
         run: npm run eval:lessons -- check-release cdn-http-caching evals/lessons/releases/cdn-http-caching
-      - name: Verify object storage release evidence
+      - name: Verify client-server release evidence
+        run: npm run eval:lessons -- check-release client-server evals/lessons/releases/client-server
+      - name: Verify api-server release evidence
+        run: npm run eval:lessons -- check-release api-server evals/lessons/releases/api-server
+      - name: Verify databases release evidence
+        run: npm run eval:lessons -- check-release databases evals/lessons/releases/databases
+      - name: Verify cap release evidence
+        run: npm run eval:lessons -- check-release cap evals/lessons/releases/cap
+      - name: Verify replication release evidence
+        run: npm run eval:lessons -- check-release replication evals/lessons/releases/replication
+      - name: Verify postgresql release evidence
+        run: npm run eval:lessons -- check-release postgresql evals/lessons/releases/postgresql
+      - name: Verify sqlite release evidence
+        run: npm run eval:lessons -- check-release sqlite evals/lessons/releases/sqlite
+      - name: Verify mysql release evidence
+        run: npm run eval:lessons -- check-release mysql evals/lessons/releases/mysql
+      - name: Verify key-value release evidence
+        run: npm run eval:lessons -- check-release key-value evals/lessons/releases/key-value
+      - name: Verify object-storage release evidence
         run: npm run eval:lessons -- check-release object-storage evals/lessons/releases/object-storage
       - name: Build for the repository URL
         run: npm run build -- --base /distributed-sim/

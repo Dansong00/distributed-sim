@@ -1,161 +1,32 @@
 {
-  "lessonHash": "6f9e1a22d9a07a217a6e1d36fabb6ec9b76de58a379880a01e8c47d7424c9c34",
-  "rubricHash": "73135482538c47cf4fb02c80c168698f6e4188417d6283fe19523dce3f675bb9",
-  "reviewer": "object-storage-review-b5",
-  "learnerHash": "2e4ab0e942822f8db4cdf3b4fd04799208ca975fd3f6afff35bd40d4b9962574",
-  "dimensions": {
-    "accuracy": {
-      "score": 4,
-      "reason": "I checked each linked page and the nearby primary pages for the claims that page does not itself contain. No page contradicts the deck. S3 conditional writes match the 200, 412, delete-marker, and unversioned overwrite sentences. GCS request preconditions match ifGenerationMatch=0, including success when only noncurrent versions exist. The S3 user-guide data model matches single-key atomic reads, last-writer-wins by timestamp, and no atomic update across keys; the versioning guide matches the 15-minute wait. The FAQ matches durability, One Zone loss, and optional versioning, replication, and Object Lock. GCS availability-durability adds 'immediately' and 'uncorrupted' to the definitions the consistency slide shortens to 'when requested' and 'intact,' and it also says a zonal bucket may become unavailable. The slide's 'lose data' sentence does not deny that.",
-      "evidence": [
-        {
-          "slide": 4,
-          "quote": "That read-after-write does not return a stale object or a false 404, except that the same page says a publicly cached object can still be served stale."
-        },
-        {
-          "slide": 5,
-          "quote": "On S3, If-None-Match: * returns 200 when no current object has that key and 412 when one does."
-        }
-      ]
-    },
-    "mechanisms": {
-      "score": 4,
-      "reason": "The actors and the state change are named for upload, replacement, listing, and authorization. A reader can follow a concurrent S3 read to one complete object, a GCS reader stuck on the old object until the upload finishes, a paginated list that misses a new name, and a 412 that does not identify the stored bytes. The opening diagram stacks the API, the store, and the database with up-down arrows; its caption still says to confirm the object, then commit the key, and that these are not one transaction. The lost-response diagram matches the text: no response leaves the object unknown, and 412 does not prove these bytes are stored.",
-      "evidence": [
-        {
-          "slide": 6,
-          "quote": "An S3 update of a single key is atomic: a concurrent read returns the previous complete object or the new complete object, never a mixture of the two."
-        },
-        {
-          "slide": 7,
-          "quote": "On GCS, an object created before the next page is omitted from later pages when its name is in the namespace already listed. A listing is not one atomic snapshot of the bucket."
-        }
-      ]
-    },
-    "coherence": {
-      "score": 3,
-      "reason": "One attachment name connects the eight slides, and the lost-response slide uses both declared prerequisites: a response can disappear, and a committed database write can remain. The reader meets S3's timestamp rule and the two-key limit only after the replace and consistency slides have already referred to them, and the 1,000-key page size appears on the access slide. The pieces are all present before the placement decision, but the reader has to gather one objective from more than one slide.",
-      "evidence": [
-        {
-          "slide": 1,
-          "quote": "A key names one object. A prefix is not a directory the store can rename in one step."
-        },
-        {
-          "slide": 2,
-          "quote": "The object write and the database commit are separate operations. Either can succeed while the other fails. The object store does not commit them together."
-        }
-      ]
-    },
-    "decisions": {
-      "score": 4,
-      "reason": "The deck gives a usable choice and the cost of the other choices. Put the opaque PDF in the bucket and the note plus the permission decision in the database. Do not use the bucket for byte edits, field queries, or note ownership. A missing response is unknown, an unconditional retry can replace another PDF, and committing the key first can point a reader at a missing object. Eleven nines, a private bucket, and a list are each given a limit: zone loss, no note check, and no repair of the split.",
-      "evidence": [
-        {
-          "slide": 5,
-          "quote": "Treat a missing response as unknown. An unconditional retry can replace another writer's object."
-        },
-        {
-          "slide": 4,
-          "quote": "That lag is not instant revocation, and it is not a rule of every object store."
-        }
-      ]
-    },
-    "clarity": {
-      "score": 3,
-      "reason": "The opening definitions and the remember lines are ordinary English, and each limit is stated as a limit rather than a slogan. Generation, delete marker, and version-suspended arrive inside rules the reader is expected to apply, without a sentence that says what those words mean. Several slides pack S3 and GCS exceptions into one paragraph, so the individual rule is accurate but easy to skim past.",
-      "evidence": [
-        {
-          "slide": 3,
-          "quote": "GCS uses preconditions, described with the lost-response rules, when a replacement must match an expected generation."
-        },
-        {
-          "slide": 6,
-          "quote": "Durability describes bytes that were stored. It does not prove this response arrived or keep a PDF you overwrote."
-        }
-      ]
-    }
-  },
-  "outcomes": [
-    {
-      "id": "upload-and-fetch-one-attachment",
-      "score": 2,
-      "reason": "The deck teaches all six criteria and the learner quotes them. Bucket, opaque object, and key are quoted from slide 2. The single key notes/42/export.pdf, the flat S3 namespace, the non-directory slash, the console prefix, and the GCS delimiter listing are quoted from slides 1 and 3. S3's per-object prefix rename and the GCS copy-and-delete rename that can stop halfway are quoted. The upload, the key written only after success, the download by key, the split of note versus bytes, and the separate commit are quoted from slide 2."
-    },
-    {
-      "id": "replace-the-export",
-      "score": 2,
-      "reason": "The learner's quotes match the criteria: a full object rather than a disk-style patch; an S3 concurrent read of the old complete object or the new one; GCS immutability with the old object until completion and the new object after; previous bytes no longer current; an unconditional unversioned S3 overwrite; a GCS permanent delete of the old live version when versioning and soft delete are both off; S3 versioning, replication, and Object Lock as separate controls; a GCS noncurrent version; and soft delete even with versioning disabled. The durability quote says that design does not provide the retention."
-    },
-    {
-      "id": "read-after-success-and-listing",
-      "score": 2,
-      "reason": "Quoted support covers a current S3 read and list after success, GCS read and list immediately after success, S3's earlier eventual consistency, and the limit that this is not every object store. The false-404 and stale-read exclusion, the public-cache exception, the retryable 500, and the statement that strong consistency can still fail are quoted. Last-writer-wins by timestamp, the uselessness of acknowledgment order, the later read, and the refusal to treat the timestamp rule as GCS or universal are quoted. The 1,000-key page, the GCS pageToken omission, the non-snapshot listing, and the refusal of a two-key atomic update are quoted."
-    },
-    {
-      "id": "timeout-and-conditional-retry",
-      "score": 2,
-      "reason": "Slide 5 quotes support the whole answer. A timeout is not proof of absence and is compared with a committed database write whose response was lost. A later unconditional success can replace another writer's object. If-None-Match: * and ifGenerationMatch=0 are quoted as product-specific 200-or-proceed versus 412 rules, not a universal API. A received 412 is only a failed precondition. A lost conditional response is quoted as ambiguous. A later read is quoted as reporting only that read, so a hit is some complete object and a miss is absence only under the store's documented consistency. The delete-marker success and the noncurrent-only GCS proceed case are quoted, with the statement that the S3 case does not mean these bytes are already live."
-    },
-    {
-      "id": "durability-is-not-this-response",
-      "score": 2,
-      "reason": "The learner quotes the deck's availability and durability definitions, the two different S3 Standard yearly figures, S3's success check after integrity and redundant storage, and GCS's success check after redundant storage. The quotes separate those checks from arrival of this HTTP response. One Zone loss despite 11 nines, and a GCS zonal bucket that can still lose data, are quoted. Durability not preserving overwritten or deleted bytes is quoted, including S3's delete limit and an unversioned overwrite. Optional versioning, replication, and Object Lock are quoted, with the 15-minute S3 wait and the 30-second GCS wait."
-    },
-    {
-      "id": "authorize-and-place-the-pdf",
-      "score": 2,
-      "reason": "The learner quotes credentials and policies rather than the note owner, a prefix rule that limits only the named credential, S3 private by default with IAM and bucket policies, and storage.objects.list. The broad Notes credential that skips the note check is quoted as able to return another note's object. The GCS metadata-immediate, access-lagging removal is quoted, including that the lag is not universal. PDF bytes versus note fields and permissions are quoted, then confirm-the-object before the key commit, an orphan object, a dangling key, and a listing that is not a repairing transaction."
-    }
-  ],
-  "hardFailures": [],
-  "sourceChecks": [
-    {
-      "slide": 1,
-      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html",
-      "claim": "The page says an object key uniquely identifies the object, that the data model has no subfolder hierarchy, and that a name such as Development/Projects.xls is one key whose prefix and delimiter the console presents as a folder. That supports the slide's one-key claim for notes/42/export.pdf and the claim that the console folder is a presentation.",
-      "verified": true
-    },
-    {
-      "slide": 2,
-      "url": "https://aws.amazon.com/s3/consistency/",
-      "claim": "The overview says S3 now delivers strong read-after-write and list consistency, that this followed a service that pioneered object storage with eventual consistency, and that after a successful new write, overwrite, or delete any later read receives the latest version and a list reflects the change. That supports the consistency sentences on the slide. The page does not discuss multi-key atomicity; the S3 data-model page does, and this page does not contradict it.",
-      "verified": true
-    },
-    {
-      "slide": 3,
-      "url": "https://cloud.google.com/storage/docs/objects",
-      "claim": "The page says object data is opaque to Cloud Storage, flat-namespace buckets have no directories, tools simulate folders with a slash delimiter, objects cannot be changed in place and are immutable for their lifetime, and a replacement is atomic so readers see the old object until the new upload completes. Renaming a simulated folder copies and deletes each object and is non-atomic. That supports the slide.",
-      "verified": true
-    },
-    {
-      "slide": 4,
-      "url": "https://cloud.google.com/storage/docs/consistency",
-      "claim": "The page says object read-after-write and listing are strongly consistent once the success response arrives, that a publicly readable cached object can still be stale, that an unavailable first location before replication returns a retryable 500, that enabling object versioning should be followed by a wait of at least 30 seconds before delete or replace, and that revoking access is reflected immediately in bucket metadata while the user may still have access for about a minute and sometimes longer. That supports those slide sentences.",
-      "verified": true
-    },
-    {
-      "slide": 5,
-      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/conditional-writes.html",
-      "claim": "The page says If-None-Match: * succeeds with 200 OK when no current object has the key and fails with 412 when one does, and that a versioned bucket still allows the write when the current version is a delete marker. Without the header, an identical key in an unversioned or version-suspended bucket is overwritten. That supports the S3 sentences. The GCS ifGenerationMatch=0 sentence is supported by Google's request-preconditions page, which this S3 page does not contradict.",
-      "verified": true
-    },
-    {
-      "slide": 6,
-      "url": "https://aws.amazon.com/s3/faqs/",
-      "claim": "The FAQ says S3 is designed for 99.999999999% durability, S3 Standard for 99.99% availability, and that S3 considers an upload successful only after it has checked integrity and stored the data redundantly. It says One Zone data may be lost if the Availability Zone is lost, that the durability system does not protect against deletes, that versioning, replication, and Object Lock are optional protections beyond durability, and that renaming a prefix requires renaming each object that contains the prefix. Those passages support the slide. The 15-minute versioning wait is in the S3 versioning guide; the FAQ does not contradict it.",
-      "verified": true
-    },
-    {
-      "slide": 7,
-      "url": "https://cloud.google.com/storage/docs/json_api/v1/objects/list",
-      "claim": "The method requires the authenticated caller to have storage.objects.list. The pageToken parameter says a new object created before the next page is omitted when its name is in the part of the namespace already listed, so the walk is not one frozen bucket snapshot. Delimiter plus prefix is described as operating like a directory listing in a flat namespace. That supports the GCS sentences on the slide.",
-      "verified": true
-    },
-    {
-      "slide": 8,
-      "url": "https://cloud.google.com/storage/docs/object-versioning",
-      "claim": "The reference table says a replace with both Object Versioning and soft delete disabled permanently deletes the old live version, a replace with versioning enabled keeps that version as noncurrent, and a replace with only soft delete enabled soft-deletes the old live object. The page also says to wait at least 30 seconds after a versioning change. That supports the retention contrast on the slide.",
-      "verified": true
-    }
-  ]
+"lessonHash":"bf1e461ee89f8b5639d11b689e5424f4cdfa4235d13e9278f8c91059bb08651c",
+"rubricHash":"d502775e50e55bcd430ad6d50b47696721f51959ab0701b86c0e7cee45f4d4cf",
+"reviewer":"/root/object_review_b",
+"learnerHash":"b2188185c0224154bbe819a791b8c89c0645f01befaf7071296a6aa0b0c248ae",
+"dimensions":{
+"accuracy":{"score":4,"reason":"Cards 1-8 teach the required object model, independent application commits, scoped replacement, read/list boundaries, uncertain-upload protection, durability/recovery, access boundaries and interface choice accurately. Each linked primary source and necessary followup was inspected live for the particular claims.","evidence":[{"slide":3,"quote":"Complete old or new bytes is one guarantee; retaining both is another."}]},
+"mechanisms":{"score":4,"reason":"Objectives object-and-key and store-and-retrieve establish actors, state and reference retrieval before whole-object-replace and read-and-list-limits. Lost-response connects completion, observations and guarded writes; durability-versus-success separates storage state from response delivery. Access-boundary and placement-and-split explain concrete consequences.","evidence":[{"slide":2,"quote":"The object upload and database commit are separate operations. The object store does not commit them together."}]},
+"coherence":{"score":4,"reason":"All eight card objectives and prerequisite edges are satisfied in order: model, two writes, replacement, read/list, uncertainty, recovery, permission boundary, workload synthesis. Diagrams at zero-based indexes 1 and 4 depict separate publication and uncertain/condition-rejected states without invented atomicity. No recurring story is required.","evidence":[{"slide":2,"quote":"Publishing a reference is a separate decision from storing the bytes."}]},
+"decisions":{"score":4,"reason":"Ready publication/recovery, read-versus-index choice, configured retention and placement, constrained credentials and workload selection are actionable. Conditional writes expose their limited protection. Card 8 contrasts object request/replacement costs with database, block, shared-file and CDN roles.","evidence":[{"slide":8,"quote":"Whole-object replacement and request overhead make it a poor default for frequent small in-place edits."}]},
+"clarity":{"score":4,"reason":"Bucket/key/prefix, metadata, retention, conditional write and alternative storage interfaces are explained for the stated HTTP/database prerequisites. Diagram captions and accessible labels reinforce the text. Shared LessonDialog and relevant CSS inspected once: index mapping, labeled navigation, prose rendering, source links, scrollable viewport and two-column diagrams are consistent; no browser execution claimed.","evidence":[{"slide":1,"quote":"The bucket and key locate an object; the application gives its bytes meaning."}]}
+},
+"outcomes":[
+{"id":"model-and-upload","score":2,"reason":"All six criteria supported: learner defines bucket/object/key and content-type metadata; scopes flat prefixes and non-atomic rename; separates application fields; traces upload/reference/key read; requires confirmed-ready versus pending publication; explains orphan/missing-byte failures and application recovery without listing transactions."},
+{"id":"replacement-boundary","score":2,"reason":"All three criteria supported: complete same-key replacement; S3/GCS old-or-new concurrent read and new current object; no implicit retention, configured versions and provider-scoped operations."},
+{"id":"lookup-and-listing","score":2,"reason":"All four criteria supported: exact key versus prefix versus indexed field query and growing request/data/latency cost; scoped S3/GCS strong read/list consistency with possible failures; pagination is not a frozen transaction; overlapping response arrival does not determine final state."},
+{"id":"uncertain-upload","score":2,"reason":"All three criteria supported: lost response allows completed write and unconditional overwrite; intended identity/content must be established rather than key existence, with later-read provenance limits; conditional absence/version checks protect only specified state, rejection proves no intended upload, lost conditional response remains uncertain and APIs vary."},
+{"id":"retention-and-accessibility","score":2,"reason":"All three criteria supported: intact retention versus requested accessibility and server completion versus received acknowledgment; redundancy and placement-specific zone failure; overwrite/delete recovery needs enabled, effective, still-retaining protections."},
+{"id":"authorization-and-placement","score":2,"reason":"All seven criteria supported: service credential versus application ownership authorization; identifier versus permission and limited trusted credential scope; provider-specific propagation; object whole-upload tradeoff without minimum size; records/query/transaction database; block versus shared-file interfaces; CDN copies near users versus durable origin."}
+],
+"hardFailures":[],
+"sourceChecks":[
+{"slide":1,"url":"https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html","claim":"Inspected AWS object-key flat namespace and console prefix rules; GCS objects followup explicitly describes non-atomic copy/delete of simulated folders. Bucket/key identity and metadata distinction are consistent with the documented model.","verified":true},
+{"slide":2,"url":"https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html","claim":"Inspected AWS S3 overview object model and key-based atomicity limits. Application/database publication ordering is a valid deduction from the separate actors and commits; listing cannot join them into a transaction.","verified":true},
+{"slide":3,"url":"https://cloud.google.com/storage/docs/objects","claim":"Inspected GCS objects immutability and atomic replacement passage, AWS overview single-key old-or-new reads, and GCS versioning disabled/soft-delete-disabled replacement table. Complete replacement and separately configured retention are supported.","verified":true},
+{"slide":4,"url":"https://cloud.google.com/storage/docs/consistency","claim":"Inspected GCS consistency read/list, retryable failure and HTTP-cache passages; AWS overview concurrent response ordering and no multi-key atomicity; GCS objects.list pageToken explains additions behind the cursor are omitted. Access paths and scoped consistency claims are supported.","verified":true},
+{"slide":5,"url":"https://cloud.google.com/storage/docs/request-preconditions","claim":"Inspected GCS request-preconditions generation match, zero/live-object absence, 412 and network-race passages, plus AWS conditional-writes If-None-Match and If-Match. Conditions protect the targeted state; a failed condition identifies no successful caller upload, and lost acknowledgment remains uncertain.","verified":true},
+{"slide":6,"url":"https://docs.cloud.google.com/storage/docs/availability-durability","claim":"Inspected GCS availability-durability definitions, redundancy-before-confirmation and zonal loss warning; AWS data protection redundancy and separate versioning; GCS versioning retention, expiry/deletion and propagation. Completion versus received response remains a separate transport event.","verified":true},
+{"slide":7,"url":"https://cloud.google.com/storage/docs/access-control/iam","claim":"Inspected GCS IAM principals, role permissions and resource scope; GCS consistency access-revocation propagation passage. A broad service principal is distinct from the application user, so application ownership checks remain necessary.","verified":true},
+{"slide":8,"url":"https://aws.amazon.com/compare/the-difference-between-block-file-object-storage/","claim":"Inspected AWS block/file/object comparison interfaces and database block workload; CloudFront introduction explains cached edge copies and S3 definitive origin. Whole-object versus small-range access and separate database/CDN roles are supported.","verified":true}
+]
 }

@@ -4,10 +4,10 @@ import "./database-lessons.css";
 export function DnsDiagram({ slide }: { slide: number }) {
   switch (slide) {
     case 1:
-      return <figure className="lesson-diagram database-flow" aria-label="In the illustrative hierarchy with empty relevant caches, the stub asks the recursive resolver. That resolver asks root for a referral to .example, then .example for a referral to notes.example, then the notes.example authority for records. It returns the result to the stub.">
+      return <figure className="lesson-diagram database-flow" aria-label="In the illustrative hierarchy with empty relevant caches, the stub asks the recursive resolver. That resolver asks root for a referral to .test, then .test for a referral to example.test, then the example.test authority for records. It returns the result to the stub.">
         <div className="database-flow-step"><div className="lesson-node">Client's stub resolver</div><ArrowUpDown aria-hidden="true" /></div>
         <div className="database-flow-step"><div className="lesson-node">Recursive resolver<small>Follows referrals on the client's behalf</small></div><ArrowUpDown aria-hidden="true" /></div>
-        <div className="database-flow-step"><div className="lesson-node">Asks root, then .example, then notes.example<small>Referrals first; final authority supplies records</small></div></div>
+        <div className="database-flow-step"><div className="lesson-node">Asks root, then .test, then example.test<small>Referrals first; final authority supplies records</small></div></div>
         <figcaption>Teaching hierarchy. Cached answers or delegations can skip visits.</figcaption>
       </figure>;
     case 3:

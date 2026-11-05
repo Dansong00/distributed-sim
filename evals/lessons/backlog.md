@@ -1,8 +1,8 @@
 # Autonomous learning stack backlog
 
-Status is local source coverage, not a claim of quality. All stacks require the new eval before being called approved. Existing source currently has Client / Server Model, API Server, Database Overview, CAP, Replication, PostgreSQL, SQLite, MySQL, Caching Fundamentals, Message Queues and Background Workers, Load Balancing, API Gateways, DNS, CDN and HTTP Caching, and Object Storage. Caching, messaging, load balancing, API gateways, DNS, CDN/HTTP caching, and object storage have current passing evaluation reports; prior code-review and browser passes do not retroactively count as learning-quality evaluations.
+Status is local source coverage, not a claim of quality. All stacks require the new eval before being called approved. Existing source currently has Client / Server Model, API Server, Database Overview, CAP, Replication, PostgreSQL, SQLite, MySQL, Caching Fundamentals, Message Queues and Background Workers, Load Balancing, API Gateways, DNS, and CDN and HTTP Caching, Key-Value Data Access, and Object Storage. The first fourteen retain the concept-first teaching described in [the editorial release](CONCEPT-FIRST-RELEASE.md); subsequent additions and their current evidence are tracked in each release report, most recently [Object Storage](releases/object-storage/REPORT.md). This assesses content readiness, not human learning.
 
-Default order is shared foundations first, then named technologies. The user approved continuing to CDN and HTTP caching after DNS; future scope corrections override this order.
+Default order is shared foundations first, then named technologies. The user selected Key-Value Data Access after CDN and HTTP caching, then asked to continue Object Storage from the existing Cursor PR29. Future scope corrections override this order.
 
 ## Shared foundations
 
@@ -16,21 +16,23 @@ DNS is implemented for DNS components, covering discovery, delegation, record ty
 
 CDN and HTTP Caching is implemented for CDN components, covering response layers, freshness, conditional validation, private-data policies, variants, updates, bounded stale reuse and cost. See releases/cdn-http-caching/REPORT.md for current evidence.
 
-Object Storage is implemented for object-storage components, covering a named attachment, whole-object replacement, read and list limits, lost responses, durability versus request success, and the split with the note record. See releases/object-storage/REPORT.md for current evidence.
+Key-Value Data Access is implemented for Generic Database, DynamoDB, Generic Cache, Redis and Memcached. Its nine cards cover operations, key/value boundaries, queries, concurrent updates, uncertain retries, lifetime, distribution and workload fit. Existing decks retain their order. This shared foundation does not certify product-specific behavior. See releases/key-value/REPORT.md for release gates and evidence.
+
+Object Storage is implemented for Generic Object Storage, S3 and Google Cloud Storage. It covers bucket/key/object semantics, separate database references, whole-object replacement, reads/listing, uncertain uploads, durability/recovery, access boundaries and workload placement. See releases/object-storage/REPORT.md for current release evidence.
 
 Next, in prerequisite order:
 1. Block storage; shared file storage.
-2. Sharding and partition keys; document databases; key-value data access.
+2. Sharding and partition keys; document databases.
 3. Wide-column, graph, geospatial, time-series, search, analytics, and vector retrieval foundations.
 4. Data lakes; lakehouses and table formats; model artifact storage.
 5. Embeddings; retrieval; reranking; model serving; feature stores; model registries.
 6. Serverless execution and client-specific topics where the shared client/server foundation leaves meaningful gaps.
 
-Use one concrete operation per stack; separate topics only when each has a distinct learning outcome. Do not create repetitive decks merely to fill an icon count. Generic database coverage does not complete specialist database topics.
+Connect each stack through its concepts, mechanisms or decisions. Use concrete examples only where they clarify the idea; no example is required on every card, and no application should be the default story across modules. Separate topics only when each has a distinct learning outcome. Do not create repetitive decks merely to fill an icon count. Generic database coverage does not complete specialist database topics.
 
 ## Product-specific layer
 
-Add Redis and Memcached after caching; Kafka, RabbitMQ and SQS after messaging; MongoDB and DynamoDB after data-model foundations; then the remaining named technologies in catalog order within their prerequisites. Existing PostgreSQL, SQLite and MySQL still need eval contracts and reviews. A shared foundation does not by itself certify product-specific knowledge.
+Add Redis and Memcached after caching; Kafka, RabbitMQ and SQS after messaging; MongoDB and DynamoDB after data-model foundations; S3 and Google Cloud Storage after object-storage foundations; then the remaining named technologies in catalog order within their prerequisites. Existing PostgreSQL, SQLite and MySQL have their own contracts and passing reviews. A shared foundation does not by itself certify product-specific knowledge.
 
 ## Per-topic record
 

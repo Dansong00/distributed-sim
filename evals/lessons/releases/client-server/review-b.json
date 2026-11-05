@@ -1,0 +1,26 @@
+{
+"lessonHash":"75dae1b156d245fe8a9ee3df204bf7eb8ff37e2a89170d0388eaeec8c8013d80",
+"rubricHash":"101ae2e6c6bf860eb9dad0bd2cc22d3282e2b649613d41fad92360850b895442",
+"reviewer":"/root/kv_refresh_review_b",
+"learnerHash":"d1f6329465f0333816a417ecaffe2e41e212377c4109a2144d14d5314403bc82",
+"dimensions":{
+"accuracy":{"score":4,"reason":"All five objectives correctly define interaction roles, shared HTTP/application semantics, local-session dependence versus stateless handlers, finite shared-service resources and uncertain missing responses. No false capacity or no-state claim.","evidence":[{"slide":3,"quote":"Stateless does not mean no persistent data, authentication or state anywhere in the system."}]},
+"mechanisms":{"score":4,"reason":"Connects request fields to interpretation/checks/work/response and state placement to replacement/failure. Separates reported error from a lost response after possible effect. LessonDiagram matches exchanges, example local sessions and client/server costs.","evidence":[{"slide":5,"quote":"processing may have succeeded and only the response was lost."}]},
+"coherence":{"score":4,"reason":"Only program memory and network delivery prerequisites are needed. Roles lead to protocol, retained context, service tradeoffs and an integrated interaction explanation; each card supplies its objective.","evidence":[{"slide":5,"quote":"Locate persistent application data and any session context separately."}]},
+"decisions":{"score":4,"reason":"Balances centralized shared behavior against round trips, overload/rejection and dependency failure. Client-local/offline benefits carry synchronization costs; protected access remains server-enforced and retry decisions depend on outcome uncertainty.","evidence":[{"slide":4,"quote":"the client/server model alone guarantees neither capacity nor availability."}]},
+"clarity":{"score":4,"reason":"Defines protocol, API and session state when first used, avoids hardware-role confusion, and gives short concrete server-A examples. The generic request trace is sufficient without a mandatory recurring story. Diagram/shared assets inspected only.","evidence":[{"slide":1,"quote":"These are roles in an interaction, not types of computer."}]}
+},
+"outcomes":[
+{"id":"roles-protocol-flow","score":2,"reason":"Defines client initiation and server handling independently of browser/hardware/location, including dual-role service calls. Traces method/URL/headers/body and status/content while distinguishing protocol syntax from application meaning and operational success."},
+{"id":"state-and-failure","score":2,"reason":"Explains session context, local-memory dependence and rerouting/loss, request/shared-store context for replaceable handlers and remaining storage dependency. Connects central shared rules to network waits, unavailable dependencies and finite overload without automatic scale/availability."},
+{"id":"request-explanation","score":2,"reason":"Gives a coherent generic shared-data operation, locates persistent data and session context separately, supplies HTTP contents and access/work/outcome steps, and distinguishes explicit reported failure from unknown processing/delivery outcome. No response is correctly not evidence of no effect."}
+],
+"hardFailures":[],
+"sourceChecks":[
+{"slide":1,"url":"https://www.rfc-editor.org/rfc/rfc9110.html#section-3.3","claim":"RFC 9110 section 3.3 defines request-sending client and responding server as programs/interaction roles; a program can act in both roles. No browser or machine-class restriction is asserted.","verified":true},
+{"slide":2,"url":"https://www.rfc-editor.org/rfc/rfc9110.html#section-1.3","claim":"RFC 9110 describes method/target/header/content and response status semantics, including errors; application payload conventions remain separate. OWASP REST guidance checked in this review supports service-side access checks rather than hidden controls.","verified":true},
+{"slide":3,"url":"https://learn.microsoft.com/en-us/azure/architecture/best-practices/auto-scaling","claim":"Azure autoscaling explicitly advises avoiding instance dependence and assumptions about subsequent routing. Externalized/request-carried context explains why equivalent handlers can replace one another while shared storage remains a dependency.","verified":true},
+{"slide":4,"url":"https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Server-side/First_steps/Introduction","claim":"MDN distinguishes client/server purposes, shared dynamic data, centralized access and optional server computation; finite resources and failed remote dependencies are correctly presented as costs, not unlimited model guarantees.","verified":true},
+{"slide":5,"url":"https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2.2","claim":"RFC 9110 section 9.2.2 explains retries after communications fail before a response is readable, distinguishing idempotent from unsafe automatic retries. This supports unknown outcome rather than assuming processing never happened.","verified":true}
+]
+}

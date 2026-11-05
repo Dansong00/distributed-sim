@@ -18,8 +18,10 @@ import { ApiGatewayDiagram } from "./ApiGatewayDiagram";
 import { LoadBalancingDiagram } from "./LoadBalancingDiagram";
 import { QueueDiagram } from "./QueueDiagram";
 import { CachingDiagram } from "./CachingDiagram";
+import { KeyValueDiagram } from "./KeyValueDiagram";
 
 const diagrams = {
+  "key-value": KeyValueDiagram,
   "client-server": LessonDiagram,
   "api-server": ApiServerDiagram,
   databases: DatabaseOverviewDiagram,

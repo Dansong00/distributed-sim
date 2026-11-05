@@ -1,0 +1,26 @@
+{
+  "lessonHash": "75dae1b156d245fe8a9ee3df204bf7eb8ff37e2a89170d0388eaeec8c8013d80",
+  "rubricHash": "101ae2e6c6bf860eb9dad0bd2cc22d3282e2b649613d41fad92360850b895442",
+  "reviewer": "/root/kv_refresh_review_a",
+  "learnerHash": "d1f6329465f0333816a417ecaffe2e41e212377c4109a2144d14d5314403bc82",
+  "dimensions": {
+    "accuracy": {"score":4,"reason":"Roles-and-exchange and shared-protocol objectives are accurate: roles are connection-specific; HTTP fields and application semantics are distinct. Live RFC sections 3.3, 3.4, 1.3 and 9.2.2 support these boundaries.","evidence":[{"slide":1,"quote":"These are roles in an interaction, not types of computer."}]},
+    "mechanisms": {"score":4,"reason":"Session-state objective explains the local-memory dependency and externalization consequence. Explain-one-interaction connects checks, allowed work, stored state and uncertain delivery without implying rollback.","evidence":[{"slide":3,"quote":"Moving state to shared storage helps replace handlers but leaves a storage dependency."}]},
+    "coherence": {"score":4,"reason":"All five card objectives build from roles to rules, session placement, benefits/dependencies and a complete flow; prerequisites are sufficient. Inspected diagram and shared dialog/CSS: zero-based mapping aligns; stateful diagram is a local-session example clarified by prose. No runtime UI test performed.","evidence":[{"slide":5,"quote":"Connect the request, responsibilities, data and outcome. Component names alone do not explain behavior."}]},
+    "decisions": {"score":4,"reason":"Benefits-and-dependencies objective connects central reuse to latency, rejection and outage, then supports client/server placement decisions and uncertain-retry reasoning.","evidence":[{"slide":4,"quote":"Overload can increase waiting or require rejection; the client/server model alone guarantees neither capacity nor availability."}]},
+    "clarity": {"score":4,"reason":"Plain definitions of roles, protocol, API and session context support the stated basic-programming audience; reminders reinforce consequential distinctions.","evidence":[{"slide":3,"quote":"Stateless does not mean no stored data. Stateless servers can use a shared database."}]}
+  },
+  "outcomes": [
+    {"id":"roles-protocol-flow","score":2,"reason":"All five criteria supported: learner traces request/response, names roles independent of hardware/browser/location, explains both roles in one program, protocol rules, every HTTP field and application success/error meaning."},
+    {"id":"state-and-failure","score":2,"reason":"All six criteria supported: retained session context, local-memory dependence, request/shared-store context, replacement and storage dependency, shared reuse, latency/failure/overload and no inherent scalability/availability guarantee."},
+    {"id":"request-explanation","score":2,"reason":"All three criteria supported: generic read/change flow checks before work, distinguishes persistent data and session context, and connects explicit error versus absent response to possible completed work. Chosen storage arrangement is explicitly conditional."}
+  ],
+  "hardFailures": [],
+  "sourceChecks": [
+    {"slide":1,"url":"https://www.rfc-editor.org/rfc/rfc9110.html#section-3.3","claim":"Live RFC 9110 sections 3.3-3.5 explicitly distinguish client/server roles and permit the same program in both; client types extend beyond browsers.","verified":true},
+    {"slide":2,"url":"https://www.rfc-editor.org/rfc/rfc9110.html#section-1.3","claim":"Live RFC 9110 sections 1.3 and 3.4 specify requests, responses, methods, target, headers, content and interpretation. OWASP REST Security followup verifies server-side access checks.","verified":true},
+    {"slide":3,"url":"https://learn.microsoft.com/en-us/azure/architecture/best-practices/auto-scaling","claim":"Live Azure autoscaling application-design section requires avoiding instance affinity and recommends stateless services; shared durable state and downstream bottlenecks confirm the stated remaining dependency.","verified":true},
+    {"slide":4,"url":"https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Server-side/First_steps/Introduction","claim":"Live MDN sections on differing purposes and server-side uses support shared data/rules, client presentation and authorized access. Azure autoscaling followup verifies finite capacity, waiting and rejection; network failure reasoning also follows RFC transport/retry discussion.","verified":true},
+    {"slide":5,"url":"https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2.2","claim":"Live RFC 9110 section 9.2.2 explicitly allows that an original request succeeded before communication failed and warns against blind non-idempotent retry.","verified":true}
+  ]
+}

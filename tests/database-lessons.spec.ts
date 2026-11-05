@@ -3,7 +3,7 @@ import { startEditor } from "./start-editor";
 
 for (const product of ["PostgreSQL", "SQLite", "MySQL"]) {
 for (const viewport of [{ width: 1280, height: 900 }, { width: 985, height: 543 }, { width: 390, height: 700 }]) {
-  test(`${product} decks remain independent and usable at ${viewport.width}x${viewport.height}`, async ({ page }) => {
+  test(`${product} decks remain independent and usable at ${viewport.width}x${viewport.height}`, async ({ page }, testInfo) => {
     await startEditor(page);
     await page.getByLabel("Search components").fill(product);
     await page.getByRole("button", { name: `Add ${product}`, exact: true }).click();
@@ -17,7 +17,7 @@ for (const viewport of [{ width: 1280, height: 900 }, { width: 985, height: 543 
     await page.setViewportSize(viewport);
     if (viewport.width <= 900) await page.getByRole("button", { name: "Properties panel", exact: true }).click();
 
-    for (const title of ["Database Overview", "CAP Theorem", "Replication", product]) {
+    for (const title of product === "PostgreSQL" ? ["Database Overview", "CAP Theorem", "Replication", product] : [product]) {
       const slideCount = title === "SQLite" || title === "MySQL" || title === "CAP Theorem" || title === "Replication" ? 9 : 8;
       const opener = page.getByRole("button", { name: `Learn about ${title}`, exact: true });
       await opener.click();
@@ -45,7 +45,12 @@ for (const viewport of [{ width: 1280, height: 900 }, { width: 985, height: 543 
             await expect(content.locator("strong").filter({ hasText: `${concept}:` })).toHaveCount(1);
           }
         }
-        await page.screenshot({ path: `/tmp/${title === "Database Overview" ? "databases" : title.toLowerCase().replaceAll(" ", "-")}-${viewport.width}-${slide}.png` });
+        await page.screenshot({ path: testInfo.outputPath(`${title.toLowerCase().replaceAll(" ", "-")}-${slide}.png`) });
+        const reference = dialog.getByRole("link", { name: "Source reference", exact: true });
+        await expect(reference).toHaveAttribute("href", /^https:\/\//);
+        await reference.scrollIntoViewIfNeeded();
+        await expect(reference).toBeInViewport();
+        await page.screenshot({ path: testInfo.outputPath(`${title.toLowerCase().replaceAll(" ", "-")}-${slide}-end.png`) });
         if (slide < slideCount) {
           const source = dialog.getByRole("link", { name: "Source reference", exact: true });
           await source.focus();
