@@ -13,6 +13,7 @@ import { ReplicationDiagram } from "./ReplicationDiagram";
 
 import { CdnHttpCachingDiagram } from "./CdnHttpCachingDiagram";
 import { ObjectStorageDiagram } from "./ObjectStorageDiagram";
+import { SharedFileStorageDiagram } from "./SharedFileStorageDiagram";
 import { BlockStorageDiagram } from "./BlockStorageDiagram";
 import { DnsDiagram } from "./DnsDiagram";
 import { ApiGatewayDiagram } from "./ApiGatewayDiagram";
@@ -39,6 +40,7 @@ const diagrams = {
   "cdn-http-caching": CdnHttpCachingDiagram,
   "object-storage": ObjectStorageDiagram,
   "block-storage": BlockStorageDiagram,
+  "shared-file-storage": SharedFileStorageDiagram,
 } satisfies Record<LessonId, typeof LessonDiagram>;
 
 export function LessonDialog({ lessonId, onClose }: { lessonId: LessonId; onClose: () => void }) {

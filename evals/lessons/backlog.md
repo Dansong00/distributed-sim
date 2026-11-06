@@ -1,6 +1,6 @@
 # Autonomous learning stack backlog
 
-Status is local source coverage, not a claim of quality. All stacks require the new eval before being called approved. Existing source currently has Client / Server Model, API Server, Database Overview, CAP, Replication, PostgreSQL, SQLite, MySQL, Caching Fundamentals, Message Queues and Background Workers, Load Balancing, API Gateways, DNS, and CDN and HTTP Caching, Key-Value Data Access, and Object Storage. The first fourteen retain the concept-first teaching described in [the editorial release](CONCEPT-FIRST-RELEASE.md); subsequent additions and their current evidence are tracked in each release report, most recently [Object Storage](releases/object-storage/REPORT.md). This assesses content readiness, not human learning.
+Status is local source coverage, not a claim of quality. All stacks require the new eval before being called approved. Existing source currently has Client / Server Model, API Server, Database Overview, CAP, Replication, PostgreSQL, SQLite, MySQL, Caching Fundamentals, Message Queues and Background Workers, Load Balancing, API Gateways, DNS, and CDN and HTTP Caching, Key-Value Data Access, Object Storage, Block Storage, and Shared File Storage. The first fourteen retain the concept-first teaching described in [the editorial release](CONCEPT-FIRST-RELEASE.md); subsequent additions and their current evidence are tracked in each release report, most recently [Shared File Storage](releases/shared-file-storage/REPORT.md). This assesses content readiness, not human learning.
 
 Default order is shared foundations first, then named technologies. The user selected Key-Value Data Access after CDN and HTTP caching, then asked to continue Object Storage from the existing Cursor PR29. Future scope corrections override this order.
 
@@ -22,13 +22,14 @@ Object Storage is implemented for Generic Object Storage, S3 and Google Cloud St
 
 Block Storage is implemented for Generic Block Storage and Amazon EBS. It separates volume blocks from filesystem/database layers and covers safe setup, persistence, write completion, shared access, snapshots/recovery, performance and workload fit. See releases/block-storage/REPORT.md for current release evidence.
 
+Shared File Storage is implemented for Generic File Storage and Amazon EFS. It covers the file interface and mount path, caching and completion, concurrent updates, identities and permissions, failure scope, recovery, performance and workload fit. See releases/shared-file-storage/REPORT.md for current evidence.
+
 Next, in prerequisite order:
-1. Shared file storage.
-2. Sharding and partition keys; document databases.
-3. Wide-column, graph, geospatial, time-series, search, analytics, and vector retrieval foundations.
-4. Data lakes; lakehouses and table formats; model artifact storage.
-5. Embeddings; retrieval; reranking; model serving; feature stores; model registries.
-6. Serverless execution and client-specific topics where the shared client/server foundation leaves meaningful gaps.
+1. Sharding and partition keys; document databases.
+2. Wide-column, graph, geospatial, time-series, search, analytics, and vector retrieval foundations.
+3. Data lakes; lakehouses and table formats; model artifact storage.
+4. Embeddings; retrieval; reranking; model serving; feature stores; model registries.
+5. Serverless execution and client-specific topics where the shared client/server foundation leaves meaningful gaps.
 
 Connect each stack through its concepts, mechanisms or decisions. Use concrete examples only where they clarify the idea; no example is required on every card, and no application should be the default story across modules. Separate topics only when each has a distinct learning outcome. Do not create repetitive decks merely to fill an icon count. Generic database coverage does not complete specialist database topics.
 
