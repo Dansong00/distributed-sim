@@ -1,0 +1,317 @@
+{
+  "audience": "Application engineers learning the block-storage foundations shared by Generic Block Storage and Amazon EBS. Teach storage-specific terms and boundaries directly. Use examples only when they clarify a mechanism or decision; no recurring application is required.",
+  "prerequisites": [
+    "A program runs on a host computer and can fail; data kept only in volatile memory can be lost when that host stops or crashes.",
+    "Applications store bytes and can use a database for records. No knowledge of block devices, filesystems, cloud volumes, snapshots or storage performance units is assumed."
+  ],
+  "objectives": [
+    {
+      "id": "volume-and-layers",
+      "description": "Define a block-addressed volume and distinguish its interface from filesystem and database responsibilities."
+    },
+    {
+      "id": "safe-provisioning",
+      "description": "Distinguish provision, attach, format and mount while protecting existing volume data."
+    },
+    {
+      "id": "persistence-and-scope",
+      "description": "Separate volume persistence, deletion policy and failure-domain availability, using EBS as a scoped example."
+    },
+    {
+      "id": "write-completion",
+      "description": "Explain volatile caches and the scope of write and flush completion without inventing universal durability guarantees."
+    },
+    {
+      "id": "shared-access",
+      "description": "Explain why multiple attachments do not provide coordinated shared filesystem or transaction semantics."
+    },
+    {
+      "id": "snapshots-and-recovery",
+      "description": "Distinguish a point-in-time volume snapshot from application-consistent recovery and a tested retention policy."
+    },
+    {
+      "id": "performance-basics",
+      "description": "Distinguish capacity, IOPS, throughput and latency and reason about workload and host/volume bottlenecks."
+    },
+    {
+      "id": "workload-fit",
+      "description": "Choose block, file, object or database responsibilities from the required access pattern and operational needs."
+    }
+  ],
+  "questions": [
+    {
+      "id": "model-and-provision",
+      "question": "What is a block-storage volume, and how are its bytes addressed and updated? In a database using files on a volume, which layer supplies block reads and writes, which supplies filenames and directories, and which supplies records, queries and transactions? Does attaching a volume create those higher layers? Distinguish provisioning, attaching, formatting and mounting a volume for file use. Before preparing a newly attached device, what must you check? How should a verified empty volume differ from a restored volume with an existing filesystem, and why is automatically formatting every attached device unsafe?",
+      "criteria": [
+        "A volume is a disk-like storage device exposing addressable blocks; software reads or overwrites ranges without replacing one whole stored object.",
+        "A filesystem organizes stored blocks into files, directories and filesystem metadata. A database using those files supplies its own records, queries and transaction rules; block storage does not understand them.",
+        "Attaching makes the device accessible to a host. It does not by itself create a filesystem or database.",
+        "Provisioning creates or allocates the volume; attaching exposes its device to a host; formatting creates a filesystem; mounting makes that filesystem accessible at a location in the host filesystem tree.",
+        "Identify the intended device and inspect whether it already holds data or a filesystem. Create a filesystem only on the verified empty intended volume when file use requires one; mount a suitable existing filesystem without reformatting.",
+        "Formatting an existing volume overwrites filesystem structures and destroys access to existing data, including data restored from a snapshot. Attachment is not evidence that a volume is empty."
+      ],
+      "criticalMisconceptions": [
+        "Block storage inherently provides files, SQL queries or database transactions.",
+        "Every attach or snapshot restore requires formatting."
+      ]
+    },
+    {
+      "id": "persistence-and-write-completion",
+      "question": "What does persistent block storage promise relative to a host process or instance lifetime, and what does it not promise about deletion or availability? For Amazon EBS, explain deletion-on-termination configuration and the Availability Zone boundary for attachment and replication. Why does persistence not imply that a volume remains usable during a zone outage or is protected from accidental deletion? An application reports a successful ordinary buffered write and the host then crashes. Why can recently written data be missing even on a persistent volume? Trace the role of volatile application or operating-system caches and a supported durable flush or database durability operation. What completion and failure checks are needed, and why does even a successful flush not promise survival of every failure or a complete multi-write transaction?",
+      "criteria": [
+        "Persistent volumes can retain stored data beyond a host process or instance lifetime, but retention depends on the service lifecycle and configured deletion policies; persistence is not an unconditional never-delete promise.",
+        "Amazon EBS volumes can persist independently of an EC2 instance, but a configured delete-on-termination setting can delete a volume when its instance terminates. Inspect the actual setting instead of assuming all attached volumes survive.",
+        "EBS attachment is within the same Availability Zone and its volume replication is within that zone. Redundancy against component failure does not establish access during a zone outage or recovery from deletion. Generic block storage does not imply the same provider topology.",
+        "An ordinary buffered write can complete while bytes remain in volatile application or operating-system memory; a crash can lose bytes that did not reach the storage durability boundary. Persistent storage cannot preserve bytes never delivered to it.",
+        "The application or database must use the appropriate supported durability operation, arrange for relevant buffered data to reach storage, await completion and handle errors. A filesystem flush such as fsync participates in this path; the actual guarantees depend on the operating system, storage stack and provider contract.",
+        "A successful durability operation covers its specified data and failure model, not arbitrary disasters, later deletion or automatic atomicity across related writes. Database transaction and recovery rules remain a separate responsibility."
+      ],
+      "criticalMisconceptions": [
+        "Persistent means undeletable or always available.",
+        "An EBS volume is automatically a live cross-zone disk.",
+        "Every successful write means all bytes are durable.",
+        "A flush creates a database transaction or guarantees survival of every failure."
+      ]
+    },
+    {
+      "id": "concurrent-access",
+      "question": "Two hosts are offered simultaneous access to one block volume. Does that make an ordinary filesystem safe for concurrent mounting and writing? Explain the cache and metadata coordination problem, what multi-attach does and does not supply, and a safer choice for applications that simply need shared files. What must be verified before choosing coordinated shared block access?",
+      "criteria": [
+        "Multi-attach exposes the same block device to multiple hosts where supported; it does not itself coordinate their filesystem caches, metadata updates or application transactions.",
+        "Independent ordinary filesystems can make conflicting assumptions and overwrite shared metadata or data, causing corruption. Do not concurrently mount and write a normal single-host filesystem merely because attachment succeeds.",
+        "Use a shared file service when shared files are the requirement, or a filesystem/application explicitly designed for coordinated shared block access. Verify provider attachment support and the chosen software coordination requirements; no advanced coordination implementation is required here."
+      ],
+      "criticalMisconceptions": [
+        "Multi-attach is a shared filesystem or automatic distributed transaction mechanism."
+      ]
+    },
+    {
+      "id": "snapshot-recovery",
+      "question": "What state does a volume snapshot preserve, and why can a snapshot taken during active writes fail to represent a complete application update? For EBS, are application or operating-system cached bytes included? Describe a supported way to prepare a recoverable snapshot and restore it safely. Why are retained recovery points and restore tests still required even when snapshots exist?",
+      "criteria": [
+        "A snapshot preserves a point-in-time volume state for recovery; it does not automatically capture a complete application transaction. EBS snapshots include data written to the volume, not bytes still cached by the application or operating system.",
+        "Use the application or database supported backup/consistent-snapshot procedure, coordinating flushing and pausing writes when required. Crash-recoverable volume state and an application-consistent backup are different; do not assume that snapshot success establishes the latter.",
+        "Restore the snapshot into a volume, attach it appropriately and use its existing filesystem without formatting. Retain suitable historical recovery points and test restoration plus application usability against recovery needs; a snapshot alone proves neither useful history nor successful timely recovery."
+      ],
+      "criticalMisconceptions": [
+        "Every live snapshot is application-consistent.",
+        "A snapshot replaces retention planning and restore testing."
+      ]
+    },
+    {
+      "id": "performance-limits",
+      "question": "Define storage capacity, IOPS, throughput and I/O latency. Why can many small random requests and a large sequential scan stress different limits? If increasing a volume performance setting does not improve observed application latency, which workload, host and volume constraints should you inspect before buying more performance?",
+      "criteria": [
+        "Capacity is how much data can be stored; IOPS is I/O operations per second; throughput is bytes transferred per second; latency is time for an I/O to complete. More capacity alone does not promise faster I/O.",
+        "Small operations can reach an operations-per-second limit with modest byte throughput; large sequential transfers can reach a byte-throughput limit with fewer operations. Actual behavior depends on I/O size, access pattern and workload rather than a universal product ranking.",
+        "Measure representative workload demand, I/O size, observed latency and queued requests; compare both volume and host/storage-path limits. A host limit, workload behavior or waiting elsewhere can prevent a larger volume setting from improving application latency."
+      ],
+      "criticalMisconceptions": [
+        "More capacity or provisioned IOPS guarantees lower application latency."
+      ]
+    },
+    {
+      "id": "choose-storage-role",
+      "question": "Choose and justify the storage role for each need: an operating-system disk or database engine updating ranges in its local files; several hosts sharing named files and directories; blobs retrieved by object key; and application records queried by fields with transactions. Can a database use block storage underneath? Explain the management and recovery responsibilities that remain when choosing a block volume.",
+      "criteria": [
+        "Block storage fits a disk-like interface for operating-system and database files with range updates; a database may use block-backed files while still implementing its own record and transaction semantics.",
+        "A shared file service supplies shared filesystem operations; object storage supplies object/key access; a database supplies record queries and transactions. These interfaces answer different requirements, so an attached block volume is not by itself a substitute for them.",
+        "Block-volume users still manage the relevant filesystem or database, safe attachment/lifecycle settings, capacity/performance and tested recovery. Choose from access pattern, sharing and recovery requirements rather than assuming a disk-like interface removes these costs."
+      ],
+      "criticalMisconceptions": [
+        "A block volume replaces a database engine or shared file service by itself."
+      ]
+    }
+  ],
+  "diagramFile": "src/learn/BlockStorageDiagram.tsx",
+  "cards": [
+    {
+      "id": "volume-and-layers",
+      "slide": 1,
+      "objective": "Define a block-addressed volume and distinguish its interface from filesystem and database responsibilities.",
+      "prerequisites": [],
+      "questions": [
+        {
+          "id": "volume-and-layers-card",
+          "question": "What is a block-storage volume, and how are its bytes addressed and updated? In a database using files on a volume, which layer supplies block reads and writes, which supplies filenames and directories, and which supplies records, queries and transactions? Does attaching a volume create those higher layers?",
+          "criteria": [
+            "A volume is a disk-like storage device exposing addressable blocks; software reads or overwrites ranges without replacing one whole stored object.",
+            "A filesystem organizes stored blocks into files, directories and filesystem metadata. A database using those files supplies its own records, queries and transaction rules; block storage does not understand them.",
+            "Attaching makes the device accessible to a host. It does not by itself create a filesystem or database."
+          ],
+          "criticalMisconceptions": [
+            "Block storage inherently provides files, SQL queries or database transactions."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "safe-provisioning",
+      "slide": 2,
+      "objective": "Distinguish provision, attach, format and mount while protecting existing volume data.",
+      "prerequisites": [
+        "volume-and-layers"
+      ],
+      "questions": [
+        {
+          "id": "safe-provisioning-card",
+          "question": "Distinguish provisioning, attaching, formatting and mounting a volume for file use. Before preparing a newly attached device, what must you check? How should a verified empty volume differ from a restored volume with an existing filesystem, and why is automatically formatting every attached device unsafe?",
+          "criteria": [
+            "Provisioning creates or allocates the volume; attaching exposes its device to a host; formatting creates a filesystem; mounting makes that filesystem accessible at a location in the host filesystem tree.",
+            "Identify the intended device and inspect whether it already holds data or a filesystem. Create a filesystem only on the verified empty intended volume when file use requires one; mount a suitable existing filesystem without reformatting.",
+            "Formatting an existing volume overwrites filesystem structures and destroys access to existing data, including data restored from a snapshot. Attachment is not evidence that a volume is empty."
+          ],
+          "criticalMisconceptions": [
+            "Every attach or snapshot restore requires formatting."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "persistence-and-scope",
+      "slide": 3,
+      "objective": "Separate volume persistence, deletion policy and failure-domain availability, using EBS as a scoped example.",
+      "prerequisites": [
+        "volume-and-layers",
+        "safe-provisioning"
+      ],
+      "questions": [
+        {
+          "id": "persistence-and-scope-card",
+          "question": "What does persistent block storage promise relative to a host process or instance lifetime, and what does it not promise about deletion or availability? For Amazon EBS, explain deletion-on-termination configuration and the Availability Zone boundary for attachment and replication. Why does persistence not imply that a volume remains usable during a zone outage or is protected from accidental deletion?",
+          "criteria": [
+            "Persistent volumes can retain stored data beyond a host process or instance lifetime, but retention depends on the service lifecycle and configured deletion policies; persistence is not an unconditional never-delete promise.",
+            "Amazon EBS volumes can persist independently of an EC2 instance, but a configured delete-on-termination setting can delete a volume when its instance terminates. Inspect the actual setting instead of assuming all attached volumes survive.",
+            "EBS attachment is within the same Availability Zone and its volume replication is within that zone. Redundancy against component failure does not establish access during a zone outage or recovery from deletion. Generic block storage does not imply the same provider topology."
+          ],
+          "criticalMisconceptions": [
+            "Persistent means undeletable or always available.",
+            "An EBS volume is automatically a live cross-zone disk."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "write-completion",
+      "slide": 4,
+      "objective": "Explain volatile caches and the scope of write and flush completion without inventing universal durability guarantees.",
+      "prerequisites": [
+        "volume-and-layers",
+        "persistence-and-scope"
+      ],
+      "questions": [
+        {
+          "id": "write-completion-card",
+          "question": "An application reports a successful ordinary buffered write and the host then crashes. Why can recently written data be missing even on a persistent volume? Trace the role of volatile application or operating-system caches and a supported durable flush or database durability operation. What completion and failure checks are needed, and why does even a successful flush not promise survival of every failure or a complete multi-write transaction?",
+          "criteria": [
+            "An ordinary buffered write can complete while bytes remain in volatile application or operating-system memory; a crash can lose bytes that did not reach the storage durability boundary. Persistent storage cannot preserve bytes never delivered to it.",
+            "The application or database must use the appropriate supported durability operation, arrange for relevant buffered data to reach storage, await completion and handle errors. A filesystem flush such as fsync participates in this path; the actual guarantees depend on the operating system, storage stack and provider contract.",
+            "A successful durability operation covers its specified data and failure model, not arbitrary disasters, later deletion or automatic atomicity across related writes. Database transaction and recovery rules remain a separate responsibility."
+          ],
+          "criticalMisconceptions": [
+            "Every successful write means all bytes are durable.",
+            "A flush creates a database transaction or guarantees survival of every failure."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "shared-access",
+      "slide": 5,
+      "objective": "Explain why multiple attachments do not provide coordinated shared filesystem or transaction semantics.",
+      "prerequisites": [
+        "volume-and-layers",
+        "safe-provisioning",
+        "write-completion"
+      ],
+      "questions": [
+        {
+          "id": "shared-access-card",
+          "question": "Two hosts are offered simultaneous access to one block volume. Does that make an ordinary filesystem safe for concurrent mounting and writing? Explain the cache and metadata coordination problem, what multi-attach does and does not supply, and a safer choice for applications that simply need shared files. What must be verified before choosing coordinated shared block access?",
+          "criteria": [
+            "Multi-attach exposes the same block device to multiple hosts where supported; it does not itself coordinate their filesystem caches, metadata updates or application transactions.",
+            "Independent ordinary filesystems can make conflicting assumptions and overwrite shared metadata or data, causing corruption. Do not concurrently mount and write a normal single-host filesystem merely because attachment succeeds.",
+            "Use a shared file service when shared files are the requirement, or a filesystem/application explicitly designed for coordinated shared block access. Verify provider attachment support and the chosen software coordination requirements; no advanced coordination implementation is required here."
+          ],
+          "criticalMisconceptions": [
+            "Multi-attach is a shared filesystem or automatic distributed transaction mechanism."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "snapshots-and-recovery",
+      "slide": 6,
+      "objective": "Distinguish a point-in-time volume snapshot from application-consistent recovery and a tested retention policy.",
+      "prerequisites": [
+        "safe-provisioning",
+        "persistence-and-scope",
+        "write-completion"
+      ],
+      "questions": [
+        {
+          "id": "snapshots-and-recovery-card",
+          "question": "What state does a volume snapshot preserve, and why can a snapshot taken during active writes fail to represent a complete application update? For EBS, are application or operating-system cached bytes included? Describe a supported way to prepare a recoverable snapshot and restore it safely. Why are retained recovery points and restore tests still required even when snapshots exist?",
+          "criteria": [
+            "A snapshot preserves a point-in-time volume state for recovery; it does not automatically capture a complete application transaction. EBS snapshots include data written to the volume, not bytes still cached by the application or operating system.",
+            "Use the application or database supported backup/consistent-snapshot procedure, coordinating flushing and pausing writes when required. Crash-recoverable volume state and an application-consistent backup are different; do not assume that snapshot success establishes the latter.",
+            "Restore the snapshot into a volume, attach it appropriately and use its existing filesystem without formatting. Retain suitable historical recovery points and test restoration plus application usability against recovery needs; a snapshot alone proves neither useful history nor successful timely recovery."
+          ],
+          "criticalMisconceptions": [
+            "Every live snapshot is application-consistent.",
+            "A snapshot replaces retention planning and restore testing."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "performance-basics",
+      "slide": 7,
+      "objective": "Distinguish capacity, IOPS, throughput and latency and reason about workload and host/volume bottlenecks.",
+      "prerequisites": [
+        "volume-and-layers",
+        "write-completion"
+      ],
+      "questions": [
+        {
+          "id": "performance-basics-card",
+          "question": "Define storage capacity, IOPS, throughput and I/O latency. Why can many small random requests and a large sequential scan stress different limits? If increasing a volume performance setting does not improve observed application latency, which workload, host and volume constraints should you inspect before buying more performance?",
+          "criteria": [
+            "Capacity is how much data can be stored; IOPS is I/O operations per second; throughput is bytes transferred per second; latency is time for an I/O to complete. More capacity alone does not promise faster I/O.",
+            "Small operations can reach an operations-per-second limit with modest byte throughput; large sequential transfers can reach a byte-throughput limit with fewer operations. Actual behavior depends on I/O size, access pattern and workload rather than a universal product ranking.",
+            "Measure representative workload demand, I/O size, observed latency and queued requests; compare both volume and host/storage-path limits. A host limit, workload behavior or waiting elsewhere can prevent a larger volume setting from improving application latency."
+          ],
+          "criticalMisconceptions": [
+            "More capacity or provisioned IOPS guarantees lower application latency."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "workload-fit",
+      "slide": 8,
+      "objective": "Choose block, file, object or database responsibilities from the required access pattern and operational needs.",
+      "prerequisites": [
+        "volume-and-layers",
+        "persistence-and-scope",
+        "shared-access",
+        "snapshots-and-recovery",
+        "performance-basics"
+      ],
+      "questions": [
+        {
+          "id": "workload-fit-card",
+          "question": "Choose and justify the storage role for each need: an operating-system disk or database engine updating ranges in its local files; several hosts sharing named files and directories; blobs retrieved by object key; and application records queried by fields with transactions. Can a database use block storage underneath? Explain the management and recovery responsibilities that remain when choosing a block volume.",
+          "criteria": [
+            "Block storage fits a disk-like interface for operating-system and database files with range updates; a database may use block-backed files while still implementing its own record and transaction semantics.",
+            "A shared file service supplies shared filesystem operations; object storage supplies object/key access; a database supplies record queries and transactions. These interfaces answer different requirements, so an attached block volume is not by itself a substitute for them.",
+            "Block-volume users still manage the relevant filesystem or database, safe attachment/lifecycle settings, capacity/performance and tested recovery. Choose from access pattern, sharing and recovery requirements rather than assuming a disk-like interface removes these costs."
+          ],
+          "criticalMisconceptions": [
+            "A block volume replaces a database engine or shared file service by itself."
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -128,6 +128,21 @@ it("offers DNS only for network DNS technology after renaming", () => {
   }
 });
 
+it("offers block storage by component type, independent of display name and technology", () => {
+  for (const preset of ["generic-block-storage", "amazon-ebs"]) {
+    const node = createComponent(preset, { x: 0, y: 0 });
+    node.name = "Database volume";
+    node.technology = undefined;
+    expect(lessonsFor({ ...node, category: undefined })).toEqual(["block-storage"]);
+    expect(lessonsFor({ ...node, kind: "sticky" })).toEqual([]);
+  }
+  for (const preset of ["generic-object-storage", "generic-file-storage", "generic-data-lake", "postgresql"]) {
+    const node = createComponent(preset, { x: 0, y: 0 });
+    node.name = "Amazon EBS";
+    expect(lessonsFor(node)).not.toContain("block-storage");
+  }
+});
+
 it("offers object storage only for object-storage components after renaming", () => {
   const node = createComponent("s3", { x: 0, y: 0 });
   node.name = "Note files";
@@ -137,7 +152,7 @@ it("offers object storage only for object-storage components after renaming", ()
   expect(lessonsFor(createComponent("google-cloud-storage", { x: 0, y: 0 }))).toEqual(["object-storage"]);
   expect(lessonsFor({ ...node, category: undefined })).toEqual(["object-storage"]);
   expect(lessonsFor({ ...node, kind: "sticky" })).toEqual([]);
-  expect(lessonsFor({ ...node, componentType: "block-storage" })).toEqual([]);
+  expect(lessonsFor({ ...node, componentType: "block-storage" })).not.toContain("object-storage");
   for (const preset of ["generic-block-storage", "generic-file-storage", "generic-data-lake", "cdn"]) {
     const other = createComponent(preset, { x: 0, y: 0 });
     other.name = "S3";
