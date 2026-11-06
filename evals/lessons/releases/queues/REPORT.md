@@ -1,7 +1,7 @@
 # Message Queues and Background Workers release evidence
 
-Content, diagram, eligibility and contract are unchanged from the [concept-first release](../../CONCEPT-FIRST-RELEASE.md). Registering the key-value diagram changed the shared renderer binding, so this release uses fresh actual evidence.
+Content, diagram, eligibility, contract and rubric are unchanged from [the previous release](https://github.com/Dansong00/distributed-sim/blob/c993cc17f453b6fafcec3cf0df1232ed62033f46/evals/lessons/releases/queues/REPORT.md). Registering the object-storage diagram changed the shared renderer binding, so this release uses fresh actual evidence.
 
-Learner `/root/kv_refresh_f10`; independent reviewers `/root/kv_refresh_review_a` and `/root/kv_refresh_review_b`. Scores **20/20 and 20/20**, every outcome 2/2, no hard failures. Every objective, diagram meaning and distinct primary source checked. Adjacent JSON files are byte-identical copies of the finalized reports.
+Learner `/root/object_refresh_u10`; independent reviewers `/root/object_review_a` and `/root/object_review_b`. Scores **20/20 and 20/20**, every outcome 2/2, no hard failures. Every objective, diagram meaning and distinct linked primary source checked. Adjacent JSON files are byte-identical copies of finalized reports.
 
-`npm run eval:lessons -- check-release queues evals/lessons/releases/queues` passes against current source. [Shared verification and external archive](../key-value/REPORT.md); [previous report](https://github.com/Dansong00/distributed-sim/blob/6a7b04f97eaea09853a1bff2f66d24e47f9845aa/evals/lessons/releases/queues/REPORT.md). These checks assess content readiness, not human learning.
+`npm run eval:lessons -- check-release queues evals/lessons/releases/queues` passes against current source. [Shared verification and external archive](../object-storage/REPORT.md). These checks assess content readiness, not human learning.
