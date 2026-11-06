@@ -12,8 +12,35 @@ Both reviewers rejected the false claim that a timeout proves absence and makes 
 
 ## Shared renderer and verification
 
-Registering the diagram changes the shared LessonDialog asset bound into all fifteen existing lesson hashes. Their content, diagrams, eligibility, contracts and rubric are unchanged from main. Fresh evidence is being completed under the current gate; old hashes are never relabeled.
+Registering the diagram changes the shared LessonDialog asset bound into all fifteen existing lesson hashes. Their content, diagrams, eligibility, contracts and rubric are unchanged from main. Fresh learners and two independent review sessions refreshed all fifteen reports. All sixteen current-source gates pass against both external and retained evidence; CI requires every gate without downloading archives.
 
-233 application tests and the production build pass. Browser checks, refreshed evaluator checks, final independent correctness/Ponytail review and archive checksum are recorded after completion in the [implementation ledger](../../../../docs/superpowers/plans/2026-11-03-object-storage-learning-stack.md).
+233 application tests, 98 evaluator tests and the production build pass. After integrating main’s panel changes, all 22 affected browser journeys pass across the completed run and focused retry: five Object Storage, seven Key-Value Data Access, four component lessons and six panel journeys. Two initial screenshot-capture stalls are preserved in the external evidence; the same tests and timeouts were retried without code changes. All eight new cards are traversed at desktop, short-height and phone sizes, with source/control reachability, keyboard isolation, focus/reset and canvas preservation assertions. Phone diagram screenshots, short-screen final-card text and the phone timeout-card trace snapshot were inspected. Doctor passed; owned servers and the temporary trace tab were closed. Independent correctness/Ponytail review is recorded in the [implementation ledger](../../../../docs/superpowers/plans/2026-11-03-object-storage-learning-stack.md).
 
 Original Cursor reports and source are preserved in Git history at `a043a54159136ed15438b64e019b0609d6bb99ba` and copied into the new external archive. Its remote-run archive claim was not independently verified and is not used as current release evidence. Raw packets, controls and browser proof remain outside Git.
+
+| Stack | Review scores /20 |
+| --- | --- |
+| object-storage | 20 / 20 |
+| client-server | 20 / 20 |
+| api-server | 20 / 20 |
+| databases | 20 / 20 |
+| cap | 20 / 20 |
+| replication | 20 / 20 |
+| postgresql | 20 / 20 |
+| sqlite | 20 / 20 |
+| mysql | 20 / 20 |
+| caching | 20 / 20 |
+| queues | 20 / 20 |
+| load-balancing | 20 / 20 |
+| api-gateways | 20 / 20 |
+| dns | 20 / 20 |
+| cdn-http-caching | 20 / 20 |
+| key-value | 20 / 20 |
+
+## External archive
+
+- Archive: `/Users/danielansong/Documents/learning-eval-archives/system-canvas/2026-11-05-object-storage-0372312/evidence.tar.gz`
+- SHA-256: `c538d69977a59bf23c5f83dfba223c345f33398e5f95db15e565aa54ef921216`
+- 572 files; 92,424,392 compressed bytes. Every archived file byte-compared against its source.
+
+Includes the original Cursor snapshot, contract-freeze notes, packets, actual learner/reviewer outputs, blind control and key, gate/test logs, source comparison and browser proof. Final code review and deployment records live beside the sealed archive.

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Boxes, FolderOpen, Plus, Upload, Copy, Download, Trash2 } from "lucide-react";
+import { Boxes, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, FolderOpen, Plus, Upload, Copy, Download, Trash2 } from "lucide-react";
 import { EditableTitle } from "./EditableTitle";
 import { FileMenu } from "./FileMenu";
 import "./header.css";
@@ -17,6 +17,7 @@ import type { HistoryAction } from "../domain/history";
 import type { Viewport } from "../domain/model";
 import { Toolbar } from "../editor/Toolbar";
 import { ConnectorPreferencesContext, readConnectorPreferences, saveConnectorPreferences, type ConnectorPreferences } from "../editor/connector-preferences";
+import "../editor/panels.css";
 const store = createDiagramStore();
 export function App() {
   const [connectorPreferences, setConnectorPreferences] = useState(readConnectorPreferences);
@@ -43,6 +44,17 @@ export function App() {
     "new" | "delete" | "reload" | "discard" | null
   >(null);
   const [panel, setPanel] = useState<"components" | "properties" | null>(null);
+  const [componentsOpen, setComponentsOpen] = useState(true);
+  const [propertiesOpen, setPropertiesOpen] = useState(true);
+  const [compact, setCompact] = useState(() => window.innerWidth <= 900);
+  useEffect(() => {
+    const update = () => setCompact(window.innerWidth <= 900);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+  const componentsVisible = compact ? panel === "components" : componentsOpen;
+  const propertiesVisible = compact ? panel === "properties" : propertiesOpen;
   const [error, setError] = useState("");
   const input = useRef<HTMLInputElement>(null);
   async function run(action: () => Promise<unknown>, close = true) {
@@ -326,27 +338,33 @@ export function App() {
         </main>
       ) : (
         <div
-          className={`workspace panel-${panel ?? "none"}`}
+          className={`workspace panel-${panel ?? "none"}${componentsOpen ? "" : " components-collapsed"}${propertiesOpen ? "" : " properties-collapsed"}`}
           inert={session.busy && !locked}
         >
           <nav className="panel-switches" aria-label="Editor panels">
             <button
-              aria-expanded={panel === "components"}
+              aria-expanded={componentsVisible}
               aria-label="Components panel"
+              title={`${componentsVisible ? "Hide" : "Show"} Components panel`}
               onClick={() =>
-                setPanel(panel === "components" ? null : "components")
+                compact
+                  ? setPanel(panel === "components" ? null : "components")
+                  : setComponentsOpen(!componentsOpen)
               }
             >
-              Components
+              {componentsVisible ? <PanelLeftClose size={18} aria-hidden="true" /> : <PanelLeftOpen size={18} aria-hidden="true" />}
             </button>
             <button
-              aria-expanded={panel === "properties"}
+              aria-expanded={propertiesVisible}
               aria-label="Properties panel"
+              title={`${propertiesVisible ? "Hide" : "Show"} Properties panel`}
               onClick={() =>
-                setPanel(panel === "properties" ? null : "properties")
+                compact
+                  ? setPanel(panel === "properties" ? null : "properties")
+                  : setPropertiesOpen(!propertiesOpen)
               }
             >
-              Properties
+              {propertiesVisible ? <PanelRightClose size={18} aria-hidden="true" /> : <PanelRightOpen size={18} aria-hidden="true" />}
             </button>
           </nav>
           <Palette disabled={blocked} onAdd={(id) => { if (!cleanupLock.current) canvas.current?.add(id); }} />
