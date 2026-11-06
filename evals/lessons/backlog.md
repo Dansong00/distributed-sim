@@ -20,8 +20,10 @@ Key-Value Data Access is implemented for Generic Database, DynamoDB, Generic Cac
 
 Object Storage is implemented for Generic Object Storage, S3 and Google Cloud Storage. It covers bucket/key/object semantics, separate database references, whole-object replacement, reads/listing, uncertain uploads, durability/recovery, access boundaries and workload placement. See releases/object-storage/REPORT.md for current release evidence.
 
+Block Storage is implemented for Generic Block Storage and Amazon EBS. It separates volume blocks from filesystem/database layers and covers safe setup, persistence, write completion, shared access, snapshots/recovery, performance and workload fit. See releases/block-storage/REPORT.md for current release evidence.
+
 Next, in prerequisite order:
-1. Block storage; shared file storage.
+1. Shared file storage.
 2. Sharding and partition keys; document databases.
 3. Wide-column, graph, geospatial, time-series, search, analytics, and vector retrieval foundations.
 4. Data lakes; lakehouses and table formats; model artifact storage.
