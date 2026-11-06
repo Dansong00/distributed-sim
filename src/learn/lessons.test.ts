@@ -196,3 +196,20 @@ it.each(["postgresql", "mysql", "sqlite", "mongodb", "api-server", "generic-queu
   node.name = "Redis";
   expect(lessonsFor(node)).not.toContain("key-value");
 });
+
+
+it("routes file storage by type despite renamed or missing technology", () => {
+  for (const preset of ["generic-file-storage", "amazon-efs"]) {
+    const node = createComponent(preset, { x: 0, y: 0 });
+    node.name = "Shared assets";
+    node.technology = undefined;
+    node.category = undefined;
+    expect(lessonsFor(node)).toEqual(["shared-file-storage"]);
+    expect(lessonsFor({ ...node, kind: "sticky" })).toEqual([]);
+  }
+  for (const preset of ["generic-block-storage", "generic-object-storage", "postgresql"]) {
+    const node = createComponent(preset, { x: 0, y: 0 });
+    node.name = "Amazon EFS";
+    expect(lessonsFor(node)).not.toContain("shared-file-storage");
+  }
+});

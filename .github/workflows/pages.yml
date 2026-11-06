@@ -61,6 +61,8 @@ jobs:
         run: npm run eval:lessons -- check-release object-storage evals/lessons/releases/object-storage
       - name: Verify block-storage release evidence
         run: npm run eval:lessons -- check-release block-storage evals/lessons/releases/block-storage
+      - name: Verify shared-file-storage release evidence
+        run: npm run eval:lessons -- check-release shared-file-storage evals/lessons/releases/shared-file-storage
       - name: Build for the repository URL
         run: npm run build -- --base /distributed-sim/
       - name: Upload site artifact

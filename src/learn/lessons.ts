@@ -14,15 +14,17 @@ import { apiGatewaysLesson } from "./api-gateways";
 import { loadBalancingLesson } from "./load-balancing";
 import { queuesLesson } from "./queues";
 import { cachingLesson } from "./caching";
+import { sharedFileStorageLesson } from "./shared-file-storage";
 import { blockStorageLesson } from "./block-storage";
 import { objectStorageLesson } from "./object-storage";
 import { keyValueLesson } from "./key-value";
 
-export const lessons = { "block-storage": blockStorageLesson, "object-storage": objectStorageLesson, "key-value": keyValueLesson, "client-server": clientServerLesson, "api-server": apiServerLesson, databases: databasesLesson, cap: capLesson, replication: replicationLesson, caching: cachingLesson, queues: queuesLesson, "load-balancing": loadBalancingLesson, "api-gateways": apiGatewaysLesson, dns: dnsLesson, "cdn-http-caching": cdnHttpCachingLesson, postgresql: postgresqlLesson, sqlite: sqliteLesson, mysql: mysqlLesson };
+export const lessons = { "shared-file-storage": sharedFileStorageLesson, "block-storage": blockStorageLesson, "object-storage": objectStorageLesson, "key-value": keyValueLesson, "client-server": clientServerLesson, "api-server": apiServerLesson, databases: databasesLesson, cap: capLesson, replication: replicationLesson, caching: cachingLesson, queues: queuesLesson, "load-balancing": loadBalancingLesson, "api-gateways": apiGatewaysLesson, dns: dnsLesson, "cdn-http-caching": cdnHttpCachingLesson, postgresql: postgresqlLesson, sqlite: sqliteLesson, mysql: mysqlLesson };
 export type LessonId = keyof typeof lessons;
 
 export function lessonsFor(node: DiagramNode): LessonId[] {
   if (node.kind !== "component") return [];
+  if (node.componentType === "file-storage") return ["shared-file-storage"];
   if (node.componentType === "block-storage") return ["block-storage"];
   if (node.componentType === "object-storage") return ["object-storage"];
   if (node.category === "Caches" || node.componentType === "cache") return ["caching", "key-value"];

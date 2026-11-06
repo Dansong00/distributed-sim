@@ -1,0 +1,351 @@
+{
+  "audience": "Application engineers learning the shared file storage foundations common to Generic File Storage and Amazon EFS. Teach concepts before provider details. No recurring application or administrative runbook is required.",
+  "prerequisites": [
+    "A program runs on a host, reads and writes bytes, and can fail. Volatile memory can be lost when a host stops.",
+    "Hosts can communicate over a network that can be slow or unavailable. No knowledge of filesystems, mounts, NFS, storage consistency, Unix permissions or cloud failure domains is assumed."
+  ],
+  "objectives": [
+    {
+      "id": "file-interface",
+      "description": "Explain shared files, directories and metadata, and distinguish file, block, object and database responsibilities."
+    },
+    {
+      "id": "mount-and-request-path",
+      "description": "Trace mounted file access from a program through a network client to the shared service."
+    },
+    {
+      "id": "caches-and-write-completion",
+      "description": "Separate client caching, cross-client visibility and durable write completion."
+    },
+    {
+      "id": "coordinated-updates",
+      "description": "Explain why shared access and individual file operations do not prevent conflicting application updates."
+    },
+    {
+      "id": "identity-and-permissions",
+      "description": "Distinguish network access, client authorization and filesystem identity and permissions."
+    },
+    {
+      "id": "availability-and-failure-scope",
+      "description": "Separate network availability, data durability and provider failure domains."
+    },
+    {
+      "id": "backup-and-recovery",
+      "description": "Plan recoverable shared-file backups with application consistency, retention and restore validation."
+    },
+    {
+      "id": "performance",
+      "description": "Reason about file-operation latency, metadata work, throughput and contention before changing capacity or parallelism."
+    },
+    {
+      "id": "workload-fit",
+      "description": "Choose shared file storage from interface and coordination needs, and state the responsibilities that remain."
+    }
+  ],
+  "questions": [
+    {
+      "id": "interface-and-mount",
+      "question": "What does a shared file service expose, and what do paths, directories and metadata mean? How does its interface differ from raw blocks, objects addressed by key, and database records and transactions? Who manages the shared filesystem? What does mounting a remote filesystem at a local directory do? Trace a file read through the program, operating-system client, network protocol and service. For EFS, what are NFS and a mount target? Does mounting copy the dataset locally or require formatting a client disk, and what must be available for remote access?",
+      "criteria": [
+        "A file is named byte content; directories organize names into paths. Metadata describes a file, such as its size, owner and permissions. Multiple clients access one shared filesystem.",
+        "The file service manages filesystem organization and serves file operations. A block device exposes addressed blocks, object storage exposes objects by key, and a database adds record queries and transaction rules. Shared file storage does not supply those database rules.",
+        "Mounting makes the remote filesystem accessible at a local path. The program uses file operations; the operating-system client sends needed requests over a network file protocol to the service. Mounting neither copies the whole dataset locally nor requires formatting a client disk.",
+        "NFS means Network File System, a protocol for remote file operations. EFS uses NFS; its mount target is a network endpoint for reaching the filesystem. A compatible client, reachable endpoint and authorized access are required."
+      ],
+      "criticalMisconceptions": [
+        "A shared file service is merely a raw block device attached to several hosts.",
+        "Shared files automatically provide database transactions.",
+        "A mount is a local independent copy that works without the service.",
+        "A shared file mount requires formatting a disk."
+      ]
+    },
+    {
+      "id": "visibility-and-coordination",
+      "question": "Why can a successful buffered write remain vulnerable to a client crash? Explain EFS close-to-open consistency when one client finishes writing and another opens the file later. Does it promise immediate freshness for a reader already holding the file open? What completion and error checks matter for durability, and what does EFS document for successful file close or synchronous completion on Regional filesystems? Two clients read a counter value of 10, each computes 11, and both write 11. Why is an increment lost even on a working shared filesystem? How can cooperative locking or a single writer prevent this, what must be protected, and what are the limits of EFS advisory locks? What if an update must change several files together?",
+      "criteria": [
+        "A client can cache file data and metadata and buffer writes in volatile memory. Ordinary buffered-write success may precede delivery to the service; persistent remote storage cannot preserve bytes that never arrived.",
+        "Under EFS close-to-open semantics, a writer closes after writing and a later opener can observe those changes. This does not promise that every already-open reader immediately sees every concurrent write; use the documented client and service semantics.",
+        "Use the supported flush or synchronous operation, such as fsync, or the documented close path, await completion and check errors. EFS documents durable storage across Availability Zones for Regional filesystem writes at synchronous completion or file close. This scope does not turn related application writes into a transaction.",
+        "A read-modify-write sequence has several steps. Two clients can read the same starting value and overwrite one another; a shared namespace and correct individual file operations do not serialize the whole sequence.",
+        "A single writer or a supported lock used by every participant must protect the full read-modify-write sequence. EFS locks are advisory: operations that ignore the lock are not automatically blocked.",
+        "A file lock does not create atomic recovery for a multi-file update. Use an application or database transaction/recovery design when related changes must succeed or fail together."
+      ],
+      "criticalMisconceptions": [
+        "Buffered-write success always means the server has durable bytes.",
+        "All clients always see every write immediately.",
+        "Sharing a filesystem prevents lost updates.",
+        "An advisory lock blocks every writer or makes several files transactional."
+      ]
+    },
+    {
+      "id": "access-control",
+      "question": "A client can reach and mount EFS but cannot write a particular file. Why is this possible? Explain file ownership, user and group IDs and read/write permissions. What does directory traversal permission mean? If the same user name has different numeric IDs on two hosts, what does EFS see? How should access be checked without granting everyone unrestricted permissions?",
+      "criteria": [
+        "Network connectivity and permission to use a filesystem do not grant permission to every file. Filesystem ownership and permissions still govern operations. EFS client authorization, including IAM when configured, is a separate layer.",
+        "EFS uses numeric user and group IDs, rather than matching user names, with Unix-style ownership and permissions. Read and write govern access to content; directory execute/search permission allows traversal of a path. The same name with different IDs can have different access.",
+        "Check the effective IDs, ownership and required file and directory permissions, alongside the client authorization policy. Align intended identities and grant only the needed access rather than making the share writable by everyone."
+      ],
+      "criticalMisconceptions": [
+        "Network access or a successful mount authorizes every file operation.",
+        "Matching user names guarantee matching EFS identity."
+      ]
+    },
+    {
+      "id": "failure-scope",
+      "question": "A healthy host loses its network route to the file service. Why can file operations stop progressing even if the stored data survives? What does an NFS hard mount do after request timeouts, and why is switching to soft retries not a harmless fix? Distinguish EFS Regional and One Zone failure scope, defining an Availability Zone. Why does storage redundancy alone not make the whole application always available or protect against accidental deletion?",
+      "criteria": [
+        "Availability means access now; durability concerns retaining stored data. A network outage can prevent access without deleting server data. On a hard NFS mount, requests can keep retrying and application I/O can wait; soft timeouts introduce error and data-integrity risks, so follow supported settings and handle failures rather than treating them as a free availability fix.",
+        "An Availability Zone is an isolated infrastructure location within a cloud Region. EFS Regional stores data across multiple zones; One Zone stores it within one, so a zone disaster can cause loss. These are EFS choices, not universal properties of shared file storage.",
+        "Application availability also requires working clients, network paths and service endpoints. Redundant storage does not prevent an authorized deletion or a bad application write."
+      ],
+      "criticalMisconceptions": [
+        "Durable data is always reachable.",
+        "All shared file storage survives a zone disaster.",
+        "Replication is protection from every deletion."
+      ]
+    },
+    {
+      "id": "recoverable-history",
+      "question": "A bad update overwrites files on a redundant share. Why can redundancy preserve the wrong state? What must a useful backup policy retain? Can an EFS backup taken while related files change be assumed to capture a consistent application state? Describe a supported preparation and restore-validation approach, including acceptable data loss and recovery time.",
+      "criteria": [
+        "Redundancy keeps copies of the current state, including bad writes or deletions; recovery needs retained earlier backups with a schedule and retention period suited to when damage may be noticed.",
+        "Do not assume a live file backup is an atomic application snapshot. AWS documents that modifications during an EFS backup can produce inconsistent results; coordinate the application and pause modifying processes for the backup when required by the supported procedure.",
+        "Restore a suitable recovery point to a controlled destination, check the restored files, access permissions and application behavior, and test how long recovery takes. Choose and verify backup frequency and retention against acceptable lost work and downtime; backup-job success alone does not prove recovery."
+      ],
+      "criticalMisconceptions": [
+        "Redundant storage replaces historical backups.",
+        "Every live backup is automatically application-consistent."
+      ]
+    },
+    {
+      "id": "performance-and-fit",
+      "question": "Define capacity, throughput, IOPS and latency. Why can repeatedly opening, looking up and closing tiny files be slower than transferring the same bytes in large reads? Why might adding clients fail to speed up a workload sharing one locked file? What should you measure before increasing storage performance or parallelism? Choose and justify a storage role for several hosts requiring existing pathname-based file operations, one host requiring a raw disk-like device, blobs retrieved by key, and records needing field queries and transactions. What should be checked before placing a database engine on shared files? What operational responsibilities remain with a managed file service?",
+      "criteria": [
+        "Capacity is stored bytes, throughput is bytes transferred per second, IOPS is operations per second, and latency is time per operation. More capacity does not itself promise faster access.",
+        "Small-file work can require many metadata operations, such as directory lookup and open/close, plus network round trips per useful byte. Larger transfers can amortize those costs; byte volume alone does not predict performance.",
+        "Measure representative operation sizes and mix, metadata activity, latency, aggregate throughput, client/network/service limits and time waiting for locks. Parallel clients help independent work but can increase contention for shared files; capacity or parallelism does not remove a serialized bottleneck.",
+        "Shared file storage fits multiple hosts needing files and directories through a supported filesystem interface. Block storage fits a disk-like device; object storage fits key-addressed blobs; a database supplies record queries and transactions.",
+        "A database can use files underneath, but must explicitly support the chosen shared filesystem and its locking, durability and recovery semantics. A shared directory is not by itself a safe multi-writer database.",
+        "Managed file storage can remove file-server administration while leaving application coordination, identities and permissions, network access, workload performance and tested recovery to be designed and checked."
+      ],
+      "criticalMisconceptions": [
+        "Equal byte counts imply equal file-service performance.",
+        "More clients or storage capacity always improves latency.",
+        "Managed shared files remove application coordination and recovery responsibilities.",
+        "Any database is safe on any network filesystem."
+      ]
+    }
+  ],
+  "diagramFile": "src/learn/SharedFileStorageDiagram.tsx",
+  "cards": [
+    {
+      "id": "file-interface",
+      "slide": 1,
+      "objective": "Explain shared files, directories and metadata, and distinguish file, block, object and database responsibilities.",
+      "prerequisites": [],
+      "questions": [
+        {
+          "id": "file-interface-card",
+          "question": "What does a shared file service expose, and what do paths, directories and metadata mean? How does its interface differ from raw blocks, objects addressed by key, and database records and transactions? Who manages the shared filesystem?",
+          "criteria": [
+            "A file is named byte content; directories organize names into paths. Metadata describes a file, such as its size, owner and permissions. Multiple clients access one shared filesystem.",
+            "The file service manages filesystem organization and serves file operations. A block device exposes addressed blocks, object storage exposes objects by key, and a database adds record queries and transaction rules. Shared file storage does not supply those database rules."
+          ],
+          "criticalMisconceptions": [
+            "A shared file service is merely a raw block device attached to several hosts.",
+            "Shared files automatically provide database transactions."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mount-and-request-path",
+      "slide": 2,
+      "objective": "Trace mounted file access from a program through a network client to the shared service.",
+      "prerequisites": [
+        "file-interface"
+      ],
+      "questions": [
+        {
+          "id": "mount-and-request-path-card",
+          "question": "What does mounting a remote filesystem at a local directory do? Trace a file read through the program, operating-system client, network protocol and service. For EFS, what are NFS and a mount target? Does mounting copy the dataset locally or require formatting a client disk, and what must be available for remote access?",
+          "criteria": [
+            "Mounting makes the remote filesystem accessible at a local path. The program uses file operations; the operating-system client sends needed requests over a network file protocol to the service. Mounting neither copies the whole dataset locally nor requires formatting a client disk.",
+            "NFS means Network File System, a protocol for remote file operations. EFS uses NFS; its mount target is a network endpoint for reaching the filesystem. A compatible client, reachable endpoint and authorized access are required."
+          ],
+          "criticalMisconceptions": [
+            "A mount is a local independent copy that works without the service.",
+            "A shared file mount requires formatting a disk."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "caches-and-write-completion",
+      "slide": 3,
+      "objective": "Separate client caching, cross-client visibility and durable write completion.",
+      "prerequisites": [
+        "mount-and-request-path"
+      ],
+      "questions": [
+        {
+          "id": "caches-and-write-completion-card",
+          "question": "Why can a successful buffered write remain vulnerable to a client crash? Explain EFS close-to-open consistency when one client finishes writing and another opens the file later. Does it promise immediate freshness for a reader already holding the file open? What completion and error checks matter for durability, and what does EFS document for successful file close or synchronous completion on Regional filesystems?",
+          "criteria": [
+            "A client can cache file data and metadata and buffer writes in volatile memory. Ordinary buffered-write success may precede delivery to the service; persistent remote storage cannot preserve bytes that never arrived.",
+            "Under EFS close-to-open semantics, a writer closes after writing and a later opener can observe those changes. This does not promise that every already-open reader immediately sees every concurrent write; use the documented client and service semantics.",
+            "Use the supported flush or synchronous operation, such as fsync, or the documented close path, await completion and check errors. EFS documents durable storage across Availability Zones for Regional filesystem writes at synchronous completion or file close. This scope does not turn related application writes into a transaction."
+          ],
+          "criticalMisconceptions": [
+            "Buffered-write success always means the server has durable bytes.",
+            "All clients always see every write immediately."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "coordinated-updates",
+      "slide": 4,
+      "objective": "Explain why shared access and individual file operations do not prevent conflicting application updates.",
+      "prerequisites": [
+        "caches-and-write-completion"
+      ],
+      "questions": [
+        {
+          "id": "coordinated-updates-card",
+          "question": "Two clients read a counter value of 10, each computes 11, and both write 11. Why is an increment lost even on a working shared filesystem? How can cooperative locking or a single writer prevent this, what must be protected, and what are the limits of EFS advisory locks? What if an update must change several files together?",
+          "criteria": [
+            "A read-modify-write sequence has several steps. Two clients can read the same starting value and overwrite one another; a shared namespace and correct individual file operations do not serialize the whole sequence.",
+            "A single writer or a supported lock used by every participant must protect the full read-modify-write sequence. EFS locks are advisory: operations that ignore the lock are not automatically blocked.",
+            "A file lock does not create atomic recovery for a multi-file update. Use an application or database transaction/recovery design when related changes must succeed or fail together."
+          ],
+          "criticalMisconceptions": [
+            "Sharing a filesystem prevents lost updates.",
+            "An advisory lock blocks every writer or makes several files transactional."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "identity-and-permissions",
+      "slide": 5,
+      "objective": "Distinguish network access, client authorization and filesystem identity and permissions.",
+      "prerequisites": [
+        "mount-and-request-path"
+      ],
+      "questions": [
+        {
+          "id": "identity-and-permissions-card",
+          "question": "A client can reach and mount EFS but cannot write a particular file. Why is this possible? Explain file ownership, user and group IDs and read/write permissions. What does directory traversal permission mean? If the same user name has different numeric IDs on two hosts, what does EFS see? How should access be checked without granting everyone unrestricted permissions?",
+          "criteria": [
+            "Network connectivity and permission to use a filesystem do not grant permission to every file. Filesystem ownership and permissions still govern operations. EFS client authorization, including IAM when configured, is a separate layer.",
+            "EFS uses numeric user and group IDs, rather than matching user names, with Unix-style ownership and permissions. Read and write govern access to content; directory execute/search permission allows traversal of a path. The same name with different IDs can have different access.",
+            "Check the effective IDs, ownership and required file and directory permissions, alongside the client authorization policy. Align intended identities and grant only the needed access rather than making the share writable by everyone."
+          ],
+          "criticalMisconceptions": [
+            "Network access or a successful mount authorizes every file operation.",
+            "Matching user names guarantee matching EFS identity."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "availability-and-failure-scope",
+      "slide": 6,
+      "objective": "Separate network availability, data durability and provider failure domains.",
+      "prerequisites": [
+        "caches-and-write-completion"
+      ],
+      "questions": [
+        {
+          "id": "availability-and-failure-scope-card",
+          "question": "A healthy host loses its network route to the file service. Why can file operations stop progressing even if the stored data survives? What does an NFS hard mount do after request timeouts, and why is switching to soft retries not a harmless fix? Distinguish EFS Regional and One Zone failure scope, defining an Availability Zone. Why does storage redundancy alone not make the whole application always available or protect against accidental deletion?",
+          "criteria": [
+            "Availability means access now; durability concerns retaining stored data. A network outage can prevent access without deleting server data. On a hard NFS mount, requests can keep retrying and application I/O can wait; soft timeouts introduce error and data-integrity risks, so follow supported settings and handle failures rather than treating them as a free availability fix.",
+            "An Availability Zone is an isolated infrastructure location within a cloud Region. EFS Regional stores data across multiple zones; One Zone stores it within one, so a zone disaster can cause loss. These are EFS choices, not universal properties of shared file storage.",
+            "Application availability also requires working clients, network paths and service endpoints. Redundant storage does not prevent an authorized deletion or a bad application write."
+          ],
+          "criticalMisconceptions": [
+            "Durable data is always reachable.",
+            "All shared file storage survives a zone disaster.",
+            "Replication is protection from every deletion."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "backup-and-recovery",
+      "slide": 7,
+      "objective": "Plan recoverable shared-file backups with application consistency, retention and restore validation.",
+      "prerequisites": [
+        "coordinated-updates",
+        "availability-and-failure-scope"
+      ],
+      "questions": [
+        {
+          "id": "backup-and-recovery-card",
+          "question": "A bad update overwrites files on a redundant share. Why can redundancy preserve the wrong state? What must a useful backup policy retain? Can an EFS backup taken while related files change be assumed to capture a consistent application state? Describe a supported preparation and restore-validation approach, including acceptable data loss and recovery time.",
+          "criteria": [
+            "Redundancy keeps copies of the current state, including bad writes or deletions; recovery needs retained earlier backups with a schedule and retention period suited to when damage may be noticed.",
+            "Do not assume a live file backup is an atomic application snapshot. AWS documents that modifications during an EFS backup can produce inconsistent results; coordinate the application and pause modifying processes for the backup when required by the supported procedure.",
+            "Restore a suitable recovery point to a controlled destination, check the restored files, access permissions and application behavior, and test how long recovery takes. Choose and verify backup frequency and retention against acceptable lost work and downtime; backup-job success alone does not prove recovery."
+          ],
+          "criticalMisconceptions": [
+            "Redundant storage replaces historical backups.",
+            "Every live backup is automatically application-consistent."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "performance",
+      "slide": 8,
+      "objective": "Reason about file-operation latency, metadata work, throughput and contention before changing capacity or parallelism.",
+      "prerequisites": [
+        "mount-and-request-path",
+        "coordinated-updates"
+      ],
+      "questions": [
+        {
+          "id": "performance-card",
+          "question": "Define capacity, throughput, IOPS and latency. Why can repeatedly opening, looking up and closing tiny files be slower than transferring the same bytes in large reads? Why might adding clients fail to speed up a workload sharing one locked file? What should you measure before increasing storage performance or parallelism?",
+          "criteria": [
+            "Capacity is stored bytes, throughput is bytes transferred per second, IOPS is operations per second, and latency is time per operation. More capacity does not itself promise faster access.",
+            "Small-file work can require many metadata operations, such as directory lookup and open/close, plus network round trips per useful byte. Larger transfers can amortize those costs; byte volume alone does not predict performance.",
+            "Measure representative operation sizes and mix, metadata activity, latency, aggregate throughput, client/network/service limits and time waiting for locks. Parallel clients help independent work but can increase contention for shared files; capacity or parallelism does not remove a serialized bottleneck."
+          ],
+          "criticalMisconceptions": [
+            "Equal byte counts imply equal file-service performance.",
+            "More clients or storage capacity always improves latency."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "workload-fit",
+      "slide": 9,
+      "objective": "Choose shared file storage from interface and coordination needs, and state the responsibilities that remain.",
+      "prerequisites": [
+        "file-interface",
+        "identity-and-permissions",
+        "backup-and-recovery",
+        "performance"
+      ],
+      "questions": [
+        {
+          "id": "workload-fit-card",
+          "question": "Choose and justify a storage role for several hosts requiring existing pathname-based file operations, one host requiring a raw disk-like device, blobs retrieved by key, and records needing field queries and transactions. What should be checked before placing a database engine on shared files? What operational responsibilities remain with a managed file service?",
+          "criteria": [
+            "Shared file storage fits multiple hosts needing files and directories through a supported filesystem interface. Block storage fits a disk-like device; object storage fits key-addressed blobs; a database supplies record queries and transactions.",
+            "A database can use files underneath, but must explicitly support the chosen shared filesystem and its locking, durability and recovery semantics. A shared directory is not by itself a safe multi-writer database.",
+            "Managed file storage can remove file-server administration while leaving application coordination, identities and permissions, network access, workload performance and tested recovery to be designed and checked."
+          ],
+          "criticalMisconceptions": [
+            "Managed shared files remove application coordination and recovery responsibilities.",
+            "Any database is safe on any network filesystem."
+          ]
+        }
+      ]
+    }
+  ]
+}
